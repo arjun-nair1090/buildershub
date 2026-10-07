@@ -1,0 +1,85 @@
+@import "tailwindcss";
+
+@theme {
+  --font-display: "Marcellus", "Times New Roman", serif;
+  --font-sans: "Instrument Sans", ui-sans-serif, system-ui, sans-serif;
+
+  --color-emerald: #173f35;
+  --color-emerald-900: #10302a;
+  --color-emerald-700: #24564a;
+  --color-emerald-50: #eef3f1;
+  --color-charcoal: #24312e;
+  --color-gold: #b08d57;
+  --color-gold-soft: #f4ede2;
+  --color-ivory: #faf9f6;
+  --color-line: #e6e1d8;
+  --color-line-strong: #d6cfc2;
+  --color-muted: #6b716d;
+  --color-danger: #a1392c;
+  --color-danger-50: #f8ecea;
+  --color-warn: #8a6a2f;
+
+  --radius-sm: 3px;
+  --radius-md: 5px;
+  --radius-lg: 8px;
+}
+
+@layer base {
+  html {
+    -webkit-text-size-adjust: 100%;
+  }
+  body {
+    @apply bg-ivory font-sans text-charcoal antialiased;
+    font-feature-settings: "tnum" 0;
+  }
+  ::selection {
+    background: #e9dcc6;
+  }
+  :focus-visible {
+    outline: 2px solid var(--color-gold);
+    outline-offset: 2px;
+  }
+}
+
+@utility tabular {
+  font-variant-numeric: tabular-nums;
+}
+
+/* Dotted leader between a label and its amount, like a jeweller's estimate. */
+@utility leader {
+  flex: 1 1 auto;
+  min-width: 1.5rem;
+  margin: 0 0.5rem;
+  transform: translateY(-0.3em);
+  border-bottom: 1px dotted var(--color-line-strong);
+}
+
+@keyframes draw {
+  from {
+    stroke-dashoffset: var(--len, 400);
+  }
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
+@keyframes settle {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}

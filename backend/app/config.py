@@ -1,0 +1,42 @@
+from functools import lru_cache
+from pathlib import Path
+
+from pydantic_settings import BaseSettings, SettingsConfigDict
+
+BACKEND_DIR = Path(__file__).resolve().parent.parent
+
+
+class Settings(BaseSettings):
+    model_config = SettingsConfigDict(env_file=BACKEND_DIR / ".env", extra="ignore")
+
+    database_url: str = "postgresql+psycopg://jewellery:jewellery@localhost:5433/jewellery"
+
+    jwt_secret: str
+    jwt_algorithm: str = "HS256"
+    access_token_expire_minutes: int = 60 * 8
+    remember_me_expire_days: int = 14
+
+    # Comma-separated list of allowed browser origins for the admin/public frontend.
+    cors_origins: str = "http://localhost:5173"
+
+    # Base URL of the public frontend. QR codes point to {public_base_url}/verify/{token}.
+    public_base_url: str = "http://localhost:5173"
+
+    upload_dir: Path = BACKEND_DIR / "uploads"
+    max_upload_mb: int = 5
+
+    seed_admin_name: str = "Store Administrator"
+    seed_admin_email: str = "admin@jewelverify.demo"
+    seed_admin_password: str = "Admin@12345"
+
+    @property
+    def cors_origin_list(self) -> list[str]:
+        return [o.strip() for o in self.cors_origins.split(",") if o.strip()]
+
+    def verification_url(self, token: str) -> str:
+        return f"{self.public_base_url.rstrip('/')}/verify/{token}"
+
+
+@lru_cache
+def get_settings() -> Settings:
+    return Settings()

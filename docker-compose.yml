@@ -1,0 +1,42 @@
+# Full stack:            docker compose up --build        -> http://localhost:8080
+# Database only (dev):   docker compose up -d db
+services:
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: jewellery
+      POSTGRES_PASSWORD: jewellery
+      POSTGRES_DB: jewellery
+    ports:
+      - "${DB_PORT:-5433}:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U jewellery -d jewellery"]
+      interval: 3s
+      timeout: 3s
+      retries: 20
+
+  backend:
+    build: ./backend
+    environment:
+      DATABASE_URL: postgresql+psycopg://jewellery:jewellery@db:5432/jewellery
+      JWT_SECRET: ${JWT_SECRET:-docker-demo-secret-change-me-before-any-real-use}
+      CORS_ORIGINS: http://localhost:8080
+      PUBLIC_BASE_URL: ${PUBLIC_BASE_URL:-http://localhost:8080}
+    volumes:
+      - uploads:/app/uploads
+    depends_on:
+      db:
+        condition: service_healthy
+
+  frontend:
+    build: ./frontend
+    ports:
+      - "8080:80"
+    depends_on:
+      - backend
+
+volumes:
+  pgdata:
+  uploads:
