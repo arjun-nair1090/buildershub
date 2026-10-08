@@ -16,14 +16,16 @@ def login(body: LoginRequest, db: Session = Depends(get_db)) -> TokenResponse:
     user = db.scalar(select(User).where(User.email == body.email))
     if not verify_password(body.password, user.password_hash if user else None) or user.status != "active":
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Incorrect email or password")
-    token, expires_in = create_access_token(user.id, remember=body.remember)
+    token, expires_in = create_access_token(user.id, user.token_version, remember=body.remember)
     return TokenResponse(access_token=token, expires_in=expires_in, user=UserOut.model_validate(user))
 
 
 @router.post("/logout", status_code=status.HTTP_204_NO_CONTENT)
-def logout(_: User = Depends(get_current_user)) -> Response:
-    # Tokens are stateless; the client discards its copy. Kept as an endpoint so the
-    # frontend has a single logout path if server-side sessions are added later.
+def logout(user: User = Depends(get_current_user), db: Session = Depends(get_db)) -> Response:
+    # Revokes every token this user holds, so a copied token stops working too.
+    # ponytail: signs out all of the user's devices, add per-session ids if single-device logout matters.
+    user.token_version += 1
+    db.commit()
     return Response(status_code=status.HTTP_204_NO_CONTENT)
 
 
@@ -59,9 +61,9 @@ def _admin_or_404(db: Session, email: str) -> User:
 def reset_admin_password(
     email: str, body: PasswordReset, _: User = Depends(require_admin), db: Session = Depends(get_db)
 ) -> Response:
-    # ponytail: tokens are stateless, so sessions already signed in stay valid until they expire.
     user = _admin_or_404(db, email)
     user.password_hash = hash_password(body.password)
+    user.token_version += 1  # sign out sessions that used the old password
     db.commit()
     return Response(status_code=status.HTTP_204_NO_CONTENT)
 

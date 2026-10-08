@@ -19,7 +19,7 @@ def verify_password(password: str, password_hash: str | None) -> bool:
     return ok and password_hash is not None
 
 
-def create_access_token(user_id: int, remember: bool = False) -> tuple[str, int]:
+def create_access_token(user_id: int, token_version: int, remember: bool = False) -> tuple[str, int]:
     settings = get_settings()
     lifetime = (
         timedelta(days=settings.remember_me_expire_days)
@@ -27,15 +27,16 @@ def create_access_token(user_id: int, remember: bool = False) -> tuple[str, int]
         else timedelta(minutes=settings.access_token_expire_minutes)
     )
     now = datetime.now(timezone.utc)
-    payload = {"sub": str(user_id), "iat": now, "exp": now + lifetime}
+    payload = {"sub": str(user_id), "ver": token_version, "iat": now, "exp": now + lifetime}
     token = jwt.encode(payload, settings.jwt_secret, algorithm=settings.jwt_algorithm)
     return token, int(lifetime.total_seconds())
 
 
-def decode_access_token(token: str) -> int | None:
+def decode_access_token(token: str) -> tuple[int, int] | None:
+    """Return (user_id, token_version), or None if the token is invalid or expired."""
     settings = get_settings()
     try:
         payload = jwt.decode(token, settings.jwt_secret, algorithms=[settings.jwt_algorithm])
-        return int(payload["sub"])
+        return int(payload["sub"]), int(payload["ver"])
     except (jwt.PyJWTError, KeyError, ValueError):
         return None

@@ -33,8 +33,12 @@ def test_login_validation(client):
     assert "email" in res.json()["fields"]
 
 
-def test_logout(client, auth):
+def test_logout_revokes_token(client, auth):
     assert client.post("/api/auth/logout", headers=auth).status_code == 204
+    assert client.get("/api/auth/me", headers=auth).status_code == 401
+    login = client.post("/api/auth/login", json={"email": ADMIN_EMAIL, "password": "Secret@123"})
+    fresh = {"Authorization": f"Bearer {login.json()['access_token']}"}
+    assert client.get("/api/auth/me", headers=fresh).status_code == 200
 
 
 def test_admin_routes_require_auth(client):
@@ -73,9 +77,12 @@ def test_reset_password_and_remove_admin(client, auth):
         return client.post("/api/auth/login", json={"email": "other@test.demo", "password": password})
 
     url = "/api/auth/admins/other@test.demo"
+    old_headers = {"Authorization": f"Bearer {login('Original-pass-1').json()['access_token']}"}
     assert client.put(f"{url}/password", json={"password": "short"}, headers=auth).status_code == 422
+    assert client.get("/api/auth/me", headers=old_headers).status_code == 200  # rejected reset changes nothing
     assert client.put(f"{url}/password", json={"password": "Brand-new-pass-2"}, headers=auth).status_code == 204
     assert login("Original-pass-1").status_code == 401
+    assert client.get("/api/auth/me", headers=old_headers).status_code == 401  # reset signs out old sessions
     other_headers = {"Authorization": f"Bearer {login('Brand-new-pass-2').json()['access_token']}"}
 
     # Nobody can remove themselves, so at least one admin always remains.
