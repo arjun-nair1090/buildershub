@@ -9,11 +9,11 @@ export function StatusBadge({ status, className }: { status: RecordStatus; class
     <span
       className={cn(
         base,
-        active ? "border-emerald/20 bg-emerald-50 text-emerald" : "border-line-strong bg-ivory text-muted",
+        active ? "border-basalt/20 bg-basalt-50 text-basalt" : "border-line-strong bg-chalk text-muted",
         className,
       )}
     >
-      <span className={cn("size-1.5 rounded-full", active ? "bg-emerald" : "bg-muted/60")} aria-hidden />
+      <span className={cn("size-1.5 rounded-full", active ? "bg-basalt" : "bg-muted/60")} aria-hidden />
       {active ? "Active" : "Inactive"}
     </span>
   );
@@ -31,8 +31,8 @@ export function VerificationBadge({ status, className }: { status: VerificationS
       className={cn(
         base,
         status === "VERIFIED" && "border-gold/40 bg-gold-soft text-[#7a5f35]",
-        status === "REGISTERED" && "border-line-strong bg-white text-charcoal",
-        status === "INACTIVE" && "border-line-strong bg-ivory text-muted",
+        status === "REGISTERED" && "border-line-strong bg-white text-ink",
+        status === "INACTIVE" && "border-line-strong bg-chalk text-muted",
         className,
       )}
     >

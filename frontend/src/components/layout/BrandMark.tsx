@@ -1,12 +1,35 @@
+import { useId } from "react";
 import { Link } from "react-router-dom";
 import { cn } from "@/utils/cn";
 
-export function BrandGlyph({ className }: { className?: string }) {
+const GEM = "M6 1.5h12l5 6-11 11-11-11Z";
+
+/** A brilliant-cut gem in gold: the "jewel" in Jewlerify, and the dot on its i. */
+export function Gem({ className }: { className?: string }) {
+  const gradient = useId();
   return (
-    <svg viewBox="0 0 32 32" aria-hidden className={cn("size-8 shrink-0", className)}>
-      <rect width="32" height="32" rx="5" fill="#173F35" />
-      <path d="M16 6.5 24.5 16 16 25.5 7.5 16Z" fill="none" stroke="#B08D57" strokeWidth="1.4" />
-      <path d="M12.2 16.2 15 19l5-6" fill="none" stroke="#FAF9F6" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+    <svg viewBox="0 0 24 20" aria-hidden className={className}>
+      <defs>
+        <linearGradient id={gradient} x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0" stopColor="#F3DDA6" />
+          <stop offset="0.5" stopColor="#D4AE6A" />
+          <stop offset="1" stopColor="#9C7637" />
+        </linearGradient>
+        <clipPath id={`${gradient}-clip`}>
+          <path d={GEM} />
+        </clipPath>
+      </defs>
+      <path d={GEM} fill={`url(#${gradient})`} />
+      {/* Facet lines clipped to the stone so their stroke never spills past its edge. */}
+      <path
+        clipPath={`url(#${gradient}-clip)`}
+        d="M1 7.5h22M6 1.5l3.5 6L12 1.5l2.5 6 3.5-6M9.5 7.5 12 18.5l2.5-11"
+        fill="none"
+        stroke="#fff"
+        strokeOpacity=".5"
+        strokeWidth=".7"
+        strokeLinejoin="round"
+      />
     </svg>
   );
 }
@@ -14,24 +37,21 @@ export function BrandGlyph({ className }: { className?: string }) {
 interface BrandMarkProps {
   to?: string;
   tone?: "dark" | "light";
-  compact?: boolean;
   className?: string;
 }
 
-export function BrandMark({ to = "/", tone = "dark", compact, className }: BrandMarkProps) {
+/** Wordmark: "Jewlerify" with a gold gem in place of the dot on the i. */
+export function BrandMark({ to = "/", tone = "dark", className }: BrandMarkProps) {
   return (
-    <Link to={to} className={cn("flex items-center gap-3", className)} aria-label="Jewellery Transparency & Verification System, home">
-      <BrandGlyph />
-      {!compact && (
-        <span className="flex flex-col leading-none">
-          <span className={cn("font-display text-[17px]", tone === "dark" ? "text-emerald" : "text-ivory")}>
-            Jewellery Transparency
-          </span>
-          <span className={cn("mt-1 text-[11px] tracking-wide", tone === "dark" ? "text-muted" : "text-ivory/60")}>
-            &amp; Verification System
-          </span>
+    <Link to={to} className={cn("group inline-flex", className)} aria-label="Jewlerify, home">
+      <span aria-hidden className={cn("font-display text-[28px] leading-none", tone === "dark" ? "text-basalt" : "text-chalk")}>
+        Jewler
+        <span className="relative">
+          ı
+          <Gem className="absolute bottom-[0.74em] left-1/2 w-[0.42em] -translate-x-1/2 transition-transform duration-500 ease-out-soft group-hover:-translate-y-[0.1em] group-hover:rotate-12" />
         </span>
-      )}
+        fy
+      </span>
     </Link>
   );
 }

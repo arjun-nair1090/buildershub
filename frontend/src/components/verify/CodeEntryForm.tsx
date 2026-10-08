@@ -30,7 +30,7 @@ export function CodeEntryForm({ className, tone = "light", autoFocus }: CodeEntr
 
   return (
     <form onSubmit={submit} className={className} noValidate>
-      <label htmlFor="jewellery-code" className={cn("mb-2 block text-[13px] font-medium", tone === "dark" ? "text-ivory/80" : "text-charcoal")}>
+      <label htmlFor="jewellery-code" className={cn("mb-2 block text-[13px] font-medium", tone === "dark" ? "text-chalk/80" : "text-ink")}>
         Jewellery ID
       </label>
       <div className="flex flex-col gap-2 sm:flex-row">

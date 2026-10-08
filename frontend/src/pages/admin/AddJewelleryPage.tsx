@@ -17,10 +17,10 @@ function RegistrationSuccess({ item, onAnother }: { item: Jewellery; onAnother: 
   const qr = useQrImage(item.jewellery_id);
   return (
     <Panel className="mx-auto max-w-4xl overflow-hidden">
-      <div className="flex items-start gap-4 border-b border-line bg-emerald-50/60 px-6 py-6 sm:px-8">
-        <CheckCircle2 className="mt-0.5 size-6 shrink-0 text-emerald" strokeWidth={1.75} />
+      <div className="flex items-start gap-4 border-b border-line bg-basalt-50/60 px-6 py-6 sm:px-8">
+        <CheckCircle2 className="mt-0.5 size-6 shrink-0 text-basalt" strokeWidth={1.75} />
         <div>
-          <h1 className="font-display text-[26px] leading-tight text-emerald">Jewellery Registered Successfully</h1>
+          <h1 className="font-display text-[26px] leading-tight text-basalt">Jewellery Registered Successfully</h1>
           <p className="mt-1 text-[15px] text-muted">
             Print the QR code and attach it to the piece or its certificate card.
           </p>
@@ -30,7 +30,7 @@ function RegistrationSuccess({ item, onAnother }: { item: Jewellery; onAnother: 
       <div className="grid gap-10 px-6 py-8 sm:px-8 md:grid-cols-[minmax(0,1fr)_260px]">
         <div className="min-w-0">
           <p className="text-[13px] text-muted">Jewellery ID</p>
-          <p className="tabular mt-1 font-display text-[30px] tracking-[0.06em] text-charcoal">{item.jewellery_id}</p>
+          <p className="tabular mt-1 font-display text-[30px] tracking-[0.06em] text-ink">{item.jewellery_id}</p>
           <dl className="mt-6 divide-y divide-line border-y border-line text-[15px]">
             {[
               ["Type", item.type],
@@ -40,7 +40,7 @@ function RegistrationSuccess({ item, onAnother }: { item: Jewellery; onAnother: 
             ].map(([k, v]) => (
               <div key={k} className="flex justify-between gap-4 py-2.5">
                 <dt className="text-muted">{k}</dt>
-                <dd className="tabular text-charcoal">{v}</dd>
+                <dd className="tabular text-ink">{v}</dd>
               </div>
             ))}
           </dl>

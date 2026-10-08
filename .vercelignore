@@ -1,0 +1,14 @@
+# Local-only files: secrets, dev database, build output, dependencies.
+backend/.venv
+backend/.env
+backend/dev.db
+backend/uploads
+backend/tests
+**/__pycache__
+**/.pytest_cache
+frontend/node_modules
+frontend/dist
+frontend/.env.local
+.playwright-mcp
+.env.local
+.vercel

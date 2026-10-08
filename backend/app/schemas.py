@@ -35,6 +35,34 @@ class UserOut(BaseModel):
     role: str
 
 
+Password = Annotated[str, Field(min_length=10, max_length=128)]
+
+
+class AdminCreate(BaseModel):
+    name: str = Field(min_length=2, max_length=120)
+    email: str = Field(min_length=3, max_length=255, pattern=r"^[^@\s]+@[^@\s]+\.[^@\s]+$")
+    password: Password
+
+    @field_validator("name", "email", mode="before")
+    @classmethod
+    def strip(cls, v: object) -> object:
+        return v.strip() if isinstance(v, str) else v
+
+    @field_validator("email")
+    @classmethod
+    def lowercase_email(cls, v: str) -> str:
+        return v.lower()
+
+
+class PasswordReset(BaseModel):
+    password: Password
+
+
+class AdminOut(UserOut):
+    status: str
+    created_at: datetime
+
+
 class TokenResponse(BaseModel):
     access_token: str
     token_type: str = "bearer"

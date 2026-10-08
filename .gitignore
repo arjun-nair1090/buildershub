@@ -17,3 +17,6 @@ Thumbs.db
 .vscode/
 .idea/
 frontend/*.tsbuildinfo
+.vercel
+.env*
+!.env.example

@@ -49,7 +49,7 @@ export function QrPanel({ item, qr, className }: QrPanelProps) {
           href={`/verify/${item.verification_token}`}
           target="_blank"
           rel="noreferrer"
-          className="inline-flex h-10 items-center justify-center gap-2 rounded-md border border-line-strong bg-white text-sm font-medium text-charcoal transition-colors hover:bg-emerald-50 [&_svg]:size-4"
+          className="inline-flex h-10 items-center justify-center gap-2 rounded-md border border-line-strong bg-white text-sm font-medium text-ink transition-colors hover:bg-basalt-50 [&_svg]:size-4"
         >
           <ExternalLink /> View verification page
         </a>

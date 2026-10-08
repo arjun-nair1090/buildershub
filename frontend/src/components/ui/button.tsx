@@ -4,17 +4,17 @@ import { forwardRef, type ButtonHTMLAttributes } from "react";
 import { cn } from "@/utils/cn";
 
 export const buttonVariants = cva(
-  "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium transition-colors disabled:pointer-events-none disabled:opacity-50 [&_svg]:size-4 [&_svg]:shrink-0",
+  "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium transition-[color,background-color,border-color,box-shadow,transform] duration-200 ease-out-soft active:scale-[0.97] disabled:pointer-events-none disabled:opacity-50 [&_svg]:size-4 [&_svg]:shrink-0",
   {
     variants: {
       variant: {
-        primary: "bg-emerald text-ivory hover:bg-emerald-900",
-        secondary: "border border-line-strong bg-white text-charcoal hover:border-emerald/40 hover:bg-emerald-50",
-        ghost: "text-charcoal hover:bg-emerald-50",
-        gold: "bg-gold text-white hover:bg-[#9a7a49]",
+        primary: "bg-basalt text-chalk shadow-[0_8px_20px_-12px_rgba(21,25,27,0.9)] hover:bg-basalt-700",
+        secondary: "border border-line-strong bg-white text-ink hover:border-basalt/40 hover:bg-basalt-50",
+        ghost: "text-ink hover:bg-basalt-50",
+        gold: "bg-gold-bright text-basalt shadow-[0_10px_24px_-12px_rgba(212,174,106,0.8)] hover:bg-[#e2c084]",
         danger: "bg-danger text-white hover:bg-[#8a2f24]",
         "danger-outline": "border border-danger/30 bg-white text-danger hover:bg-danger-50",
-        link: "h-auto px-0 text-emerald underline-offset-4 hover:underline",
+        link: "h-auto px-0 text-basalt underline-offset-4 hover:underline",
       },
       size: {
         sm: "h-8 px-3 text-[13px]",

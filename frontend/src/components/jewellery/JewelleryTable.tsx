@@ -25,7 +25,7 @@ const COLUMNS: Record<ColumnKey, Column> = {
     label: "Jewellery ID",
     sort: "jewellery_id",
     render: (j) => (
-      <Link to={`/admin/jewellery/${j.jewellery_id}`} className="tabular font-medium tracking-wide text-emerald hover:underline">
+      <Link to={`/admin/jewellery/${j.jewellery_id}`} className="tabular font-medium tracking-wide text-basalt hover:underline">
         {j.jewellery_id}
       </Link>
     ),
@@ -55,7 +55,7 @@ interface JewelleryTableProps {
 }
 
 function RowActions({ item, onDeactivate }: { item: Jewellery; onDeactivate: (item: Jewellery) => Promise<void> }) {
-  const link = "inline-flex size-8 items-center justify-center rounded-md text-muted hover:bg-emerald-50 hover:text-emerald";
+  const link = "inline-flex size-8 items-center justify-center rounded-md text-muted hover:bg-basalt-50 hover:text-basalt";
   return (
     <div className="flex items-center justify-end gap-0.5">
       <Link to={`/admin/jewellery/${item.jewellery_id}`} className={link} title="View" aria-label={`View ${item.jewellery_id}`}>
@@ -99,7 +99,7 @@ export function JewelleryTable({ items, columns, loading, skeletonRows = 5, sort
                     <button
                       type="button"
                       onClick={() => onSort(c.sort!)}
-                      className={cn("inline-flex items-center gap-1 hover:text-charcoal", sort === c.sort && "text-charcoal")}
+                      className={cn("inline-flex items-center gap-1 hover:text-ink", sort === c.sort && "text-ink")}
                     >
                       {c.label}
                       {sort === c.sort ? (
@@ -131,7 +131,7 @@ export function JewelleryTable({ items, columns, loading, skeletonRows = 5, sort
                   </tr>
                 ))
               : items.map((j) => (
-                  <tr key={j.jewellery_id} className={cn("transition-colors hover:bg-ivory/70", j.status === "inactive" && "text-muted")}>
+                  <tr key={j.jewellery_id} className={cn("transition-colors hover:bg-chalk/70", j.status === "inactive" && "text-muted")}>
                     {cols.map((c) => (
                       <td key={c.key} className={cn("whitespace-nowrap px-4 py-3.5 first:pl-6", c.align === "right" && "tabular text-right")}>
                         {c.render(j)}
@@ -160,14 +160,14 @@ export function JewelleryTable({ items, columns, loading, skeletonRows = 5, sort
                 <div className="flex items-start justify-between gap-3">
                   <div className="min-w-0">
                     {COLUMNS.id.render(j)}
-                    <p className="mt-0.5 truncate text-sm text-charcoal">
+                    <p className="mt-0.5 truncate text-sm text-ink">
                       {j.type}, {j.purity}, {formatWeight(j.net_weight)}
                     </p>
                   </div>
                   <StatusBadge status={j.status} />
                 </div>
                 <div className="mt-3 flex items-center justify-between">
-                  <span className="tabular text-[15px] font-semibold text-charcoal">{formatINR(j.total_price)}</span>
+                  <span className="tabular text-[15px] font-semibold text-ink">{formatINR(j.total_price)}</span>
                   <RowActions item={j} onDeactivate={onDeactivate} />
                 </div>
               </li>

@@ -26,8 +26,8 @@ function Section({ step, title, description, children }: { step: number; title: 
   return (
     <Panel className="grid gap-6 p-5 sm:p-6 lg:grid-cols-[220px_1fr] lg:gap-10 lg:p-8">
       <div>
-        <span className="tabular text-[13px] font-semibold text-gold">{String(step).padStart(2, "0")}</span>
-        <h2 className="mt-1 text-[15px] font-semibold text-charcoal">{title}</h2>
+        <span className="tabular text-[13px] font-semibold text-gold-deep">{String(step).padStart(2, "0")}</span>
+        <h2 className="mt-1 text-[15px] font-semibold text-ink">{title}</h2>
         <p className="mt-1 text-[13px] leading-relaxed text-muted">{description}</p>
       </div>
       <div className="space-y-5">{children}</div>
@@ -138,13 +138,13 @@ export function JewelleryForm({ defaultValues = emptyValues, submitLabel, cancel
           </Field>
         </div>
 
-        <div className="rounded-md border border-line bg-ivory p-4">
+        <div className="rounded-md border border-line bg-chalk p-4">
           <div className="flex flex-wrap items-baseline justify-between gap-3">
             <span className="flex items-center gap-2 text-[13px] text-muted">
               <Calculator className="size-4 text-gold" strokeWidth={1.5} />
               Calculated total
             </span>
-            <span className={manual ? "tabular text-lg text-muted line-through" : "tabular text-xl font-semibold text-emerald"}>
+            <span className={manual ? "tabular text-lg text-muted line-through" : "tabular text-xl font-semibold text-basalt"}>
               {formatINR(calculated)}
             </span>
           </div>
@@ -181,8 +181,8 @@ export function JewelleryForm({ defaultValues = emptyValues, submitLabel, cancel
         </div>
       </Section>
 
-      <div className="sticky bottom-0 z-10 -mx-4 flex flex-col-reverse gap-2 border-t border-line bg-ivory/95 px-4 py-4 backdrop-blur sm:mx-0 sm:flex-row sm:justify-end sm:rounded-lg sm:border sm:bg-white sm:px-6">
-        <Link to={cancelTo} className="inline-flex h-11 items-center justify-center rounded-md px-4 text-sm font-medium text-charcoal hover:bg-emerald-50">
+      <div className="sticky bottom-0 z-10 -mx-4 flex flex-col-reverse gap-2 border-t border-line bg-chalk/95 px-4 py-4 backdrop-blur sm:mx-0 sm:flex-row sm:justify-end sm:rounded-lg sm:border sm:bg-white sm:px-6">
+        <Link to={cancelTo} className="inline-flex h-11 items-center justify-center rounded-md px-4 text-sm font-medium text-ink hover:bg-basalt-50">
           Cancel
         </Link>
         <Button type="submit" size="lg" loading={isSubmitting}>

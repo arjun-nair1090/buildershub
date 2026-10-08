@@ -1,7 +1,7 @@
 from datetime import date, datetime, timezone
 from decimal import Decimal
 
-from sqlalchemy import Date, DateTime, Integer, Numeric, String, Text
+from sqlalchemy import Date, DateTime, Integer, LargeBinary, Numeric, String, Text
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.database import Base
@@ -60,3 +60,12 @@ class Jewellery(Base):
         if self.status != "active":
             return "INACTIVE"
         return "VERIFIED" if self.certificate_id else "REGISTERED"
+
+
+class CertificateFile(Base):
+    """Uploaded certificate bytes. Kept in the database because serverless hosts have no lasting disk."""
+
+    __tablename__ = "certificate_files"
+
+    name: Mapped[str] = mapped_column(String(64), primary_key=True)  # random hex + extension
+    data: Mapped[bytes] = mapped_column(LargeBinary)

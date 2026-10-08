@@ -1,10 +1,8 @@
 import os
-import tempfile
 
-# Configure before the app is imported: isolated DB, throwaway upload dir, fixed secret.
+# Configure before the app is imported: isolated DB, fixed secret.
 os.environ["DATABASE_URL"] = "sqlite://"
 os.environ["JWT_SECRET"] = "test-secret-" + "x" * 40
-os.environ["UPLOAD_DIR"] = tempfile.mkdtemp(prefix="jtvs-uploads-")
 os.environ["PUBLIC_BASE_URL"] = "https://verify.example.com"
 
 import pytest

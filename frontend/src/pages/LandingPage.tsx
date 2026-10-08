@@ -1,5 +1,5 @@
 import { Camera, ListOrdered, ScanLine, ShieldOff } from "lucide-react";
-import type { ReactNode } from "react";
+import { useEffect, type CSSProperties, type ReactNode } from "react";
 import { Link } from "react-router-dom";
 import { HallmarkStamp } from "@/components/jewellery/HallmarkStamp";
 import { PriceBreakdown } from "@/components/jewellery/PriceBreakdown";
@@ -8,19 +8,21 @@ import { buttonVariants } from "@/components/ui/button";
 import { CodeEntryForm } from "@/components/verify/CodeEntryForm";
 import { cn } from "@/utils/cn";
 
+const delay = (ms: number) => ({ "--d": `${ms}ms` }) as CSSProperties;
+
 function SectionHeading({ title, children }: { title: string; children?: ReactNode }) {
   return (
     <div className="max-w-xl">
-      <h2 className="font-display text-[30px] leading-tight text-emerald sm:text-[38px]">{title}</h2>
-      {children && <p className="mt-3 text-[17px] leading-relaxed text-charcoal/75">{children}</p>}
+      <h2 className="font-display text-[32px] leading-[1.08] text-basalt sm:text-[44px]">{title}</h2>
+      {children && <p className="mt-4 text-[17px] leading-relaxed text-ink/75">{children}</p>}
     </div>
   );
 }
 
 const STEPS = [
-  { n: "01", title: "Register", body: "Every jewellery item receives a unique digital identity." },
-  { n: "02", title: "Scan", body: "Scan the QR code attached to the jewellery." },
-  { n: "03", title: "Verify", body: "View the registered details and price breakdown." },
+  { title: "Register", body: "The jeweller records the piece once. It gets its own Jewellery ID and QR tag." },
+  { title: "Scan", body: "Point any phone camera at the tag. The record opens in the browser." },
+  { title: "Verify", body: "Read the registered purity, weights, certificate and itemised price." },
 ];
 
 const VERIFIABLE = [
@@ -56,42 +58,54 @@ const REASONS = [
 ];
 
 export function LandingPage() {
+  useEffect(() => {
+    document.title = "Jewlerify: every jewel, verified";
+  }, []);
+
   return (
     <>
       {/* Hero */}
-      <section className="mx-auto grid max-w-6xl items-center gap-14 px-4 pb-20 pt-14 sm:px-6 sm:pt-20 lg:grid-cols-[1fr_minmax(0,540px)] lg:gap-12 lg:pb-28">
-        <div className="max-w-xl">
-          <h1 className="font-display text-[46px] leading-[1.02] text-emerald sm:text-[64px] lg:text-[72px]">
-            Know What You're Buying.
-          </h1>
-          <p className="mt-6 max-w-md text-lg leading-relaxed text-charcoal/80">
-            Verify your jewellery's registered details, certification information and price breakdown through one
-            simple QR scan.
-          </p>
-          <div className="mt-9 flex flex-col gap-3 sm:flex-row">
-            <Link to="/verify" className={cn(buttonVariants({ size: "lg" }))}>
-              Verify Jewellery
-            </Link>
-            <Link to="/admin/login" className={cn(buttonVariants({ size: "lg", variant: "secondary" }))}>
-              Jeweller Login
-            </Link>
+      <section className="relative overflow-hidden bg-basalt text-chalk">
+        <div className="mx-auto grid max-w-6xl items-center gap-14 px-4 pb-20 pt-10 sm:px-6 sm:pt-16 lg:grid-cols-[1fr_minmax(0,540px)] lg:gap-12 lg:pb-28">
+          <div className="max-w-xl">
+            <h1 className="rise font-display text-[52px] leading-[0.98] sm:text-[76px] lg:text-[88px]">
+              Every jewel, verified.
+            </h1>
+            <p className="rise mt-7 max-w-md text-lg leading-relaxed text-chalk/75" style={delay(140)}>
+              Scan the tag on any piece to see its registered purity, weight, certificate and an itemised price,
+              before you pay.
+            </p>
+            <div className="rise mt-10 flex flex-col gap-3 sm:flex-row" style={delay(260)}>
+              <Link to="/verify" className={cn(buttonVariants({ size: "lg", variant: "gold" }))}>
+                Verify jewellery
+              </Link>
+              <Link
+                to="/admin/login"
+                className={cn(
+                  buttonVariants({ size: "lg", variant: "ghost" }),
+                  "border border-white/20 text-chalk hover:border-white/40 hover:bg-white/5",
+                )}
+              >
+                I'm a jeweller
+              </Link>
+            </div>
           </div>
+          <HeroVisual />
         </div>
-        <HeroVisual />
       </section>
 
       {/* How it works */}
-      <section className="border-t border-line bg-white">
-        <div className="mx-auto max-w-6xl px-4 py-20 sm:px-6 lg:py-24">
+      <section className="bg-white">
+        <div className="mx-auto max-w-6xl px-4 py-20 sm:px-6 lg:py-28">
           <SectionHeading title="How it works" />
-          <ol className="mt-12 grid gap-10 md:grid-cols-3 md:gap-8">
-            {STEPS.map((s) => (
-              <li key={s.n} className="border-t border-charcoal/80 pt-5">
-                <p className="text-[13px] text-muted">
-                  Step <span className="tabular font-semibold text-gold">{s.n}</span>
-                </p>
-                <h3 className="mt-3 font-display text-2xl text-charcoal">{s.title}</h3>
-                <p className="mt-2 max-w-xs text-[15px] leading-relaxed text-charcoal/75">{s.body}</p>
+          <ol className="mt-14 grid gap-12 md:grid-cols-3 md:gap-10">
+            {STEPS.map((s, i) => (
+              <li key={s.title} className="reveal">
+                <span className="tabular block font-display text-[64px] leading-none text-gold" aria-hidden>
+                  {i + 1}
+                </span>
+                <h3 className="mt-5 border-t border-line pt-5 font-display text-[26px] text-ink">{s.title}</h3>
+                <p className="mt-2 max-w-xs text-[15px] leading-relaxed text-ink/75">{s.body}</p>
               </li>
             ))}
           </ol>
@@ -100,7 +114,7 @@ export function LandingPage() {
 
       {/* What you can verify */}
       <section className="border-t border-line">
-        <div className="mx-auto grid max-w-6xl gap-12 px-4 py-20 sm:px-6 lg:grid-cols-2 lg:gap-16 lg:py-24">
+        <div className="mx-auto grid max-w-6xl gap-14 px-4 py-20 sm:px-6 lg:grid-cols-2 lg:gap-16 lg:py-28">
           <div>
             <SectionHeading title="What you can verify">
               Everything the jeweller registered for the piece, on one page.
@@ -108,20 +122,20 @@ export function LandingPage() {
             <dl className="mt-10 divide-y divide-line border-y border-line">
               {VERIFIABLE.map((v) => (
                 <div key={v.label} className="grid gap-1 py-4 sm:grid-cols-[200px_1fr] sm:gap-6">
-                  <dt className="text-[15px] font-medium text-charcoal">{v.label}</dt>
+                  <dt className="text-[15px] font-medium text-ink">{v.label}</dt>
                   <dd className="text-[15px] text-muted">{v.detail}</dd>
                 </div>
               ))}
             </dl>
           </div>
 
-          {/* A real-looking excerpt of the buyer page */}
-          <div className="self-center rounded-lg border border-line bg-white">
+          {/* An excerpt of the buyer page */}
+          <div className="reveal self-center overflow-hidden rounded-[14px] border border-line bg-white shadow-[0_30px_60px_-40px_rgba(21,25,27,0.45)]">
             <div className="flex items-start justify-between gap-4 px-6 py-6 sm:px-8">
               <div>
-                <p className="text-[13px] font-semibold text-gold">Jewellery details</p>
-                <p className="mt-1.5 font-display text-2xl text-charcoal">Ring</p>
-                <p className="mt-1 text-[15px] text-charcoal/75">22K gold diamond ring</p>
+                <p className="text-[13px] font-semibold text-gold-deep">Jewellery details</p>
+                <p className="mt-1.5 font-display text-[26px] text-ink">Ring</p>
+                <p className="mt-1 text-[15px] text-ink/75">22K gold diamond ring</p>
               </div>
               <HallmarkStamp purity="22K" percent="91.6" size="lg" />
             </div>
@@ -136,7 +150,7 @@ export function LandingPage() {
               ].map(([k, v]) => (
                 <div key={k} className="flex justify-between gap-4 py-2">
                   <dt className="text-muted">{k}</dt>
-                  <dd className="tabular text-charcoal">{v}</dd>
+                  <dd className={cn("tabular", v === "Verified" ? "font-medium text-verified" : "text-ink")}>{v}</dd>
                 </div>
               ))}
             </dl>
@@ -146,18 +160,18 @@ export function LandingPage() {
 
       {/* Price transparency */}
       <section className="border-t border-line bg-white">
-        <div className="mx-auto grid max-w-6xl gap-12 px-4 py-20 sm:px-6 lg:grid-cols-[1fr_440px] lg:gap-20 lg:py-24">
+        <div className="mx-auto grid max-w-6xl gap-12 px-4 py-20 sm:px-6 lg:grid-cols-[1fr_440px] lg:gap-20 lg:py-28">
           <div>
-            <SectionHeading title="Price transparency">
-              A single number on a tag tells you very little. The verification page shows how the total is made up,
-              so you can compare like with like.
+            <SectionHeading title="Price, itemised">
+              A single number on a tag tells you very little. The record shows how the total is made up, so you can
+              compare like with like.
             </SectionHeading>
             <p className="mt-8 max-w-md text-[15px] leading-relaxed text-muted">
               Gold value, making charges, stone or other component value and tax are listed separately and add up to
               the total price.
             </p>
           </div>
-          <div className="rounded-lg border border-line bg-ivory p-6 sm:p-8">
+          <div className="reveal rounded-[14px] border border-line bg-chalk p-6 sm:p-8">
             <p className="mb-6 text-[13px] text-muted">Example breakdown</p>
             <PriceBreakdown gold_value={98500} making_charges={12000} other_component_value={4000} tax={10500} total_price={125000} emphasis />
           </div>
@@ -166,31 +180,33 @@ export function LandingPage() {
 
       {/* Why digital verification */}
       <section className="border-t border-line">
-        <div className="mx-auto max-w-6xl px-4 py-20 sm:px-6 lg:py-24">
-          <SectionHeading title="Why digital verification" />
-          <div className="mt-12 grid gap-x-10 gap-y-10 sm:grid-cols-2 lg:grid-cols-4">
+        <div className="mx-auto max-w-6xl px-4 py-20 sm:px-6 lg:py-28">
+          <SectionHeading title="Why a digital record" />
+          <div className="mt-14 grid gap-x-10 gap-y-12 sm:grid-cols-2 lg:grid-cols-4">
             {REASONS.map(({ icon: Icon, title, body }) => (
               <div key={title}>
-                <Icon className="size-5 text-gold" strokeWidth={1.5} />
-                <h3 className="mt-4 text-[17px] font-semibold text-charcoal">{title}</h3>
-                <p className="mt-2 text-[15px] leading-relaxed text-charcoal/75">{body}</p>
+                <span className="grid size-10 place-items-center rounded-full bg-basalt text-gold-bright">
+                  <Icon className="size-[18px]" strokeWidth={1.6} />
+                </span>
+                <h3 className="mt-5 text-[17px] font-semibold text-ink">{title}</h3>
+                <p className="mt-2 text-[15px] leading-relaxed text-ink/75">{body}</p>
               </div>
             ))}
           </div>
-          <div className="mt-14 rounded-md border border-line bg-white px-5 py-4 text-[15px] leading-relaxed text-charcoal/80">
-            <span className="font-medium text-charcoal">What it does not do. </span>
-            This platform verifies the information associated with a registered digital record. It does not
-            independently perform physical gold purity testing.
+          <div className="mt-16 rounded-[10px] border border-line bg-white px-5 py-4 text-[15px] leading-relaxed text-ink/80">
+            <span className="font-medium text-ink">What it does not do. </span>
+            Jewlerify verifies the information associated with a registered digital record. It does not independently
+            perform physical gold purity testing.
           </div>
         </div>
       </section>
 
       {/* CTA */}
-      <section className="bg-emerald">
-        <div className="mx-auto grid max-w-6xl items-end gap-10 px-4 py-16 sm:px-6 lg:grid-cols-2 lg:py-20">
+      <section className="grain">
+        <div className="mx-auto grid max-w-6xl items-end gap-10 px-4 py-16 sm:px-6 lg:grid-cols-2 lg:py-24">
           <div>
-            <h2 className="font-display text-[30px] leading-tight text-ivory sm:text-[38px]">Holding a tagged piece?</h2>
-            <p className="mt-3 max-w-md text-[17px] leading-relaxed text-ivory/75">
+            <h2 className="font-display text-[34px] leading-[1.08] text-chalk sm:text-[46px]">Holding a tagged piece?</h2>
+            <p className="mt-4 max-w-md text-[17px] leading-relaxed text-chalk/70">
               Point your phone camera at its QR code, or type the Jewellery ID printed underneath it.
             </p>
           </div>

@@ -1,6 +1,7 @@
 from functools import lru_cache
 from pathlib import Path
 
+from pydantic import field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 BACKEND_DIR = Path(__file__).resolve().parent.parent
@@ -22,12 +23,21 @@ class Settings(BaseSettings):
     # Base URL of the public frontend. QR codes point to {public_base_url}/verify/{token}.
     public_base_url: str = "http://localhost:5173"
 
-    upload_dir: Path = BACKEND_DIR / "uploads"
-    max_upload_mb: int = 5
+    # Vercel Functions cap request bodies at 4.5 MB, so uploads stay under that.
+    max_upload_mb: int = 4
 
     seed_admin_name: str = "Store Administrator"
     seed_admin_email: str = "admin@jewelverify.demo"
     seed_admin_password: str = "Admin@12345"
+
+    @field_validator("database_url")
+    @classmethod
+    def use_psycopg_driver(cls, url: str) -> str:
+        """Hosted Postgres (e.g. Neon) hands out postgres:// URLs; SQLAlchemy needs the driver named."""
+        for prefix in ("postgres://", "postgresql://"):
+            if url.startswith(prefix):
+                return "postgresql+psycopg://" + url.removeprefix(prefix)
+        return url
 
     @property
     def cors_origin_list(self) -> list[str]:

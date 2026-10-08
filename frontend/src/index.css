@@ -1,27 +1,37 @@
 @import "tailwindcss";
 
+/*
+ * Jewlerify palette: drawn from the jeweller's touchstone, a dark basalt slab that
+ * gold is rubbed on to read its streak.
+ */
 @theme {
-  --font-display: "Marcellus", "Times New Roman", serif;
+  --font-display: "Gilda Display", "Times New Roman", serif;
   --font-sans: "Instrument Sans", ui-sans-serif, system-ui, sans-serif;
 
-  --color-emerald: #173f35;
-  --color-emerald-900: #10302a;
-  --color-emerald-700: #24564a;
-  --color-emerald-50: #eef3f1;
-  --color-charcoal: #24312e;
-  --color-gold: #b08d57;
-  --color-gold-soft: #f4ede2;
-  --color-ivory: #faf9f6;
-  --color-line: #e6e1d8;
-  --color-line-strong: #d6cfc2;
-  --color-muted: #6b716d;
+  --color-basalt: #1f2427;
+  --color-basalt-900: #15191b;
+  --color-basalt-700: #2d3438;
+  --color-basalt-50: #e6eae7;
+  --color-ink: #1b1f22;
+  /* gold: strokes, icons and text on basalt. gold-deep: small gold text on light surfaces (AA). */
+  --color-gold: #b38b46;
+  --color-gold-bright: #d4ae6a;
+  --color-gold-deep: #86652c;
+  --color-gold-soft: #f1ebdd;
+  --color-chalk: #eef0ec;
+  --color-line: #dadfda;
+  --color-line-strong: #c4cac4;
+  --color-muted: #5d6662;
+  --color-verified: #2e6a4f;
   --color-danger: #a1392c;
   --color-danger-50: #f8ecea;
   --color-warn: #8a6a2f;
 
   --radius-sm: 3px;
-  --radius-md: 5px;
-  --radius-lg: 8px;
+  --radius-md: 6px;
+  --radius-lg: 10px;
+
+  --ease-out-soft: cubic-bezier(0.22, 1, 0.36, 1);
 }
 
 @layer base {
@@ -29,11 +39,14 @@
     -webkit-text-size-adjust: 100%;
   }
   body {
-    @apply bg-ivory font-sans text-charcoal antialiased;
-    font-feature-settings: "tnum" 0;
+    @apply bg-chalk font-sans text-ink antialiased;
+  }
+  /* Gilda Display ships one weight; never let the browser fake a bold. */
+  .font-display {
+    font-synthesis-weight: none;
   }
   ::selection {
-    background: #e9dcc6;
+    background: #e4d3ae;
   }
   :focus-visible {
     outline: 2px solid var(--color-gold);
@@ -54,6 +67,29 @@
   border-bottom: 1px dotted var(--color-line-strong);
 }
 
+/* Fine grain on the touchstone surfaces, so basalt reads as stone rather than flat paint. */
+@utility grain {
+  background-image:
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 0 0 0 .07 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E"),
+    radial-gradient(120% 90% at 70% 10%, #2b3236 0%, var(--color-basalt) 55%, var(--color-basalt-900) 100%);
+}
+
+/* Elements opt in to the entrance with `rise`, staggered via --d (delay). */
+@utility rise {
+  animation: settle 700ms var(--ease-out-soft) var(--d, 0ms) both;
+}
+
+/* Scroll-linked reveal where the browser supports it; static everywhere else. */
+@utility reveal {
+  @supports (animation-timeline: view()) {
+    @media (prefers-reduced-motion: no-preference) {
+      animation: settle linear both;
+      animation-timeline: view();
+      animation-range: entry 5% cover 28%;
+    }
+  }
+}
+
 @keyframes draw {
   from {
     stroke-dashoffset: var(--len, 400);
@@ -66,11 +102,42 @@
 @keyframes settle {
   from {
     opacity: 0;
-    transform: translateY(6px);
+    transform: translateY(14px);
   }
   to {
     opacity: 1;
     transform: none;
+  }
+}
+
+@keyframes fade {
+  from {
+    opacity: 0;
+  }
+}
+
+/* The seal lands like a hallmark being struck. */
+@keyframes strike {
+  0% {
+    opacity: 0;
+    transform: scale(1.35) rotate(-8deg);
+  }
+  60% {
+    opacity: 1;
+    transform: scale(0.96) rotate(0deg);
+  }
+  100% {
+    transform: none;
+  }
+}
+
+/* Gold glint sweeping across a surface once. */
+@keyframes glint {
+  from {
+    transform: translateX(-120%) skewX(-18deg);
+  }
+  to {
+    transform: translateX(320%) skewX(-18deg);
   }
 }
 
@@ -79,6 +146,7 @@
   *::before,
   *::after {
     animation-duration: 0.01ms !important;
+    animation-delay: 0ms !important;
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
   }

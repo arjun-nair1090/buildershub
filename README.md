@@ -1,4 +1,4 @@
-# Jewellery Transparency & Verification System
+# Jewlerify — Jewellery Transparency & Verification
 
 A jeweller registers a piece of jewellery. The system gives it a unique Jewellery ID, a digital record and a QR code. A buyer scans the QR code with their phone camera and sees the registered details, the certificate reference and an itemised price breakdown. No app is needed.
 
@@ -91,7 +91,7 @@ The Vite dev server forwards `/api/*` to the backend, so the frontend and API sh
 | `REMEMBER_ME_EXPIRE_DAYS` | Session length with "Keep me signed in" | `14` |
 | `CORS_ORIGINS` | Comma-separated allowed browser origins | `http://localhost:5173` |
 | `PUBLIC_BASE_URL` | Public frontend URL. QR codes encode `{PUBLIC_BASE_URL}/verify/{token}` | `http://localhost:5173` |
-| `MAX_UPLOAD_MB` | Certificate upload size limit | `5` |
+| `MAX_UPLOAD_MB` | Certificate upload size limit (kept under Vercel's 4.5 MB request cap) | `4` |
 | `SEED_ADMIN_NAME` / `SEED_ADMIN_EMAIL` / `SEED_ADMIN_PASSWORD` | Admin account created by `seed.py` | see below |
 
 **`frontend/.env.local`**
@@ -154,7 +154,7 @@ Interactive docs: http://localhost:8010/docs
 | DELETE | `/api/jewellery/{jewellery_id}` | admin | Deactivate (soft delete) |
 | POST | `/api/jewellery/{jewellery_id}/activate` | admin | Reactivate |
 | GET | `/api/jewellery/{jewellery_id}/qr` | admin | Print-resolution QR PNG (~1200 px, 300 dpi) |
-| POST / GET / DELETE | `/api/jewellery/{jewellery_id}/certificate` | admin | Upload / download / remove certificate (PDF, JPG, PNG, ≤ 5 MB) |
+| POST / GET / DELETE | `/api/jewellery/{jewellery_id}/certificate` | admin | Upload / download / remove certificate (PDF, JPG, PNG, ≤ 4 MB) |
 | GET | `/api/verify/{token}` | public | Buyer view. `404` not found, `410` inactive (no details returned) |
 
 Validation errors return `422` as `{"detail": "...", "fields": {"field": "message"}}`.
@@ -162,7 +162,7 @@ Validation errors return `422` as `{"detail": "...", "fields": {"field": "messag
 ## 8. How QR verification works
 
 1. **Register.** On save, the backend generates a Jewellery ID (`JWL-26-A8F72K`) and a separate random 12-character verification token (~59 bits). Both use an alphabet without look-alike characters (0/O, 1/I/L). The internal database id is never exposed.
-2. **Generate.** `GET /api/jewellery/{id}/qr` encodes `{PUBLIC_BASE_URL}/verify/{token}` with error correction level Q, rendered in brand emerald at ~1200 px with the Jewellery ID printed underneath.
+2. **Generate.** `GET /api/jewellery/{id}/qr` encodes `{PUBLIC_BASE_URL}/verify/{token}` with error correction level Q, rendered in brand basalt at ~1200 px with the Jewellery ID printed underneath.
 3. **Scan.** Any phone camera opens the URL in the browser.
 4. **Verify.** The page calls `GET /api/verify/{token}`:
    - **Active with a certificate reference** → *Verified record*

@@ -8,8 +8,8 @@ export function ProtectedRoute() {
 
   if (state === "loading") {
     return (
-      <div className="grid min-h-dvh place-items-center bg-ivory" role="status">
-        <Loader2 className="size-6 animate-spin text-emerald" />
+      <div className="grid min-h-dvh place-items-center bg-chalk" role="status">
+        <Loader2 className="size-6 animate-spin text-basalt" />
         <span className="sr-only">Checking your session</span>
       </div>
     );

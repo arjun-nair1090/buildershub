@@ -10,7 +10,10 @@ class Base(DeclarativeBase):
     pass
 
 
-engine = create_engine(get_settings().database_url, pool_pre_ping=True)
+_url = get_settings().database_url
+# Neon's pooled endpoint is PgBouncer in transaction mode, which can't keep server-side prepared statements.
+_connect_args = {"prepare_threshold": None} if _url.startswith("postgresql+psycopg") else {}
+engine = create_engine(_url, pool_pre_ping=True, connect_args=_connect_args)
 SessionLocal = sessionmaker(bind=engine, autoflush=False, expire_on_commit=False)
 
 

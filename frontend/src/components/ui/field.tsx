@@ -24,7 +24,7 @@ export function Field({ label, error, hint, optional, className, children }: Fie
 
   return (
     <div className={cn("space-y-1.5", className)}>
-      <label htmlFor={id} className="flex items-baseline justify-between text-[13px] font-medium text-charcoal">
+      <label htmlFor={id} className="flex items-baseline justify-between text-[13px] font-medium text-ink">
         {label}
         {optional && <span className="text-xs font-normal text-muted">Optional</span>}
       </label>

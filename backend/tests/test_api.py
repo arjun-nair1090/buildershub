@@ -43,6 +43,49 @@ def test_admin_routes_require_auth(client):
     assert client.get("/api/jewellery/stats").status_code == 401
     bad = {"Authorization": "Bearer not-a-real-token"}
     assert client.get("/api/jewellery", headers=bad).status_code == 401
+    assert client.get("/api/auth/admins").status_code == 401
+    assert client.post("/api/auth/admins", json={}).status_code == 401
+
+
+def test_admin_creates_admin(client, auth):
+    new = {"name": "Second Admin", "email": " Second@Test.demo ", "password": "Strong-pass-1"}
+    res = client.post("/api/auth/admins", json=new, headers=auth)
+    assert res.status_code == 201
+    assert res.json()["email"] == "second@test.demo" and "password_hash" not in res.json()
+
+    # The new admin can sign in and sees both accounts.
+    login = client.post("/api/auth/login", json={"email": "second@test.demo", "password": "Strong-pass-1"})
+    assert login.status_code == 200
+    headers = {"Authorization": f"Bearer {login.json()['access_token']}"}
+    emails = [a["email"] for a in client.get("/api/auth/admins", headers=headers).json()]
+    assert emails == [ADMIN_EMAIL, "second@test.demo"]
+
+    assert client.post("/api/auth/admins", json=new, headers=auth).status_code == 409
+    weak = {**new, "email": "third@test.demo", "password": "short"}
+    assert client.post("/api/auth/admins", json=weak, headers=auth).status_code == 422
+
+
+def test_reset_password_and_remove_admin(client, auth):
+    other = {"name": "Other", "email": "other@test.demo", "password": "Original-pass-1"}
+    client.post("/api/auth/admins", json=other, headers=auth)
+
+    def login(password):
+        return client.post("/api/auth/login", json={"email": "other@test.demo", "password": password})
+
+    url = "/api/auth/admins/other@test.demo"
+    assert client.put(f"{url}/password", json={"password": "short"}, headers=auth).status_code == 422
+    assert client.put(f"{url}/password", json={"password": "Brand-new-pass-2"}, headers=auth).status_code == 204
+    assert login("Original-pass-1").status_code == 401
+    other_headers = {"Authorization": f"Bearer {login('Brand-new-pass-2').json()['access_token']}"}
+
+    # Nobody can remove themselves, so at least one admin always remains.
+    assert client.delete(f"/api/auth/admins/{ADMIN_EMAIL}", headers=auth).status_code == 400
+
+    assert client.delete(url, headers=auth).status_code == 204
+    assert login("Brand-new-pass-2").status_code == 401
+    assert client.get("/api/auth/me", headers=other_headers).status_code == 401  # existing session is cut off
+    assert client.delete(url, headers=auth).status_code == 404
+    assert client.put(f"{url}/password", json={"password": "Brand-new-pass-2"}).status_code == 401
 
 
 # ---------- CRUD ----------
@@ -187,6 +230,7 @@ def test_certificate_upload_flow(client, auth, payload):
 
     res = client.delete(url, headers=auth)
     assert res.json()["has_certificate_document"] is False
+    assert client.get(url, headers=auth).status_code == 404
 
 
 def test_certificate_upload_rejects_bad_files(client, auth, payload):

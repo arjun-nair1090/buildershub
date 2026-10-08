@@ -1,7 +1,7 @@
+from pathlib import Path
 from typing import Literal
 
 from fastapi import APIRouter, Depends, File, HTTPException, Query, Response, UploadFile, status
-from fastapi.responses import FileResponse
 from sqlalchemy import func, or_, select
 from sqlalchemy.orm import Session
 
@@ -180,36 +180,32 @@ async def upload_certificate(
     jewellery_id: str, file: UploadFile = File(...), db: Session = Depends(get_db)
 ) -> JewelleryOut:
     item = get_or_404(db, jewellery_id)
-    stored = await files.save_certificate(file)
     previous = item.certificate_document
-    item.certificate_document = stored
+    item.certificate_document = await files.save_certificate(db, file)
+    files.delete_certificate(db, previous)
     db.commit()
-    files.delete_certificate(previous)
     db.refresh(item)
     return to_out(item)
 
 
 @router.get("/{jewellery_id}/certificate")
-def download_certificate(jewellery_id: str, db: Session = Depends(get_db)) -> FileResponse:
+def download_certificate(jewellery_id: str, db: Session = Depends(get_db)) -> Response:
     item = get_or_404(db, jewellery_id)
     if not item.certificate_document:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="No certificate document uploaded")
-    path = files.certificate_path(item.certificate_document)
-    if not path.exists():
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Document not found")
-    return FileResponse(
-        path,
-        media_type=files.MEDIA_TYPES[path.suffix],
-        filename=f"{item.jewellery_id}-certificate{path.suffix}",
+    suffix = Path(item.certificate_document).suffix
+    return Response(
+        content=files.load_certificate(db, item.certificate_document),
+        media_type=files.MEDIA_TYPES[suffix],
+        headers={"Content-Disposition": f'attachment; filename="{item.jewellery_id}-certificate{suffix}"'},
     )
 
 
 @router.delete("/{jewellery_id}/certificate", response_model=JewelleryOut)
 def remove_certificate(jewellery_id: str, db: Session = Depends(get_db)) -> JewelleryOut:
     item = get_or_404(db, jewellery_id)
-    previous = item.certificate_document
+    files.delete_certificate(db, item.certificate_document)
     item.certificate_document = None
     db.commit()
-    files.delete_certificate(previous)
     db.refresh(item)
     return to_out(item)

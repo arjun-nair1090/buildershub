@@ -5,7 +5,7 @@ from PIL import Image, ImageDraw, ImageFont
 from qrcode.constants import ERROR_CORRECT_Q
 
 TARGET_QR_PX = 1200  # ~4 in at 300 dpi — comfortably printable on a tag or certificate card.
-INK = (23, 63, 53)  # brand emerald #173F35
+INK = (31, 36, 39)  # brand basalt #1F2427
 MUTED = (110, 116, 112)
 
 

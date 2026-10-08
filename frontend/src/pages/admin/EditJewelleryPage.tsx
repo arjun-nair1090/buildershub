@@ -27,7 +27,7 @@ export function EditJewelleryPage() {
   if (error) return <RecordMissing id={id} message={error} onRetry={reload} />;
 
   const back = (
-    <Link to={`/admin/jewellery/${id}`} className="mb-4 inline-flex items-center gap-1.5 text-sm text-muted hover:text-charcoal">
+    <Link to={`/admin/jewellery/${id}`} className="mb-4 inline-flex items-center gap-1.5 text-sm text-muted hover:text-ink">
       <ArrowLeft className="size-4" /> Back to record
     </Link>
   );

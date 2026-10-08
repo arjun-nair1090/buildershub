@@ -2,8 +2,11 @@ import uuid
 from pathlib import Path
 
 from fastapi import HTTPException, UploadFile, status
+from sqlalchemy import delete
+from sqlalchemy.orm import Session
 
 from app.config import get_settings
+from app.models import CertificateFile
 
 # Extension -> (accepted MIME types, magic-byte prefix). The content itself is checked,
 # not just the filename, so a renamed executable is rejected.
@@ -21,7 +24,8 @@ def _reject(message: str) -> HTTPException:
     return HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=message)
 
 
-async def save_certificate(upload: UploadFile) -> str:
+async def save_certificate(db: Session, upload: UploadFile) -> str:
+    """Validate the upload and stage it in the session; the caller commits."""
     settings = get_settings()
     ext = Path(upload.filename or "").suffix.lower()
     if ext not in ALLOWED:
@@ -37,20 +41,18 @@ async def save_certificate(upload: UploadFile) -> str:
     if not data.startswith(magic):
         raise _reject("File contents are not a valid PDF, JPG or PNG")
 
-    settings.upload_dir.mkdir(parents=True, exist_ok=True)
     stored_name = f"{uuid.uuid4().hex}{'.jpg' if ext == '.jpeg' else ext}"
-    (settings.upload_dir / stored_name).write_bytes(data)
+    db.add(CertificateFile(name=stored_name, data=data))
     return stored_name
 
 
-def certificate_path(stored_name: str) -> Path:
-    settings = get_settings()
-    path = (settings.upload_dir / stored_name).resolve()
-    if settings.upload_dir.resolve() not in path.parents:
+def load_certificate(db: Session, stored_name: str) -> bytes:
+    row = db.get(CertificateFile, stored_name)
+    if row is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Document not found")
-    return path
+    return row.data
 
 
-def delete_certificate(stored_name: str | None) -> None:
+def delete_certificate(db: Session, stored_name: str | None) -> None:
     if stored_name:
-        certificate_path(stored_name).unlink(missing_ok=True)
+        db.execute(delete(CertificateFile).where(CertificateFile.name == stored_name))

@@ -2,7 +2,7 @@ import { FileText, Upload, X } from "lucide-react";
 import { useRef, useState, type DragEvent, type ReactNode } from "react";
 import { cn } from "@/utils/cn";
 
-export const MAX_CERTIFICATE_MB = 5;
+export const MAX_CERTIFICATE_MB = 4;
 const ACCEPT = ["application/pdf", "image/jpeg", "image/png"];
 
 export function validateCertificate(file: File): string | null {
@@ -41,10 +41,10 @@ export function CertificateUpload({ file, onChange, existing }: CertificateUploa
   }
 
   const row = (name: string, meta: string, actions: ReactNode) => (
-    <div className="flex items-center gap-3 rounded-md border border-line bg-ivory px-3 py-2.5">
+    <div className="flex items-center gap-3 rounded-md border border-line bg-chalk px-3 py-2.5">
       <FileText className="size-5 shrink-0 text-gold" strokeWidth={1.5} />
       <div className="min-w-0 flex-1">
-        <p className="truncate text-sm font-medium text-charcoal">{name}</p>
+        <p className="truncate text-sm font-medium text-ink">{name}</p>
         <p className="text-xs text-muted">{meta}</p>
       </div>
       {actions}
@@ -53,7 +53,7 @@ export function CertificateUpload({ file, onChange, existing }: CertificateUploa
 
   return (
     <div className="space-y-1.5">
-      <p className="flex items-baseline justify-between text-[13px] font-medium text-charcoal">
+      <p className="flex items-baseline justify-between text-[13px] font-medium text-ink">
         Certificate document
         <span className="text-xs font-normal text-muted">Optional</span>
       </p>
@@ -65,7 +65,7 @@ export function CertificateUpload({ file, onChange, existing }: CertificateUploa
           <button
             type="button"
             onClick={() => onChange(null)}
-            className="rounded-sm p-1 text-muted hover:bg-white hover:text-charcoal"
+            className="rounded-sm p-1 text-muted hover:bg-white hover:text-ink"
             aria-label="Remove selected file"
           >
             <X className="size-4" />
@@ -76,10 +76,10 @@ export function CertificateUpload({ file, onChange, existing }: CertificateUploa
           "Certificate on file",
           "PDF or image uploaded earlier",
           <div className="flex shrink-0 gap-1">
-            <button type="button" onClick={existing.onDownload} className="rounded-sm px-2 py-1 text-[13px] text-emerald hover:bg-white">
+            <button type="button" onClick={existing.onDownload} className="rounded-sm px-2 py-1 text-[13px] text-basalt hover:bg-white">
               Download
             </button>
-            <button type="button" onClick={() => inputRef.current?.click()} className="rounded-sm px-2 py-1 text-[13px] text-emerald hover:bg-white">
+            <button type="button" onClick={() => inputRef.current?.click()} className="rounded-sm px-2 py-1 text-[13px] text-basalt hover:bg-white">
               Replace
             </button>
             <button type="button" onClick={existing.onRemove} className="rounded-sm px-2 py-1 text-[13px] text-danger hover:bg-white">
@@ -99,11 +99,11 @@ export function CertificateUpload({ file, onChange, existing }: CertificateUploa
           onDrop={onDrop}
           className={cn(
             "flex w-full flex-col items-center rounded-md border border-dashed px-4 py-6 text-center transition-colors",
-            dragging ? "border-emerald bg-emerald-50" : "border-line-strong bg-white hover:border-emerald/50",
+            dragging ? "border-basalt bg-basalt-50" : "border-line-strong bg-white hover:border-basalt/50",
           )}
         >
           <Upload className="mb-2 size-5 text-gold" strokeWidth={1.5} />
-          <span className="text-sm font-medium text-charcoal">Choose a file or drop it here</span>
+          <span className="text-sm font-medium text-ink">Choose a file or drop it here</span>
           <span className="mt-0.5 text-xs text-muted">PDF, JPG or PNG, up to {MAX_CERTIFICATE_MB} MB</span>
         </button>
       )}

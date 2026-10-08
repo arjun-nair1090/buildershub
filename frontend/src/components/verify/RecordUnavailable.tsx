@@ -35,17 +35,17 @@ export function RecordUnavailable({ kind, message, onRetry }: RecordUnavailableP
   const Icon = copy.icon;
 
   return (
-    <div className="mx-auto max-w-xl px-4 py-12 sm:py-20">
+    <div className="rise mx-auto max-w-xl px-4 py-12 sm:py-20">
       <div className="rounded-lg border border-line bg-white px-6 py-10 text-center sm:px-10">
-        <span className="mx-auto mb-5 grid size-14 place-items-center rounded-full border border-line-strong bg-ivory text-muted">
+        <span className="mx-auto mb-5 grid size-14 place-items-center rounded-full border border-line-strong bg-chalk text-muted">
           <Icon className="size-6" strokeWidth={1.5} />
         </span>
         <p className="text-[13px] font-medium text-muted">Not verified</p>
-        <h1 className="mt-1 font-display text-[26px] leading-tight text-charcoal sm:text-[30px]">{copy.title}</h1>
-        <p className="mx-auto mt-3 max-w-sm text-[15px] leading-relaxed text-charcoal/80">{message ?? copy.body}</p>
+        <h1 className="mt-1 font-display text-[26px] leading-tight text-ink sm:text-[30px]">{copy.title}</h1>
+        <p className="mx-auto mt-3 max-w-sm text-[15px] leading-relaxed text-ink/80">{message ?? copy.body}</p>
         {copy.advice && <p className="mx-auto mt-3 max-w-sm text-sm leading-relaxed text-muted">{copy.advice}</p>}
         {onRetry && (
-          <button type="button" onClick={onRetry} className="mt-5 text-sm font-medium text-emerald underline-offset-4 hover:underline">
+          <button type="button" onClick={onRetry} className="mt-5 text-sm font-medium text-basalt underline-offset-4 hover:underline">
             Try again
           </button>
         )}
@@ -53,13 +53,13 @@ export function RecordUnavailable({ kind, message, onRetry }: RecordUnavailableP
 
       {kind !== "error" && (
         <div className="mt-8 rounded-lg border border-line bg-white p-6">
-          <p className="mb-4 text-[15px] text-charcoal">Check a different item</p>
+          <p className="mb-4 text-[15px] text-ink">Check a different item</p>
           <CodeEntryForm />
         </div>
       )}
 
       <p className="mt-8 text-center text-sm">
-        <Link to="/" className="text-muted underline-offset-4 hover:text-charcoal hover:underline">
+        <Link to="/" className="text-muted underline-offset-4 hover:text-ink hover:underline">
           About digital verification
         </Link>
       </p>

@@ -17,7 +17,7 @@ export function PanelHeader({ title, description, action, className }: PanelHead
   return (
     <div className={cn("flex items-start justify-between gap-4 border-b border-line px-5 py-4 sm:px-6", className)}>
       <div>
-        <h2 className="text-[15px] font-semibold text-charcoal">{title}</h2>
+        <h2 className="text-[15px] font-semibold text-ink">{title}</h2>
         {description && <p className="mt-0.5 text-[13px] text-muted">{description}</p>}
       </div>
       {action}
@@ -30,7 +30,7 @@ export function DataRow({ label, value, mono }: { label: string; value: ReactNod
   return (
     <div className="flex items-baseline justify-between gap-6 py-2.5">
       <dt className="text-[13px] text-muted">{label}</dt>
-      <dd className={cn("text-right text-[15px] text-charcoal", mono && "tabular font-medium tracking-wide")}>
+      <dd className={cn("text-right text-[15px] text-ink", mono && "tabular font-medium tracking-wide")}>
         {value}
       </dd>
     </div>

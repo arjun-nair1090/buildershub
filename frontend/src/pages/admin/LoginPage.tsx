@@ -1,11 +1,11 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { AlertCircle, Eye, EyeOff } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useEffect, useState, type CSSProperties } from "react";
 import { useForm } from "react-hook-form";
 import { Link, Navigate, useLocation, useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import { z } from "zod";
-import { BrandGlyph, BrandMark } from "@/components/layout/BrandMark";
+import { BrandMark, Gem } from "@/components/layout/BrandMark";
 import { Button } from "@/components/ui/button";
 import { Field } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
@@ -34,7 +34,7 @@ export function LoginPage() {
   } = useForm<Values>({ resolver: zodResolver(schema), defaultValues: { email: "", password: "", remember: true } });
 
   useEffect(() => {
-    document.title = "Sign in";
+    document.title = "Sign in to Jewlerify";
   }, []);
 
   if (state === "authenticated") return <Navigate to={from} replace />;
@@ -57,24 +57,24 @@ export function LoginPage() {
   }
 
   return (
-    <div className="grid min-h-dvh bg-ivory lg:grid-cols-[minmax(0,1fr)_minmax(0,1.1fr)]">
-      <aside className="relative hidden flex-col justify-between overflow-hidden bg-emerald p-12 text-ivory lg:flex">
+    <div className="grid min-h-dvh bg-chalk lg:grid-cols-[minmax(0,1fr)_minmax(0,1.1fr)]">
+      <aside className="grain relative hidden flex-col justify-between overflow-hidden p-12 text-chalk lg:flex">
         <BrandMark tone="light" />
         <div className="max-w-sm">
-          <p className="font-display text-[34px] leading-tight">Register a piece once. Every buyer can check it.</p>
-          <p className="mt-4 text-[15px] leading-relaxed text-ivory/70">
+          <p className="rise font-display text-[44px] leading-[1.05]">Register a piece once. Every buyer can check it.</p>
+          <p className="rise mt-5 text-[15px] leading-relaxed text-chalk/70" style={{ "--d": "120ms" } as CSSProperties}>
             Add jewellery, print its QR code, and buyers see the registered details and price breakdown on their own
             phone.
           </p>
         </div>
-        <p className="text-[13px] text-ivory/50">Jeweller and administrator access only.</p>
-        <BrandGlyph className="pointer-events-none absolute -bottom-24 -right-24 size-80 opacity-[0.07]" />
+        <p className="text-[13px] text-chalk/50">Jeweller and administrator access only.</p>
+        <Gem className="pointer-events-none absolute -bottom-16 -right-20 w-96 rotate-12 opacity-[0.07]" />
       </aside>
 
       <main className="flex flex-col justify-center px-4 py-12 sm:px-10">
-        <div className="mx-auto w-full max-w-sm">
+        <div className="rise mx-auto w-full max-w-sm">
           <BrandMark className="mb-12 lg:hidden" />
-          <h1 className="font-display text-[32px] leading-tight text-emerald">Jeweller login</h1>
+          <h1 className="font-display text-[38px] leading-tight text-basalt">Jeweller login</h1>
           <p className="mt-2 text-[15px] text-muted">Sign in to manage registered jewellery.</p>
 
           {formError && (
@@ -97,7 +97,7 @@ export function LoginPage() {
                   <button
                     type="button"
                     onClick={() => setShowPassword((s) => !s)}
-                    className="grid size-8 place-items-center rounded-sm text-muted hover:text-charcoal"
+                    className="grid size-8 place-items-center rounded-sm text-muted hover:text-ink"
                     aria-label={showPassword ? "Hide password" : "Show password"}
                     aria-pressed={showPassword}
                   >
@@ -106,12 +106,12 @@ export function LoginPage() {
                 }
               />
             </Field>
-            <label className="flex cursor-pointer items-center gap-2.5 text-sm text-charcoal">
-              <input type="checkbox" className="size-4 rounded-sm accent-emerald" {...register("remember")} />
+            <label className="flex cursor-pointer items-center gap-2.5 text-sm text-ink">
+              <input type="checkbox" className="size-4 rounded-sm accent-gold" {...register("remember")} />
               Keep me signed in on this device
             </label>
             <Button type="submit" size="lg" className="w-full" loading={isSubmitting}>
-              Sign In
+              Sign in
             </Button>
           </form>
 
@@ -122,7 +122,7 @@ export function LoginPage() {
           )}
 
           <p className="mt-10 text-sm">
-            <Link to="/" className="text-muted underline-offset-4 hover:text-charcoal hover:underline">
+            <Link to="/" className="text-muted underline-offset-4 hover:text-ink hover:underline">
               Back to the public site
             </Link>
           </p>

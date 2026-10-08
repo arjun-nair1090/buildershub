@@ -21,11 +21,12 @@ const JewelleryListPage = named(() => import("@/pages/admin/JewelleryListPage"),
 const AddJewelleryPage = named(() => import("@/pages/admin/AddJewelleryPage"), "AddJewelleryPage");
 const JewelleryDetailPage = named(() => import("@/pages/admin/JewelleryDetailPage"), "JewelleryDetailPage");
 const EditJewelleryPage = named(() => import("@/pages/admin/EditJewelleryPage"), "EditJewelleryPage");
+const TeamPage = named(() => import("@/pages/admin/TeamPage"), "TeamPage");
 
 function PageLoader() {
   return (
-    <div className="grid min-h-dvh place-items-center bg-ivory" role="status">
-      <Loader2 className="size-6 animate-spin text-emerald" />
+    <div className="grid min-h-dvh place-items-center bg-chalk" role="status">
+      <Loader2 className="size-6 animate-spin text-basalt" />
       <span className="sr-only">Loading</span>
     </div>
   );
@@ -52,6 +53,7 @@ export default function App() {
                 <Route path="jewellery/new" element={<AddJewelleryPage />} />
                 <Route path="jewellery/:id" element={<JewelleryDetailPage />} />
                 <Route path="jewellery/:id/edit" element={<EditJewelleryPage />} />
+                <Route path="team" element={<TeamPage />} />
               </Route>
             </Route>
           </Routes>
@@ -61,8 +63,8 @@ export default function App() {
         position="top-center"
         toastOptions={{
           classNames: {
-            toast: "!rounded-md !border !border-line !bg-white !font-sans !text-charcoal !shadow-[0_10px_30px_-12px_rgba(36,49,46,0.3)]",
-            success: "[&_[data-icon]]:!text-emerald",
+            toast: "!rounded-md !border !border-line !bg-white !font-sans !text-ink !shadow-[0_10px_30px_-12px_rgba(36,49,46,0.3)]",
+            success: "[&_[data-icon]]:!text-basalt",
             error: "[&_[data-icon]]:!text-danger",
           },
         }}

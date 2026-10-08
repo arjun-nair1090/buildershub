@@ -3,7 +3,7 @@ import { ChevronDown } from "lucide-react";
 import { cn } from "@/utils/cn";
 
 const fieldBase =
-  "w-full rounded-md border border-line-strong bg-white text-[15px] text-charcoal placeholder:text-muted/70 transition-colors focus:border-emerald focus:outline-none focus:ring-2 focus:ring-emerald/15 disabled:cursor-not-allowed disabled:bg-ivory disabled:text-muted aria-[invalid=true]:border-danger aria-[invalid=true]:focus:ring-danger/15";
+  "w-full rounded-md border border-line-strong bg-white text-[15px] text-ink placeholder:text-muted/70 transition-colors focus:border-basalt focus:outline-none focus:ring-2 focus:ring-basalt/15 disabled:cursor-not-allowed disabled:bg-chalk disabled:text-muted aria-[invalid=true]:border-danger aria-[invalid=true]:focus:ring-danger/15";
 
 interface InputProps extends InputHTMLAttributes<HTMLInputElement> {
   /** Text or icon shown inside the field on the left, e.g. ₹. */

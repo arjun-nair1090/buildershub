@@ -20,7 +20,7 @@ import { certificateFilename, saveBlob } from "@/utils/download";
 import { formatDate, formatPurity, formatWeight } from "@/utils/format";
 
 const backLink = (
-  <Link to="/admin/jewellery" className="mb-4 inline-flex items-center gap-1.5 text-sm text-muted hover:text-charcoal">
+  <Link to="/admin/jewellery" className="mb-4 inline-flex items-center gap-1.5 text-sm text-muted hover:text-ink">
     <ArrowLeft className="size-4" /> All jewellery
   </Link>
 );
@@ -180,7 +180,7 @@ export function JewelleryDetailPage() {
               <DataRow label="Type" value={item.type} />
               <div className="py-2.5">
                 <dt className="text-[13px] text-muted">Description</dt>
-                <dd className="mt-1 text-[15px] leading-relaxed text-charcoal">{item.description}</dd>
+                <dd className="mt-1 text-[15px] leading-relaxed text-ink">{item.description}</dd>
               </div>
             </dl>
           </InfoCard>
@@ -203,7 +203,7 @@ export function JewelleryDetailPage() {
                   label="Document"
                   value={
                     item.has_certificate_document ? (
-                      <button type="button" onClick={downloadCertificate} className="inline-flex items-center gap-1.5 text-emerald hover:underline">
+                      <button type="button" onClick={downloadCertificate} className="inline-flex items-center gap-1.5 text-basalt hover:underline">
                         <FileText className="size-4" /> Download
                       </button>
                     ) : (
@@ -215,7 +215,7 @@ export function JewelleryDetailPage() {
             ) : (
               <p className="py-3 text-sm text-muted">
                 No certificate reference. Buyers see this record as registered rather than verified.{" "}
-                <Link to={`/admin/jewellery/${item.jewellery_id}/edit`} className="text-emerald hover:underline">
+                <Link to={`/admin/jewellery/${item.jewellery_id}/edit`} className="text-basalt hover:underline">
                   Add certificate details
                 </Link>
               </p>

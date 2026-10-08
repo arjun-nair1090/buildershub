@@ -8,7 +8,7 @@ from app.routers import auth, jewellery, verify
 
 settings = get_settings()
 
-app = FastAPI(title="Jewellery Transparency & Verification System API", version="1.0.0")
+app = FastAPI(title="Jewlerify API", version="1.0.0")
 
 app.add_middleware(
     CORSMiddleware,
