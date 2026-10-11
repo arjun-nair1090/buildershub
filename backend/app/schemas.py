@@ -1,20 +1,31 @@
+import re
 from datetime import date, datetime
 from decimal import Decimal
 from typing import Annotated, Literal
 
-from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
+from pydantic import BaseModel, ConfigDict, Field, ValidationInfo, field_validator, model_validator
 
-from app.constants import GOLD_COLOURS, JEWELLERY_TYPES, PURITY_PERCENT
+from app.constants import (
+    DISCOUNT_TYPES,
+    GOLD_COLOURS,
+    JEWELLERY_TYPES,
+    PURITY_PERCENT,
+    STOCK_STATUSES,
+    VERIFICATION_LEVELS,
+)
 
 JewelleryType = Literal[JEWELLERY_TYPES]  # type: ignore[valid-type]
 Purity = Literal[tuple(PURITY_PERCENT)]  # type: ignore[valid-type]
 GoldColour = Literal[GOLD_COLOURS]  # type: ignore[valid-type]
+VerificationLevel = Literal[VERIFICATION_LEVELS]  # type: ignore[valid-type]
+StockStatus = Literal[STOCK_STATUSES]  # type: ignore[valid-type]
+DiscountType = Literal[DISCOUNT_TYPES]  # type: ignore[valid-type]
 RecordStatus = Literal["active", "inactive"]
-DiscountType = Literal["percent", "flat"]
 
 Weight = Annotated[Decimal, Field(gt=0, le=100000, max_digits=10, decimal_places=3)]
 Money = Annotated[Decimal, Field(ge=0, le=999999999, max_digits=12, decimal_places=2)]
 Percent = Annotated[Decimal, Field(ge=0, le=100, max_digits=5, decimal_places=2)]
+Slug = Annotated[str, Field(min_length=2, max_length=80, pattern=r"^[a-z0-9]+(?:-[a-z0-9]+)*$")]
 
 
 # ---------- Auth ----------
@@ -73,9 +84,33 @@ class TokenResponse(BaseModel):
     user: UserOut
 
 
+# ---------- Shared ----------
+
+class StoreRef(BaseModel):
+    """Which store a piece or design belongs to, as buyers see it."""
+
+    model_config = ConfigDict(from_attributes=True)
+
+    slug: str
+    name: str
+    area: str
+    city: str
+
+
+class PhotoOut(BaseModel):
+    public_id: str
+    alt_text: str  # as entered; blank means "use the title"
+    alt: str  # what screen readers get
+    width: int
+    height: int
+    position: int
+
+
 # ---------- Jewellery ----------
 
 class JewelleryIn(BaseModel):
+    store: Slug
+    title: str = Field(min_length=2, max_length=120)
     type: JewelleryType
     description: str = Field(min_length=3, max_length=500)
     colour: GoldColour | None = None
@@ -88,6 +123,9 @@ class JewelleryIn(BaseModel):
     certificate_id: str | None = Field(default=None, max_length=64, pattern=r"^[A-Za-z0-9][A-Za-z0-9\-/._]*$")
     issuing_authority: str | None = Field(default=None, max_length=160)
     certificate_date: date | None = None
+    # Declared after the certificate fields so its validator can see them.
+    verification_level: VerificationLevel = Field(default="declared", validate_default=True)
+    huid: str | None = Field(default=None, validate_default=True)
 
     gold_value: Money
     making_charges: Money
@@ -99,13 +137,61 @@ class JewelleryIn(BaseModel):
     making_percent_min: Percent | None = None
     making_percent_max: Percent | None = None
 
-    @field_validator("description", "design_details", "certificate_id", "issuing_authority", mode="before")
+    stock_status: StockStatus = "in_stock"
+    is_published: bool = False
+    # Declared after the prices so a flat discount can be checked against the registered total.
+    discount_type: DiscountType | None = None
+    discount_value: Money | None = Field(default=None, validate_default=True)
+    discount_ends_on: date | None = None
+
+    @field_validator("description", "design_details", "certificate_id", "issuing_authority", "huid", mode="before")
     @classmethod
     def blank_to_none(cls, v):
         if isinstance(v, str):
             v = v.strip()
             return v or None
         return v
+
+    @field_validator("store", "title", mode="before")
+    @classmethod
+    def strip(cls, v: object) -> object:
+        return v.strip() if isinstance(v, str) else v
+
+    @field_validator("verification_level")
+    @classmethod
+    def lab_needs_certificate(cls, level: str, info: ValidationInfo) -> str:
+        needed = ("certificate_id", "issuing_authority", "certificate_date")
+        if level == "lab" and not all(info.data.get(k) for k in needed):
+            raise ValueError("Lab verified needs the certificate ID, issuing authority and date")
+        return level
+
+    @field_validator("huid")
+    @classmethod
+    def huid_for_hallmark(cls, huid: str | None, info: ValidationInfo) -> str | None:
+        if huid is not None and not re.fullmatch(r"[A-Za-z0-9]{6}", huid):
+            raise ValueError("A HUID is 6 letters or digits")
+        if huid is None and info.data.get("verification_level") == "hallmark":
+            raise ValueError("Enter the piece's 6-character HUID")
+        return huid.upper() if huid else None
+
+    @field_validator("discount_value")
+    @classmethod
+    def discount_rules(cls, value: Decimal | None, info: ValidationInfo) -> Decimal | None:
+        kind = info.data.get("discount_type")
+        if kind is None:
+            if value is not None:
+                raise ValueError("Choose whether the discount is a percent or a flat amount")
+            return None
+        if value is None:
+            raise ValueError("Enter the discount")
+        if kind == "percent" and not Decimal(1) <= value <= Decimal(90):
+            raise ValueError("A percent discount must be between 1 and 90")
+        if kind == "flat":
+            parts = ("gold_value", "making_charges", "other_component_value", "tax")
+            total = info.data.get("total_price") or sum((info.data.get(k) or Decimal(0)) for k in parts)
+            if not Decimal(0) < value < total:
+                raise ValueError("A flat discount must be above ₹0 and below the registered price")
+        return value
 
     @model_validator(mode="after")
     def check_consistency(self):
@@ -131,22 +217,26 @@ class JewelleryUpdate(JewelleryIn):
 
 
 class JewelleryOut(BaseModel):
-    """Admin view. Deliberately excludes the internal database id."""
+    """Admin view. Deliberately excludes the internal database ids."""
 
     model_config = ConfigDict(from_attributes=True)
 
     jewellery_id: str
     verification_token: str
     verification_url: str
+    store: StoreRef
+    title: str
     type: str
     description: str
     colour: str | None
     design_details: str | None
-    has_photo: bool
+    photos: list[PhotoOut]
     purity: str
     purity_percent: str
     gross_weight: Decimal
     net_weight: Decimal
+    verification_level: str
+    huid: str | None
     certificate_id: str | None
     issuing_authority: str | None
     certificate_date: date | None
@@ -158,10 +248,41 @@ class JewelleryOut(BaseModel):
     total_price: Decimal
     making_percent_min: Decimal | None
     making_percent_max: Decimal | None
+    discount_type: str | None
+    discount_value: Decimal | None
+    discount_ends_on: date | None
+    stock_status: str
+    is_published: bool
+    price: "PiecePrice"  # what buyers see right now
     status: str
-    verification_status: str
     created_at: datetime
     updated_at: datetime
+
+
+class JewelleryStats(BaseModel):
+    total: int
+    published: int  # active and published
+    in_stock: int  # active, published and in stock
+    inactive: int
+    stores: int
+    designs: int
+
+
+class PricePreviewIn(BaseModel):
+    """The figures the admin form has so far, to preview the price buyers would see."""
+
+    purity: Purity
+    net_weight: Weight
+    gold_value: Money
+    making_charges: Money
+    other_component_value: Money = Decimal("0")
+    tax: Money
+    making_percent_min: Percent | None = None
+    making_percent_max: Percent | None = None
+    discount_type: DiscountType | None = None
+    discount_value: Money | None = None
+    discount_ends_on: date | None = None
+    stock_status: StockStatus = "in_stock"
 
 
 class JewelleryPage(BaseModel):
@@ -169,13 +290,6 @@ class JewelleryPage(BaseModel):
     total: int
     page: int
     page_size: int
-
-
-class JewelleryStats(BaseModel):
-    total: int
-    active: int
-    verified: int
-    inactive: int
 
 
 # ---------- Store settings & gold rate ----------
@@ -190,13 +304,7 @@ class GoldRateOut(BaseModel):
 
 
 class StoreSettingsIn(BaseModel):
-    store_name: str = Field(max_length=120)
     gst_percent: Percent
-
-    @field_validator("store_name", mode="before")
-    @classmethod
-    def strip(cls, v: object) -> object:
-        return v.strip() if isinstance(v, str) else v
 
 
 class StoreSettingsOut(StoreSettingsIn):
@@ -240,50 +348,32 @@ class PiecePrice(BaseModel):
     final_max: Decimal
 
 
-class LivePrice(BaseModel):
-    """Price at the current gold rate. Ranges come from the making charges range; when the item has
-    no range, min and max are equal."""
-
-    rate_per_gram: Decimal
-    gold_value: Decimal
-    making_charges_min: Decimal
-    making_charges_max: Decimal
-    making_percent_min: Decimal | None
-    making_percent_max: Decimal | None
-    other_component_value: Decimal
-    gst_percent: Decimal
-    tax_min: Decimal
-    tax_max: Decimal
-    total_min: Decimal
-    total_max: Decimal
-
-
 class PublicVerification(BaseModel):
     """Everything a buyer sees. No internal ids, no document paths, no admin data."""
 
     jewellery_id: str
-    store_name: str | None
+    title: str
+    store: StoreRef
     type: str
     description: str
     colour: str | None
     design_details: str | None
-    # Null when there is no photo. Changes when the photo is replaced, so it can bust caches.
-    photo_version: str | None
+    photos: list[PhotoOut]
     purity: str
     purity_percent: str
     gross_weight: Decimal
     net_weight: Decimal
+    verification_level: VerificationLevel
+    # Only what the level vouches for: the HUID from Hallmark linked up, the certificate for Lab verified.
+    huid: str | None
     certificate_id: str | None
     issuing_authority: str | None
     certificate_date: date | None
-    gold_value: Decimal
-    making_charges: Decimal
-    other_component_value: Decimal
-    tax: Decimal
-    total_price: Decimal
-    verification_status: str
-    record_status: str
+    stock_status: StockStatus
+    record_status: Literal["ACTIVE"]
     registered_on: date
-    # Null when no market rate is available; the registered amounts above are then the price.
     gold_rate: GoldRateOut | None
-    live_price: LivePrice | None
+    price: PiecePrice
+
+
+JewelleryOut.model_rebuild()

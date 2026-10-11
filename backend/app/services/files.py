@@ -25,7 +25,6 @@ def _reject(message: str) -> HTTPException:
 
 
 CERTIFICATE_TYPES = (".pdf", ".png", ".jpg", ".jpeg")
-PHOTO_TYPES = (".png", ".jpg", ".jpeg")
 
 
 async def _save(db: Session, upload: UploadFile, label: str, extensions: tuple[str, ...], kinds: str) -> str:
@@ -52,10 +51,6 @@ async def _save(db: Session, upload: UploadFile, label: str, extensions: tuple[s
 
 async def save_certificate(db: Session, upload: UploadFile) -> str:
     return await _save(db, upload, "Certificate", CERTIFICATE_TYPES, "PDF, JPG or PNG")
-
-
-async def save_photo(db: Session, upload: UploadFile) -> str:
-    return await _save(db, upload, "Photo", PHOTO_TYPES, "JPG or PNG")
 
 
 def load_file(db: Session, stored_name: str) -> bytes:

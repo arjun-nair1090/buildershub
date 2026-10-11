@@ -14,7 +14,7 @@ from app.config import get_settings
 from app.database import SessionLocal
 from app.models import CertificateFile, Jewellery, User
 from app.security import hash_password
-from app.services.store import get_store
+from app.services.store import get_store_settings
 
 D = Decimal
 GST = D("0.03")
@@ -90,7 +90,7 @@ def seed() -> None:
             print(f"Created admin user {email}")
 
         remove_old_demo(db)
-        get_store(db)
+        get_store_settings(db)
 
         existing = set(db.scalars(select(Jewellery.jewellery_id)))
         now = datetime.now(timezone.utc)

@@ -1,32 +1,29 @@
-from pathlib import Path as FilePath
-
-from fastapi import APIRouter, Depends, HTTPException, Path, Response, status
+from fastapi import APIRouter, Depends, HTTPException, Path, status
 from sqlalchemy import or_, select
 from sqlalchemy.orm import Session
 
 from app.constants import PURITY_PERCENT
 from app.database import get_db
 from app.models import Jewellery
-from app.schemas import PublicVerification
-from app.services import files
-from app.services.gold_rate import current_rate
-from app.services.pricing import gold_rate_out, live_price
-from app.services.store import get_store
+from app.schemas import PublicVerification, StoreRef
+from app.services.photos import photo_out
+from app.services.pricing import gold_rate_out, piece_price, pricing_context
 
 router = APIRouter(prefix="/api/verify", tags=["public verification"])
 
 Code = Path(min_length=4, max_length=32, pattern=r"^[A-Za-z0-9\-]+$")
 
 
-def active_item(db: Session, token: str) -> Jewellery:
-    """Accepts the QR token, or the Jewellery ID printed under the QR for buyers who enter it by hand."""
+def visible_piece(db: Session, token: str) -> Jewellery:
+    """Accepts the QR token, or the Jewellery ID printed under the QR for buyers who enter it by hand.
+    Unpublished pieces are reported as not found, so a draft can't be discovered."""
     code = token.strip().upper()
     item = db.scalar(
         select(Jewellery).where(or_(Jewellery.verification_token == code, Jewellery.jewellery_id == code))
     )
-    if item is None:
+    if item is None or not item.is_published:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Verification record not found")
-    if item.status != "active":
+    if not item.is_active:
         # No jewellery details are returned for inactive records.
         raise HTTPException(status_code=status.HTTP_410_GONE, detail="Record inactive")
     return item
@@ -39,46 +36,31 @@ def active_item(db: Session, token: str) -> Jewellery:
 )
 def verify(token: str = Code, db: Session = Depends(get_db)) -> PublicVerification:
     """Public endpoint opened from the QR code."""
-    item = active_item(db, token)
-    store = get_store(db)
-    rate = current_rate(db)
+    item = visible_piece(db, token)
+    ctx = pricing_context(db)
+    lab = item.verification_level == "lab"
 
     return PublicVerification(
         jewellery_id=item.jewellery_id,
-        store_name=store.store_name or None,
+        title=item.title,
+        store=StoreRef.model_validate(item.store),
         type=item.type,
         description=item.description,
         colour=item.colour,
         design_details=item.design_details,
-        photo_version=FilePath(item.photo).stem if item.photo else None,
+        photos=[photo_out(p, item.title) for p in item.photos],
         purity=item.purity,
         purity_percent=PURITY_PERCENT.get(item.purity, ""),
         gross_weight=item.gross_weight,
         net_weight=item.net_weight,
-        certificate_id=item.certificate_id,
-        issuing_authority=item.issuing_authority,
-        certificate_date=item.certificate_date,
-        gold_value=item.gold_value,
-        making_charges=item.making_charges,
-        other_component_value=item.other_component_value,
-        tax=item.tax,
-        total_price=item.total_price,
-        verification_status=item.verification_status,
+        verification_level=item.verification_level,
+        huid=item.huid if item.verification_level != "declared" else None,
+        certificate_id=item.certificate_id if lab else None,
+        issuing_authority=item.issuing_authority if lab else None,
+        certificate_date=item.certificate_date if lab else None,
+        stock_status=item.stock_status,
         record_status="ACTIVE",
         registered_on=item.created_at.date(),
-        gold_rate=gold_rate_out(rate) if rate else None,
-        live_price=live_price(item, rate, store.gst_percent) if rate else None,
-    )
-
-
-@router.get("/{token}/photo", responses={200: {"content": {"image/jpeg": {}, "image/png": {}}}})
-def verify_photo(token: str = Code, db: Session = Depends(get_db)) -> Response:
-    item = active_item(db, token)
-    if not item.photo:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="No photo for this item")
-    return Response(
-        content=files.load_file(db, item.photo),
-        media_type=files.MEDIA_TYPES[FilePath(item.photo).suffix],
-        # The page links it with ?v=<photo_version>, so a replaced photo gets a new URL.
-        headers={"Cache-Control": "public, max-age=86400"},
+        gold_rate=gold_rate_out(ctx.rate) if ctx.rate else None,
+        price=piece_price(item, ctx.rate, ctx.gst_percent, ctx.today),
     )

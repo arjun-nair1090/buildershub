@@ -14,3 +14,9 @@ GOLD_COLOURS = ("Yellow gold", "Rose gold", "White gold", "Two-tone", "Multi-ton
 DEFAULT_GST_PERCENT = "3.00"
 
 RECORD_STATUSES = ("active", "inactive")
+
+# How far the store vouches for a piece. The badge buyers see always matches this.
+VERIFICATION_LEVELS = ("declared", "hallmark", "lab")
+STOCK_STATUSES = ("in_stock", "reserved", "sold")
+DISCOUNT_TYPES = ("percent", "flat")
+MAX_PHOTOS = 6

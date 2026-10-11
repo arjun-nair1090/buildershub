@@ -16,7 +16,7 @@ from sqlalchemy.orm import Session
 
 from app.config import Settings, get_settings
 from app.models import GoldRate
-from app.services.store import get_store
+from app.services.store import get_store_settings
 
 log = logging.getLogger(__name__)
 
@@ -84,7 +84,7 @@ def current_rate(db: Session) -> RateSnapshot | None:
 
     stale = not latest or now - _aware(latest[0].fetched_at) > timedelta(minutes=settings.gold_rate_ttl_minutes)
     if feed and stale:
-        store = get_store(db)
+        store = get_store_settings(db)
         checked = store.gold_rate_checked_at
         if checked is None or now - _aware(checked) > RETRY_AFTER:
             # Recorded before the call so concurrent requests don't all hit the API at once.

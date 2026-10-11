@@ -1,7 +1,9 @@
 from decimal import Decimal
 
 import pytest
+from sqlalchemy import select
 
+from app.models import Store
 from tests.conftest import ADMIN_EMAIL
 
 PNG_1PX = bytes.fromhex(
@@ -107,7 +109,10 @@ def test_create_calculates_total_and_ids(client, auth, payload):
     assert body["jewellery_id"].startswith("JWL-")
     assert len(body["verification_token"]) == 12
     assert body["verification_url"] == f"https://verify.example.com/verify/{body['verification_token']}"
-    assert body["verification_status"] == "VERIFIED"
+    assert body["verification_level"] == "declared"
+    assert body["store"] == {"slug": "test-store", "name": "Test Jewellers", "area": "Test Area", "city": "Mumbai"}
+    assert body["title"] == "Diamond ring" and body["photos"] == [] and body["is_published"] is False
+    assert body["price"]["basis"] == "registered" and Decimal(body["price"]["final_max"]) == 125000
     assert body["purity_percent"] == "91.6"
     assert "id" not in body
 
@@ -128,12 +133,6 @@ def test_create_validation(client, auth, payload):
 
     res = client.post("/api/jewellery", json={**payload, "certificate_id": ""}, headers=auth)
     assert res.status_code == 422  # authority given without certificate id
-
-
-def test_registered_without_certificate(client, auth, payload):
-    no_cert = {**payload, "certificate_id": None, "issuing_authority": None, "certificate_date": None}
-    body = client.post("/api/jewellery", json=no_cert, headers=auth).json()
-    assert body["verification_status"] == "REGISTERED"
 
 
 def test_get_update_and_search(client, auth, payload):
@@ -167,28 +166,13 @@ def test_deactivate_and_stats(client, auth, payload):
     res = client.delete(f"/api/jewellery/{a['jewellery_id']}", headers=auth)
     assert res.json()["status"] == "inactive"
     assert client.get("/api/jewellery/stats", headers=auth).json() == {
-        "total": 2, "active": 1, "verified": 0, "inactive": 1,
+        "total": 2, "published": 0, "in_stock": 0, "inactive": 1, "stores": 1, "designs": 0,
     }
     res = client.post(f"/api/jewellery/{a['jewellery_id']}/activate", headers=auth)
     assert res.json()["status"] == "active"
 
 
 # ---------- Public verification ----------
-
-def test_public_verify_valid(client, auth, payload):
-    created = client.post("/api/jewellery", json=payload, headers=auth).json()
-    res = client.get(f"/api/verify/{created['verification_token']}")
-    assert res.status_code == 200
-    body = res.json()
-    assert body["jewellery_id"] == created["jewellery_id"]
-    assert body["verification_status"] == "VERIFIED"
-    assert body["record_status"] == "ACTIVE"
-    for private in ("verification_token", "certificate_document", "id", "status", "updated_at"):
-        assert private not in body
-
-    # The printed Jewellery ID also works for manual entry, case-insensitively.
-    assert client.get(f"/api/verify/{created['jewellery_id'].lower()}").status_code == 200
-
 
 def test_public_verify_invalid(client):
     res = client.get("/api/verify/DOESNOTEXIST")
@@ -197,8 +181,24 @@ def test_public_verify_invalid(client):
     assert client.get("/api/verify/bad%20token!").status_code == 422
 
 
-def test_public_verify_inactive_hides_details(client, auth, payload):
-    created = client.post("/api/jewellery", json=payload, headers=auth).json()
+def test_public_verify_valid(client, publish):
+    created = publish()
+    res = client.get(f"/api/verify/{created['verification_token']}")
+    assert res.status_code == 200
+    body = res.json()
+    assert body["jewellery_id"] == created["jewellery_id"]
+    assert body["verification_level"] == "declared"
+    assert body["record_status"] == "ACTIVE"
+    for private in ("verification_token", "certificate_document", "id", "status", "updated_at", "store_id",
+                    "is_published"):
+        assert private not in body
+
+    # The printed Jewellery ID also works for manual entry, case-insensitively.
+    assert client.get(f"/api/verify/{created['jewellery_id'].lower()}").status_code == 200
+
+
+def test_public_verify_inactive_hides_details(client, auth, publish):
+    created = publish()
     client.delete(f"/api/jewellery/{created['jewellery_id']}", headers=auth)
     res = client.get(f"/api/verify/{created['verification_token']}")
     assert res.status_code == 410
@@ -253,35 +253,9 @@ def test_certificate_upload_rejects_bad_files(client, auth, payload):
     assert res.status_code == 422
 
 
-def test_photo_upload_flow(client, auth, payload):
-    created = client.post("/api/jewellery", json=payload, headers=auth).json()
-    jid, token = created["jewellery_id"], created["verification_token"]
-    assert created["has_photo"] is False
-    assert client.get(f"/api/verify/{token}").json()["photo_version"] is None
-
-    res = client.post(f"/api/jewellery/{jid}/photo", files={"file": ("p.png", PNG_1PX, "image/png")}, headers=auth)
-    assert res.status_code == 200 and res.json()["has_photo"] is True
-    assert client.get(f"/api/jewellery/{jid}/photo", headers=auth).content == PNG_1PX
-
-    # Buyers fetch it through the verification code, without signing in.
-    version = client.get(f"/api/verify/{token}").json()["photo_version"]
-    assert version
-    res = client.get(f"/api/verify/{token}/photo")
-    assert res.status_code == 200 and res.content == PNG_1PX
-
-    res = client.post(f"/api/jewellery/{jid}/photo", files={"file": ("p.pdf", b"%PDF-1.4", "application/pdf")}, headers=auth)
-    assert res.status_code == 422  # photos are images only
-
-    client.delete(f"/api/jewellery/{jid}", headers=auth)
-    assert client.get(f"/api/verify/{token}/photo").status_code == 410
-
-    assert client.delete(f"/api/jewellery/{jid}/photo", headers=auth).json()["has_photo"] is False
-
-
-def test_design_fields_and_making_range_validation(client, auth, payload):
-    body = {**payload, "colour": "Rose gold", "design_details": "Floral filigree",
-            "making_percent_min": "10", "making_percent_max": "14"}
-    created = client.post("/api/jewellery", json=body, headers=auth).json()
+def test_design_fields_and_making_range_validation(client, auth, payload, publish):
+    created = publish(colour="Rose gold", design_details="Floral filigree", making_percent_min="10",
+                      making_percent_max="14")
     assert created["colour"] == "Rose gold" and Decimal(created["making_percent_max"]) == 14
     public = client.get(f"/api/verify/{created['verification_token']}").json()
     assert public["design_details"] == "Floral filigree" and public["colour"] == "Rose gold"
@@ -291,22 +265,17 @@ def test_design_fields_and_making_range_validation(client, auth, payload):
         assert client.post("/api/jewellery", json={**payload, **bad}, headers=auth).status_code == 422, bad
 
 
-def test_store_settings(client, auth, payload):
+def test_store_settings(client, auth):
     assert client.get("/api/settings").status_code == 401
     res = client.get("/api/settings", headers=auth).json()
-    assert res["store_name"] == "" and Decimal(res["gst_percent"]) == 3
+    assert Decimal(res["gst_percent"]) == 3 and "store_name" not in res
     assert res["gold_feed_configured"] is False and res["gold_rate"] is None
 
-    res = client.put("/api/settings", json={"store_name": "  Example Jewellers ", "gst_percent": "3"}, headers=auth)
-    assert res.status_code == 200 and res.json()["store_name"] == "Example Jewellers"
-
-    token = client.post("/api/jewellery", json=payload, headers=auth).json()["verification_token"]
-    body = client.get(f"/api/verify/{token}").json()
-    assert body["store_name"] == "Example Jewellers"
-    assert body["gold_rate"] is None and body["live_price"] is None  # no feed: registered prices only
+    res = client.put("/api/settings", json={"gst_percent": "5"}, headers=auth)
+    assert res.status_code == 200 and Decimal(res.json()["gst_percent"]) == 5
 
 
-def test_live_price_from_market_rate(client, auth, payload, monkeypatch):
+def test_live_price_from_market_rate(client, publish, monkeypatch):
     from app.config import get_settings
     from app.services import gold_rate
 
@@ -319,26 +288,26 @@ def test_live_price_from_market_rate(client, auth, payload, monkeypatch):
     monkeypatch.setattr(get_settings(), "goldapi_key", "test-key")
     monkeypatch.setattr(gold_rate, "fetch_inr_per_gram_24k", fake_fetch)
 
-    body = {**payload, "net_weight": "10", "other_component_value": "1000",
-            "making_percent_min": "10", "making_percent_max": "15"}
-    token = client.post("/api/jewellery", json=body, headers=auth).json()["verification_token"]
+    created = publish(net_weight="10", other_component_value="1000", making_percent_min="10", making_percent_max="15")
+    token = created["verification_token"]
 
     res = client.get(f"/api/verify/{token}").json()
-    rate, live = res["gold_rate"], res["live_price"]
+    rate, price = res["gold_rate"], res["price"]
     assert Decimal(rate["per_gram"]["22K"]) == Decimal("9160")
     assert rate["change_percent"] is None
+    assert price["basis"] == "live"
     # 10 g x 9,160 = 91,600; making 10-15% = 9,160-13,740; GST 3% on gold + making + stones.
-    assert Decimal(live["gold_value"]) == 91600
-    assert (Decimal(live["making_charges_min"]), Decimal(live["making_charges_max"])) == (9160, 13740)
-    assert (Decimal(live["tax_min"]), Decimal(live["tax_max"])) == (3053, 3190)
-    assert (Decimal(live["total_min"]), Decimal(live["total_max"])) == (104813, 109530)
+    assert Decimal(price["gold"]) == 91600
+    assert (Decimal(price["making_min"]), Decimal(price["making_max"])) == (9160, 13740)
+    assert (Decimal(price["tax_min"]), Decimal(price["tax_max"])) == (3053, 3190)
+    assert (Decimal(price["final_min"]), Decimal(price["final_max"])) == (104813, 109530)
 
     # Within the cache window the API isn't called again.
     client.get(f"/api/verify/{token}")
     assert calls == [("goldapi", "test-key")]
 
 
-def test_gold_rate_falls_back_to_last_known(client, auth, payload, monkeypatch):
+def test_gold_rate_falls_back_to_last_known(client, publish, monkeypatch):
     from datetime import datetime, timedelta, timezone
 
     from app.config import get_settings
@@ -359,7 +328,7 @@ def test_gold_rate_falls_back_to_last_known(client, auth, payload, monkeypatch):
     monkeypatch.setattr(get_settings(), "goldapi_key", "test-key")
     monkeypatch.setattr(gold_rate, "fetch_inr_per_gram_24k", failing_fetch)
 
-    token = client.post("/api/jewellery", json=payload, headers=auth).json()["verification_token"]
+    token = publish()["verification_token"]
     rate = client.get(f"/api/verify/{token}").json()["gold_rate"]
     assert Decimal(rate["per_gram"]["24K"]) == Decimal("9990")
     assert Decimal(rate["change_percent"]) == Decimal("2.04")
@@ -384,3 +353,111 @@ def test_metals_dev_prefers_ibja_rate(monkeypatch):
     monkeypatch.setattr(gold_rate, "_get_json", lambda r: {"status": "failure", "error_code": 1101})
     with pytest.raises(ValueError):
         gold_rate.fetch_inr_per_gram_24k("metals.dev", "bad")
+
+
+# ---------- Pieces on the marketplace model ----------
+
+def test_piece_needs_a_known_store(client, auth, payload):
+    res = client.post("/api/jewellery", json={**payload, "store": "no-such-store"}, headers=auth)
+    assert res.status_code == 422 and "store" in res.json()["fields"]
+
+
+def test_verification_level_rules(client, auth, payload):
+    res = client.post("/api/jewellery", json={**payload, "verification_level": "hallmark"}, headers=auth)
+    assert res.status_code == 422 and "huid" in res.json()["fields"]
+    res = client.post("/api/jewellery", json={**payload, "verification_level": "hallmark", "huid": "ab12cd"},
+                      headers=auth)
+    assert res.status_code == 201 and res.json()["huid"] == "AB12CD"
+    jid = res.json()["jewellery_id"]
+
+    lab = {**payload, "verification_level": "lab"}
+    res = client.put(f"/api/jewellery/{jid}", json=lab, headers=auth)
+    assert res.status_code == 422 and "verification_level" in res.json()["fields"]  # no certificate file yet
+    res = client.put(f"/api/jewellery/{jid}", json={**lab, "issuing_authority": None}, headers=auth)
+    assert res.status_code == 422 and "verification_level" in res.json()["fields"]
+
+    client.post(f"/api/jewellery/{jid}/certificate", files={"file": ("c.png", PNG_1PX, "image/png")}, headers=auth)
+    assert client.put(f"/api/jewellery/{jid}", json=lab, headers=auth).json()["verification_level"] == "lab"
+    assert client.delete(f"/api/jewellery/{jid}/certificate", headers=auth).status_code == 422
+
+
+def test_publishing_needs_a_photo(client, auth, payload, add_photo):
+    res = client.post("/api/jewellery", json={**payload, "is_published": True}, headers=auth)
+    assert res.status_code == 422 and "is_published" in res.json()["fields"]
+
+    jid = client.post("/api/jewellery", json=payload, headers=auth).json()["jewellery_id"]
+    add_photo(jid)
+    res = client.put(f"/api/jewellery/{jid}", json={**payload, "is_published": True}, headers=auth)
+    assert res.status_code == 200 and res.json()["is_published"] is True
+
+
+@pytest.mark.parametrize("discount, field", [
+    ({"discount_type": "percent", "discount_value": "0.5"}, "discount_value"),
+    ({"discount_type": "percent", "discount_value": "95"}, "discount_value"),
+    ({"discount_type": "flat", "discount_value": "125000"}, "discount_value"),
+    ({"discount_type": "flat"}, "discount_value"),
+    ({"discount_value": "10"}, "discount_value"),
+    ({"discount_type": "half"}, "discount_type"),
+])
+def test_discount_validation(client, auth, payload, discount, field):
+    res = client.post("/api/jewellery", json={**payload, **discount}, headers=auth)
+    assert res.status_code == 422 and field in res.json()["fields"], res.text
+
+
+def test_discount_shows_in_the_price(client, auth, payload):
+    body = {**payload, "discount_type": "flat", "discount_value": "5000", "discount_ends_on": "2020-01-01"}
+    res = client.post("/api/jewellery", json=body, headers=auth)
+    assert res.status_code == 201  # a past end date is allowed; the discount just isn't shown
+    assert res.json()["price"]["discount"] is None
+
+    res = client.put(f"/api/jewellery/{res.json()['jewellery_id']}", json={**body, "discount_ends_on": None},
+                     headers=auth)
+    price = res.json()["price"]
+    assert price["discount"]["label"] == "₹5,000 off"
+    assert Decimal(price["original_max"]) == 125000 and Decimal(price["final_max"]) == 120000
+
+
+def test_price_preview(client, auth, payload):
+    figures = {k: payload[k] for k in ("purity", "net_weight", "gold_value", "making_charges",
+                                       "other_component_value", "tax")}
+    res = client.post("/api/jewellery/price-preview",
+                      json={**figures, "discount_type": "percent", "discount_value": "10"}, headers=auth)
+    assert res.status_code == 200
+    assert Decimal(res.json()["final_max"]) == 112500 and res.json()["discount"]["label"] == "10% off"
+    assert client.post("/api/jewellery/price-preview", json=figures).status_code == 401
+
+
+def test_list_filters(client, auth, payload, publish):
+    publish()
+    client.post("/api/jewellery", json={**payload, "stock_status": "sold"}, headers=auth)
+
+    def total(**params) -> int:
+        return client.get("/api/jewellery", params=params, headers=auth).json()["total"]
+
+    assert total(store="test-store") == 2 and total(store="elsewhere") == 0
+    assert total(published="true") == 1 and total(published="false") == 1
+    assert total(stock="sold") == 1
+
+
+def test_verify_hides_drafts_and_inactive_stores(client, auth, payload, publish, db):
+    draft = client.post("/api/jewellery", json=payload, headers=auth).json()
+    assert client.get(f"/api/verify/{draft['verification_token']}").status_code == 404
+
+    live = publish()
+    assert client.get(f"/api/verify/{live['verification_token']}").status_code == 200
+
+    db.scalar(select(Store).where(Store.slug == "test-store")).status = "inactive"
+    db.commit()
+    res = client.get(f"/api/verify/{live['verification_token']}")
+    assert res.status_code == 410 and res.json() == {"detail": "Record inactive"}
+
+
+def test_verify_shows_only_what_the_level_vouches_for(client, publish):
+    declared = client.get(f"/api/verify/{publish()['verification_token']}").json()
+    assert declared["certificate_id"] is None  # the payload has one, but a declared piece doesn't vouch for it
+    assert declared["store"]["name"] == "Test Jewellers" and declared["title"] == "Diamond ring"
+    assert len(declared["photos"]) == 1 and declared["photos"][0]["alt"] == "Diamond ring"
+    assert declared["price"]["basis"] == "registered" and declared["gold_rate"] is None
+
+    hallmark = publish(verification_level="hallmark", huid="HU1D23")
+    assert client.get(f"/api/verify/{hallmark['verification_token']}").json()["huid"] == "HU1D23"

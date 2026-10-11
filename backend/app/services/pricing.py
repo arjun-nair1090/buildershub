@@ -6,10 +6,9 @@ from typing import Protocol
 from sqlalchemy.orm import Session
 
 from app.constants import PURITY_PERCENT
-from app.models import Jewellery
-from app.schemas import GoldRateOut, LivePrice, PiecePrice, PriceDiscount
+from app.schemas import GoldRateOut, PiecePrice, PriceDiscount
 from app.services.gold_rate import RateSnapshot, current_rate
-from app.services.store import get_store
+from app.services.store import get_store_settings
 
 HUNDRED = Decimal("100")
 # India has one time zone and no daylight saving, so a fixed offset is exact (and needs no tz database).
@@ -36,36 +35,6 @@ def gold_rate_out(rate: RateSnapshot) -> GoldRateOut:
         change_percent=change,
         updated_at=rate.fetched_at,
         source=rate.source,
-    )
-
-
-def live_price(item: Jewellery, rate: RateSnapshot, gst_percent: Decimal) -> LivePrice:
-    per_gram = karat_rate(rate.inr_per_gram_24k, item.purity)
-    gold = _rupees(item.net_weight * per_gram)
-
-    if item.making_percent_min is not None and item.making_percent_max is not None:
-        making_min = _rupees(gold * item.making_percent_min / HUNDRED)
-        making_max = _rupees(gold * item.making_percent_max / HUNDRED)
-    else:
-        making_min = making_max = item.making_charges
-
-    other = item.other_component_value
-    tax_min = _rupees((gold + making_min + other) * gst_percent / HUNDRED)
-    tax_max = _rupees((gold + making_max + other) * gst_percent / HUNDRED)
-
-    return LivePrice(
-        rate_per_gram=per_gram,
-        gold_value=gold,
-        making_charges_min=making_min,
-        making_charges_max=making_max,
-        making_percent_min=item.making_percent_min,
-        making_percent_max=item.making_percent_max,
-        other_component_value=other,
-        gst_percent=gst_percent,
-        tax_min=tax_min,
-        tax_max=tax_max,
-        total_min=gold + making_min + other + tax_min,
-        total_max=gold + making_max + other + tax_max,
     )
 
 
@@ -198,4 +167,4 @@ class PricingContext:
 
 
 def pricing_context(db: Session) -> PricingContext:
-    return PricingContext(rate=current_rate(db), gst_percent=get_store(db).gst_percent, today=today_ist())
+    return PricingContext(rate=current_rate(db), gst_percent=get_store_settings(db).gst_percent, today=today_ist())

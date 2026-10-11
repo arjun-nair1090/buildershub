@@ -7,6 +7,8 @@ from fastapi import HTTPException, UploadFile, status
 from PIL import Image, ImageOps, UnidentifiedImageError
 
 from app.config import get_settings
+from app.models import Photo
+from app.schemas import PhotoOut
 
 FULL_PX = 1600
 THUMB_PX = 600
@@ -71,3 +73,15 @@ async def read_upload(upload: UploadFile) -> bytes:
     if len(data) > limit_mb * 1024 * 1024:
         raise _reject(f"Photo must be {limit_mb} MB or smaller")
     return data
+
+
+def photo_out(photo: Photo, title: str) -> PhotoOut:
+    """`alt` is what screen readers get: the entered alt text, or the owner's title."""
+    return PhotoOut(
+        public_id=photo.public_id,
+        alt_text=photo.alt_text,
+        alt=photo.alt_text or title,
+        width=photo.width,
+        height=photo.height,
+        position=photo.position,
+    )
