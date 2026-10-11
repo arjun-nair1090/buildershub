@@ -266,7 +266,7 @@ function SimilarPieces({ record }: { record: PublicVerification }) {
         <h2 id="similar-heading" className="font-display text-[24px] leading-tight text-ink">Similar pieces</h2>
         <p className="mt-1 text-sm text-muted">More from {record.store.name}</p>
       </div>
-      <div className="mt-5 flex snap-x gap-4 overflow-x-auto px-5 pb-2 [scrollbar-width:none] sm:px-0 lg:grid lg:grid-cols-4 lg:overflow-visible [&::-webkit-scrollbar]:hidden">
+      <div className="mt-5 flex snap-x scroll-px-5 gap-4 overflow-x-auto px-5 pb-2 sm:scroll-px-0 [scrollbar-width:none] sm:px-0 lg:grid lg:grid-cols-4 lg:overflow-visible [&::-webkit-scrollbar]:hidden">
         {record.similar.map((piece) => (
           <div key={piece.jewellery_id} className="w-40 shrink-0 snap-start sm:w-48 lg:w-auto">
             <PieceTile piece={piece} />

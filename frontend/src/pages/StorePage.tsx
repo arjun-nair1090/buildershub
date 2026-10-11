@@ -73,13 +73,6 @@ function VisitPanel({ store }: { store: PublicStore }) {
           className="block aspect-[4/3] w-full"
         />
       </div>
-      <p className="mt-1.5 text-right text-[11px] text-muted">
-        ©{" "}
-        <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noreferrer" className="underline-offset-2 hover:underline">
-          OpenStreetMap
-        </a>{" "}
-        contributors
-      </p>
     </div>
   );
 }
