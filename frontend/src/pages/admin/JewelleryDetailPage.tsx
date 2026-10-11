@@ -5,15 +5,15 @@ import { toast } from "sonner";
 import { HallmarkStamp } from "@/components/jewellery/HallmarkStamp";
 import { PriceBreakdown } from "@/components/jewellery/PriceBreakdown";
 import { QrPanel } from "@/components/jewellery/QrPanel";
-import { StatusBadge, VerificationBadge } from "@/components/jewellery/StatusBadge";
+import { LevelBadge, ListingBadge, StatusBadge } from "@/components/jewellery/StatusBadge";
 import { PageHeader } from "@/components/layout/AdminLayout";
+import { PhotoManager } from "@/components/photos/PhotoManager";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { EmptyState } from "@/components/ui/empty-state";
 import { DataRow, Panel, PanelHeader } from "@/components/ui/panel";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useJewelleryRecord } from "@/hooks/useJewellery";
-import { usePhoto } from "@/hooks/usePhoto";
 import { useQrImage } from "@/hooks/useQrImage";
 import { errorMessage } from "@/services/api";
 import { jewelleryService } from "@/services/jewellery";
@@ -22,7 +22,7 @@ import { formatDate, formatPercent, formatPurity, formatWeight } from "@/utils/f
 
 const backLink = (
   <Link to="/admin/jewellery" className="mb-4 inline-flex items-center gap-1.5 text-sm text-muted hover:text-ink">
-    <ArrowLeft className="size-4" /> All jewellery
+    <ArrowLeft className="size-4" /> All pieces
   </Link>
 );
 
@@ -34,7 +34,7 @@ export function RecordMissing({ id, message, onRetry }: { id: string; message?: 
         <EmptyState
           icon={SearchX}
           title={message ? "The record could not be loaded" : `No record with ID ${id}`}
-          description={message ?? "Check the Jewellery ID, or find the piece in the jewellery list."}
+          description={message ?? "Check the Jewellery ID, or find the piece in the list."}
           action={
             onRetry ? (
               <Button variant="secondary" onClick={onRetry}>
@@ -42,7 +42,7 @@ export function RecordMissing({ id, message, onRetry }: { id: string; message?: 
               </Button>
             ) : (
               <Link to="/admin/jewellery" className={buttonVariants({ variant: "secondary" })}>
-                Go to jewellery list
+                Go to pieces
               </Link>
             )
           }
@@ -65,7 +65,6 @@ export function JewelleryDetailPage() {
   const { id = "" } = useParams();
   const { item, setItem, error, notFound, loading, reload } = useJewelleryRecord(id);
   const qr = useQrImage(item?.jewellery_id);
-  const photoUrl = usePhoto(item?.jewellery_id, item?.has_photo);
 
   useEffect(() => {
     document.title = id;
@@ -124,6 +123,7 @@ export function JewelleryDetailPage() {
   }
 
   const active = item.status === "active";
+  const ranged = item.making_percent_min !== null && item.making_percent_max !== null;
 
   return (
     <>
@@ -133,7 +133,8 @@ export function JewelleryDetailPage() {
         description={
           <span className="flex flex-wrap items-center gap-2">
             <StatusBadge status={item.status} />
-            <VerificationBadge status={item.verification_status} />
+            <LevelBadge level={item.verification_level} />
+            <ListingBadge published={item.is_published} stock={item.stock_status} />
             <span className="text-[13px]">Registered {formatDate(item.created_at)}</span>
           </span>
         }
@@ -177,12 +178,25 @@ export function JewelleryDetailPage() {
 
       <div className="grid items-start gap-6 lg:grid-cols-[1fr_320px]">
         <div className="grid gap-6 md:grid-cols-2">
-          <InfoCard
-            title="Jewellery information"
-            aside={photoUrl && <img src={photoUrl} alt={`Photo of ${item.jewellery_id}`} className="size-14 rounded-sm border border-line object-cover" />}
-          >
+          <Panel className="md:col-span-2">
+            <PanelHeader title="Photos" description="The first photo is the cover. A published piece keeps at least one." />
+            <div className="p-5 sm:p-6">
+              <PhotoManager owner="jewellery" ownerKey={item.jewellery_id} photos={item.photos} onChange={(photos) => setItem({ ...item, photos })} />
+            </div>
+          </Panel>
+
+          <InfoCard title="Piece">
             <dl className="divide-y divide-line">
-              <DataRow label="Type" value={item.type} />
+              <DataRow
+                label="Store"
+                value={
+                  <Link to={`/admin/stores/${item.store.slug}/edit`} className="text-basalt hover:underline">
+                    {item.store.name}
+                  </Link>
+                }
+              />
+              <DataRow label="Title" value={item.title} />
+              <DataRow label="Category" value={item.type} />
               <DataRow label="Colour" value={item.colour ?? <span className="text-muted">Not specified</span>} />
               <div className="py-2.5">
                 <dt className="text-[13px] text-muted">Description</dt>
@@ -193,16 +207,6 @@ export function JewelleryDetailPage() {
                   <dt className="text-[13px] text-muted">Design details</dt>
                   <dd className="mt-1 text-[15px] leading-relaxed text-ink">{item.design_details}</dd>
                 </div>
-              )}
-              {!item.has_photo && (
-                <DataRow
-                  label="Photo"
-                  value={
-                    <Link to={`/admin/jewellery/${item.jewellery_id}/edit`} className="text-basalt hover:underline">
-                      Add a photo
-                    </Link>
-                  }
-                />
               )}
             </dl>
           </InfoCard>
@@ -215,47 +219,44 @@ export function JewelleryDetailPage() {
             </dl>
           </InfoCard>
 
-          <InfoCard title="Certification">
-            {item.certificate_id ? (
-              <dl className="divide-y divide-line">
-                <DataRow label="Certificate ID" value={item.certificate_id} mono />
-                <DataRow label="Issuing authority" value={item.issuing_authority ?? "—"} />
-                <DataRow label="Certificate date" value={formatDate(item.certificate_date)} />
-                <DataRow
-                  label="Document"
-                  value={
-                    item.has_certificate_document ? (
-                      <button type="button" onClick={downloadCertificate} className="inline-flex items-center gap-1.5 text-basalt hover:underline">
-                        <FileText className="size-4" /> Download
-                      </button>
-                    ) : (
-                      <span className="text-muted">Not uploaded</span>
-                    )
-                  }
-                />
-              </dl>
-            ) : (
-              <p className="py-3 text-sm text-muted">
-                No certificate reference. Buyers see this record as registered rather than verified.{" "}
-                <Link to={`/admin/jewellery/${item.jewellery_id}/edit`} className="text-basalt hover:underline">
-                  Add certificate details
-                </Link>
-              </p>
-            )}
+          <InfoCard title="Verification">
+            <dl className="divide-y divide-line">
+              <DataRow label="Level" value={<LevelBadge level={item.verification_level} />} />
+              {item.huid && <DataRow label="HUID" value={item.huid} mono />}
+              {item.certificate_id && (
+                <>
+                  <DataRow label="Certificate ID" value={item.certificate_id} mono />
+                  <DataRow label="Issuing authority" value={item.issuing_authority ?? "—"} />
+                  <DataRow label="Certificate date" value={formatDate(item.certificate_date)} />
+                  <DataRow
+                    label="Document"
+                    value={
+                      item.has_certificate_document ? (
+                        <button type="button" onClick={downloadCertificate} className="inline-flex items-center gap-1.5 text-basalt hover:underline">
+                          <FileText className="size-4" /> Download
+                        </button>
+                      ) : (
+                        <span className="text-muted">Not uploaded</span>
+                      )
+                    }
+                  />
+                </>
+              )}
+            </dl>
           </InfoCard>
 
-          <InfoCard title="Price transparency">
-            <PriceBreakdown {...item} className="py-3" />
+          <InfoCard title="Price buyers see now">
+            <PriceBreakdown price={item.price} className="py-3" />
             <p className="border-t border-line py-3 text-[13px] text-muted">
-              {item.making_percent_min !== null && item.making_percent_max !== null
-                ? `Buyers see making charges as ${formatPercent(item.making_percent_min)}–${formatPercent(item.making_percent_max)} of the live gold value.`
-                : "No making charges range: buyers see the fixed amount above."}
+              {ranged
+                ? `Making charges are ${formatPercent(item.making_percent_min!)}–${formatPercent(item.making_percent_max!)} of the live gold value.`
+                : "No making charges range: buyers see the fixed amount."}
             </p>
           </InfoCard>
         </div>
 
         <Panel className="lg:sticky lg:top-8">
-          <PanelHeader title="QR code" description="Opens the public verification page." />
+          <PanelHeader title="QR code" description={item.is_published ? "Opens the public verification page." : "Works once the piece is published."} />
           <QrPanel item={item} qr={qr} className="p-5" />
         </Panel>
       </div>

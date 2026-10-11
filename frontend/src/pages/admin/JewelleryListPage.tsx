@@ -10,9 +10,10 @@ import { Input, Select } from "@/components/ui/input";
 import { Panel } from "@/components/ui/panel";
 import { useDebounce } from "@/hooks/useDebounce";
 import { useJewelleryList } from "@/hooks/useJewellery";
+import { useStores } from "@/hooks/useStores";
 import { errorMessage } from "@/services/api";
 import { jewelleryService } from "@/services/jewellery";
-import { JEWELLERY_TYPES, PURITIES, type Jewellery, type JewelleryQuery, type SortField } from "@/types";
+import { JEWELLERY_TYPES, PURITIES, STOCK_LABEL, STOCK_STATUSES, type Jewellery, type JewelleryQuery, type SortField } from "@/types";
 
 const PAGE_SIZE = 10;
 
@@ -28,6 +29,9 @@ export function JewelleryListPage() {
       type: (params.get("type") ?? "") as JewelleryQuery["type"],
       purity: (params.get("purity") ?? "") as JewelleryQuery["purity"],
       status: (params.get("status") ?? "") as JewelleryQuery["status"],
+      store: params.get("store") ?? "",
+      published: (params.get("published") ?? "") as JewelleryQuery["published"],
+      stock: (params.get("stock") ?? "") as JewelleryQuery["stock"],
       sort: (params.get("sort") as SortField) || "created_at",
       order: (params.get("order") as "asc" | "desc") || "desc",
       page: Number(params.get("page")) || 1,
@@ -36,6 +40,7 @@ export function JewelleryListPage() {
     [params],
   );
   const { data, error, loading, reload } = useJewelleryList(query);
+  const { stores } = useStores();
 
   function update(next: Partial<Record<keyof JewelleryQuery, string | number>>, resetPage = true) {
     setParams(
@@ -53,7 +58,7 @@ export function JewelleryListPage() {
   }
 
   useEffect(() => {
-    document.title = "Jewellery";
+    document.title = "Pieces";
   }, []);
 
   useEffect(() => {
@@ -75,7 +80,7 @@ export function JewelleryListPage() {
     }
   }
 
-  const filtered = Boolean(query.search || query.type || query.purity || query.status);
+  const filtered = Boolean(query.search || query.type || query.purity || query.status || query.store || query.published || query.stock);
   const clearFilters = () => {
     setSearch("");
     setParams({}, { replace: true });
@@ -84,42 +89,63 @@ export function JewelleryListPage() {
   return (
     <>
       <PageHeader
-        title="Jewellery"
+        title="Pieces"
         description={data ? `${data.total} ${filtered ? "matching" : "registered"} ${data.total === 1 ? "record" : "records"}` : "Registered records"}
         actions={
           <Link to="/admin/jewellery/new" className={buttonVariants({ size: "lg" })}>
-            <Plus /> Add Jewellery
+            <Plus /> Add piece
           </Link>
         }
       />
 
       <Panel>
-        <div className="grid gap-3 border-b border-line p-4 sm:p-5 lg:grid-cols-[1fr_auto_auto_auto] lg:items-center">
+        <div className="space-y-3 border-b border-line p-4 sm:p-5">
           <div className="relative">
             <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted" />
             <Input
               type="search"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              placeholder="Search by Jewellery ID, certificate ID or type"
-              aria-label="Search jewellery"
+              placeholder="Search by Jewellery ID, title, certificate ID or category"
+              aria-label="Search pieces"
               className="pl-9"
             />
           </div>
-          <div className="grid grid-cols-3 gap-3 lg:contents">
-            <Select aria-label="Filter by type" value={query.type} onChange={(e) => update({ type: e.target.value })} className="lg:w-36">
-              <option value="">All types</option>
+          <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
+            <Select aria-label="Filter by store" value={query.store} onChange={(e) => update({ store: e.target.value })}>
+              <option value="">All stores</option>
+              {stores?.map((s) => (
+                <option key={s.slug} value={s.slug}>
+                  {s.name}
+                </option>
+              ))}
+            </Select>
+            <Select aria-label="Filter by category" value={query.type} onChange={(e) => update({ type: e.target.value })}>
+              <option value="">All categories</option>
               {JEWELLERY_TYPES.map((t) => (
                 <option key={t}>{t}</option>
               ))}
             </Select>
-            <Select aria-label="Filter by purity" value={query.purity} onChange={(e) => update({ purity: e.target.value })} className="lg:w-32">
+            <Select aria-label="Filter by purity" value={query.purity} onChange={(e) => update({ purity: e.target.value })}>
               <option value="">All purities</option>
               {PURITIES.map((p) => (
                 <option key={p}>{p}</option>
               ))}
             </Select>
-            <Select aria-label="Filter by status" value={query.status} onChange={(e) => update({ status: e.target.value })} className="lg:w-32">
+            <Select aria-label="Filter by listing" value={query.published} onChange={(e) => update({ published: e.target.value })}>
+              <option value="">Published or draft</option>
+              <option value="true">Published</option>
+              <option value="false">Draft</option>
+            </Select>
+            <Select aria-label="Filter by stock" value={query.stock} onChange={(e) => update({ stock: e.target.value })}>
+              <option value="">Any stock</option>
+              {STOCK_STATUSES.map((s) => (
+                <option key={s} value={s}>
+                  {STOCK_LABEL[s]}
+                </option>
+              ))}
+            </Select>
+            <Select aria-label="Filter by status" value={query.status} onChange={(e) => update({ status: e.target.value })}>
               <option value="">Any status</option>
               <option value="active">Active</option>
               <option value="inactive">Inactive</option>
@@ -154,11 +180,11 @@ export function JewelleryListPage() {
           ) : (
             <EmptyState
               icon={Gem}
-              title="No jewellery registered yet"
+              title="No pieces registered yet"
               description="Register your first piece to create its digital record and QR code."
               action={
                 <Link to="/admin/jewellery/new" className={buttonVariants()}>
-                  <Plus /> Add Jewellery
+                  <Plus /> Add piece
                 </Link>
               }
             />
@@ -169,7 +195,7 @@ export function JewelleryListPage() {
               items={data?.items ?? []}
               loading={loading && !data}
               skeletonRows={8}
-              columns={["id", "type", "purity", "weight", "certificate", "price", "status"]}
+              columns={["id", "title", "store", "purity", "weight", "level", "listing", "price", "status"]}
               sort={query.sort}
               order={query.order}
               onSort={onSort}

@@ -4,12 +4,12 @@ import { Link, useNavigate, useParams } from "react-router-dom";
 import { toast } from "sonner";
 import { JewelleryForm } from "@/components/jewellery/JewelleryForm";
 import { toFormValues } from "@/components/jewellery/jewellerySchema";
+import { savePiece } from "@/components/jewellery/savePiece";
 import { StatusBadge } from "@/components/jewellery/StatusBadge";
 import { PageHeader } from "@/components/layout/AdminLayout";
 import { Panel } from "@/components/ui/panel";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useJewelleryRecord } from "@/hooks/useJewellery";
-import { usePhoto } from "@/hooks/usePhoto";
 import { errorMessage } from "@/services/api";
 import { jewelleryService } from "@/services/jewellery";
 import { certificateFilename, saveBlob } from "@/utils/download";
@@ -19,7 +19,6 @@ export function EditJewelleryPage() {
   const { id = "" } = useParams();
   const navigate = useNavigate();
   const { item, setItem, error, notFound, loading, reload } = useJewelleryRecord(id);
-  const photoUrl = usePhoto(item?.jewellery_id, item?.has_photo);
 
   useEffect(() => {
     document.title = `Edit ${id}`;
@@ -85,37 +84,10 @@ export function EditJewelleryPage() {
               }
             : null
         }
-        existingPhoto={
-          item.has_photo
-            ? {
-                url: photoUrl,
-                onRemove: () =>
-                  jewelleryService
-                    .removePhoto(item.jewellery_id)
-                    .then((updated) => {
-                      setItem(updated);
-                      toast.success("Photo removed.");
-                    })
-                    .catch((err) => toast.error(errorMessage(err))),
-              }
-            : null
-        }
-        onSubmit={async (input, certificate, photo) => {
-          await jewelleryService.update(item.jewellery_id, input);
-          if (certificate) {
-            try {
-              await jewelleryService.uploadCertificate(item.jewellery_id, certificate);
-            } catch (err) {
-              toast.error(`Changes saved, but the certificate didn't upload: ${errorMessage(err)}`);
-            }
-          }
-          if (photo) {
-            try {
-              await jewelleryService.uploadPhoto(item.jewellery_id, photo);
-            } catch (err) {
-              toast.error(`Changes saved, but the photo didn't upload: ${errorMessage(err)}`);
-            }
-          }
+        canPublish={item.photos.length > 0}
+        onSubmit={async (input, certificate) => {
+          const { warning } = await savePiece(item.jewellery_id, input, certificate, item.has_certificate_document);
+          if (warning) toast.error(warning);
           toast.success("Changes saved successfully.");
           navigate(`/admin/jewellery/${item.jewellery_id}`);
         }}

@@ -15,10 +15,10 @@ import { jewelleryService } from "@/services/jewellery";
 import type { Jewellery, JewelleryStats } from "@/types";
 
 const STAT_CARDS: { key: keyof JewelleryStats; label: string; note: string }[] = [
-  { key: "total", label: "Total jewellery", note: "All registered records" },
-  { key: "active", label: "Active records", note: "QR codes that open a record" },
-  { key: "verified", label: "Verified records", note: "Active, with a certificate reference" },
-  { key: "inactive", label: "Inactive records", note: "Deactivated, not shown as verified" },
+  { key: "stores", label: "Stores", note: "Shops on the marketplace" },
+  { key: "published", label: "Published pieces", note: "Active and visible to buyers" },
+  { key: "in_stock", label: "In stock", note: "Published pieces buyers can buy" },
+  { key: "designs", label: "Designs", note: "Made-to-order designs" },
 ];
 
 export function DashboardPage() {
@@ -48,7 +48,7 @@ export function DashboardPage() {
 
   const addButton = (
     <Link to="/admin/jewellery/new" className={buttonVariants({ size: "lg" })}>
-      <Plus /> Add Jewellery
+      <Plus /> Add piece
     </Link>
   );
 
@@ -76,7 +76,7 @@ export function DashboardPage() {
 
       <Panel className="mt-8">
         <PanelHeader
-          title="Recent jewellery"
+          title="Recent pieces"
           description="The latest registered pieces."
           action={
             <Link to="/admin/jewellery" className="text-sm font-medium text-basalt underline-offset-4 hover:underline">
@@ -89,7 +89,7 @@ export function DashboardPage() {
         ) : !recent.loading && recent.data?.items.length === 0 ? (
           <EmptyState
             icon={Gem}
-            title="No jewellery registered yet"
+            title="No pieces registered yet"
             description="Register your first piece to create its digital record and QR code."
             action={addButton}
           />
@@ -97,7 +97,7 @@ export function DashboardPage() {
           <JewelleryTable
             items={recent.data?.items ?? []}
             loading={recent.loading && !recent.data}
-            columns={["id", "type", "purity", "weight", "price", "status", "created"]}
+            columns={["id", "title", "store", "listing", "price", "created"]}
             onDeactivate={deactivate}
           />
         )}

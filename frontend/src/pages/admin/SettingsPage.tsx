@@ -15,7 +15,6 @@ import { settingsService } from "@/services/settings";
 import type { StoreSettings } from "@/types";
 
 const schema = z.object({
-  store_name: z.string().trim().min(2, "Enter the store name").max(120, "Keep it under 120 characters"),
   gst_percent: z
     .string()
     .trim()
@@ -32,7 +31,7 @@ export function SettingsPage() {
     reset,
     setError,
     formState: { errors, isSubmitting },
-  } = useForm<Values>({ resolver: zodResolver(schema), defaultValues: { store_name: "", gst_percent: "3" } });
+  } = useForm<Values>({ resolver: zodResolver(schema), defaultValues: { gst_percent: "3" } });
 
   useEffect(() => {
     document.title = "Store settings";
@@ -40,7 +39,7 @@ export function SettingsPage() {
       .get()
       .then((s) => {
         setSettings(s);
-        reset({ store_name: s.store_name, gst_percent: String(Number(s.gst_percent)) });
+        reset({ gst_percent: String(Number(s.gst_percent)) });
       })
       .catch((err) => toast.error(errorMessage(err)));
   }, [reset]);
@@ -60,15 +59,12 @@ export function SettingsPage() {
 
   return (
     <>
-      <PageHeader title="Store settings" description="What buyers see on every verification page." />
+      <PageHeader title="Store settings" description="Applies to every store's prices." />
 
       <div className="grid gap-6 lg:grid-cols-[1fr_380px] lg:items-start">
         <Panel>
-          <PanelHeader title="Store" />
+          <PanelHeader title="Tax" />
           <form onSubmit={handleSubmit(onSubmit)} noValidate className="space-y-5 p-5 sm:p-6">
-            <Field label="Store name" error={errors.store_name?.message} hint="Shown at the top of the page a buyer opens from the QR code.">
-              <Input autoComplete="organization" {...register("store_name")} />
-            </Field>
             <Field label="GST on jewellery" error={errors.gst_percent?.message} hint="Applied to gold value, making charges and other components in the live price.">
               <Input inputMode="decimal" suffix={<span className="pr-2 text-sm text-muted">%</span>} {...register("gst_percent")} />
             </Field>

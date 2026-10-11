@@ -1,6 +1,6 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Calculator, PencilLine } from "lucide-react";
-import { useState, type ReactNode } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import { useForm, useWatch } from "react-hook-form";
 import { Link } from "react-router-dom";
 import { toast } from "sonner";
@@ -8,20 +8,39 @@ import { Button } from "@/components/ui/button";
 import { Field } from "@/components/ui/field";
 import { Input, Select, Textarea } from "@/components/ui/input";
 import { Panel } from "@/components/ui/panel";
+import { useStores } from "@/hooks/useStores";
 import { ApiError } from "@/services/api";
-import { GOLD_COLOURS, JEWELLERY_TYPES, PURITIES, PURITY_PERCENT, type JewelleryInput } from "@/types";
+import {
+  GOLD_COLOURS,
+  JEWELLERY_TYPES,
+  PURITIES,
+  PURITY_PERCENT,
+  STOCK_LABEL,
+  STOCK_STATUSES,
+  VERIFICATION_LABEL,
+  VERIFICATION_LEVELS,
+  type JewelleryInput,
+  type VerificationLevel,
+} from "@/types";
 import { formatINR, formatINRRange, sumMoney } from "@/utils/format";
 import { CertificateUpload } from "./CertificateUpload";
-import { emptyValues, jewellerySchema, toInput, type JewelleryFormValues } from "./jewellerySchema";
-import { PhotoUpload } from "./PhotoUpload";
+import { DiscountPreview } from "./DiscountPreview";
+import { emptyValues, jewellerySchema, toInput, toPreviewInput, type JewelleryFormValues } from "./jewellerySchema";
+
+const LEVEL_HINT: Record<VerificationLevel, string> = {
+  declared: "The store's own description. Buyers are told no hallmark or certificate is linked.",
+  hallmark: "Linked to the piece's BIS hallmark. Buyers see the HUID.",
+  lab: "Backed by a lab certificate. Buyers see its ID, issuer and date. The certificate file must be attached.",
+};
 
 interface JewelleryFormProps {
   defaultValues?: JewelleryFormValues;
   submitLabel: string;
   cancelTo: string;
   existingDocument?: { onDownload: () => void; onRemove: () => void } | null;
-  existingPhoto?: { url: string | null; onRemove: () => void } | null;
-  onSubmit: (input: JewelleryInput, certificate: File | null, photo: File | null) => Promise<void>;
+  /** Publishing needs a photo, and photos are added on the record page once the piece is saved. */
+  canPublish: boolean;
+  onSubmit: (input: JewelleryInput, certificate: File | null) => Promise<void>;
 }
 
 function Section({ step, title, description, children }: { step: number; title: string; description: string; children: ReactNode }) {
@@ -37,22 +56,28 @@ function Section({ step, title, description, children }: { step: number; title: 
   );
 }
 
-export function JewelleryForm({ defaultValues = emptyValues, submitLabel, cancelTo, existingDocument, existingPhoto, onSubmit }: JewelleryFormProps) {
+export function JewelleryForm({ defaultValues = emptyValues, submitLabel, cancelTo, existingDocument, canPublish, onSubmit }: JewelleryFormProps) {
   const [certificate, setCertificate] = useState<File | null>(null);
-  const [photo, setPhoto] = useState<File | null>(null);
+  const { stores } = useStores();
   const {
     register,
     handleSubmit,
     setError,
     setValue,
+    getValues,
     control,
     formState: { errors, isSubmitting },
   } = useForm<JewelleryFormValues>({ resolver: zodResolver(jewellerySchema), defaultValues, mode: "onTouched" });
 
-  const [gold, making, other, tax, manual, purity, makingMin, makingMax] = useWatch({
-    control,
-    name: ["gold_value", "making_charges", "other_component_value", "tax", "manual_total", "purity", "making_percent_min", "making_percent_max"],
-  });
+  const values = useWatch({ control }) as JewelleryFormValues;
+  const { gold_value: gold, making_charges: making, other_component_value: other, tax, manual_total: manual, purity } = values;
+  const { making_percent_min: makingMin, making_percent_max: makingMax, verification_level: level, discount_type: discountType } = values;
+
+  // With a single store there's nothing to choose.
+  useEffect(() => {
+    if (stores?.length === 1 && !getValues("store")) setValue("store", stores[0].slug);
+  }, [stores, getValues, setValue]);
+
   const calculated = sumMoney(gold, making, other, tax);
   const rangeExample =
     Number(gold) > 0 && makingMin && makingMax
@@ -61,7 +86,7 @@ export function JewelleryForm({ defaultValues = emptyValues, submitLabel, cancel
 
   async function submit(values: JewelleryFormValues) {
     try {
-      await onSubmit(toInput(values), certificate, photo);
+      await onSubmit(toInput(values), certificate);
     } catch (err) {
       if (err instanceof ApiError && Object.keys(err.fields).length) {
         for (const [field, message] of Object.entries(err.fields)) {
@@ -76,11 +101,26 @@ export function JewelleryForm({ defaultValues = emptyValues, submitLabel, cancel
 
   return (
     <form onSubmit={handleSubmit(submit, () => toast.error("Check the highlighted fields."))} noValidate className="space-y-5">
-      <Section step={1} title="Basic information" description="What the piece is, as the buyer should read it.">
-        <Field label="Jewellery type" error={errors.type?.message}>
+      <Section step={1} title="Basic information" description="What the piece is and which store sells it.">
+        <Field label="Store" error={errors.store?.message}>
+          <Select {...register("store")} disabled={!stores}>
+            <option value="" disabled>
+              {stores ? "Choose a store" : "Loading stores…"}
+            </option>
+            {stores?.map((s) => (
+              <option key={s.slug} value={s.slug}>
+                {s.name} ({s.area})
+              </option>
+            ))}
+          </Select>
+        </Field>
+        <Field label="Title" error={errors.title?.message} hint="Short, as buyers would say it: Nakshi kada, Temple necklace">
+          <Input maxLength={120} {...register("title")} />
+        </Field>
+        <Field label="Category" error={errors.type?.message}>
           <Select {...register("type")}>
             <option value="" disabled>
-              Choose a type
+              Choose a category
             </option>
             {JEWELLERY_TYPES.map((t) => (
               <option key={t} value={t}>
@@ -89,7 +129,7 @@ export function JewelleryForm({ defaultValues = emptyValues, submitLabel, cancel
             ))}
           </Select>
         </Field>
-        <Field label="Description" error={errors.description?.message} hint="For example: 22K gold diamond ring with a 0.30 ct solitaire">
+        <Field label="Description" error={errors.description?.message} hint="For example: 22K gold ring with a 0.30 ct solitaire">
           <Textarea rows={3} maxLength={500} {...register("description")} />
         </Field>
         <Field label="Colour" optional error={errors.colour?.message}>
@@ -105,7 +145,7 @@ export function JewelleryForm({ defaultValues = emptyValues, submitLabel, cancel
         <Field label="Design details" optional error={errors.design_details?.message} hint="Motifs, finish, stones, clasp: what makes this piece recognisable">
           <Textarea rows={3} maxLength={1000} {...register("design_details")} />
         </Field>
-        <PhotoUpload file={photo} onChange={setPhoto} existing={existingPhoto} />
+        <p className="text-[13px] text-muted">Photos are added on the piece's page after you save it.</p>
       </Section>
 
       <Section step={2} title="Gold information" description="Purity and weights as recorded at registration.">
@@ -128,19 +168,37 @@ export function JewelleryForm({ defaultValues = emptyValues, submitLabel, cancel
         </div>
       </Section>
 
-      <Section step={3} title="Certification" description="The hallmark or lab certificate this piece was issued. Leave blank if there isn't one.">
-        <div className="grid gap-5 sm:grid-cols-2">
-          <Field label="Certificate ID" optional error={errors.certificate_id?.message}>
-            <Input autoComplete="off" placeholder="e.g. HM-26-014823" {...register("certificate_id")} />
-          </Field>
-          <Field label="Certificate date" optional error={errors.certificate_date?.message}>
-            <Input type="date" max={new Date().toISOString().slice(0, 10)} {...register("certificate_date")} />
-          </Field>
-        </div>
-        <Field label="Issuing authority" optional error={errors.issuing_authority?.message}>
-          <Input placeholder="e.g. assaying and hallmarking centre" {...register("issuing_authority")} />
+      <Section step={3} title="Verification" description="How far the store vouches for this piece. The buyer's badge matches it exactly.">
+        <Field label="Verification level" error={errors.verification_level?.message} hint={LEVEL_HINT[level ?? "declared"]}>
+          <Select {...register("verification_level")}>
+            {VERIFICATION_LEVELS.map((l) => (
+              <option key={l} value={l}>
+                {VERIFICATION_LABEL[l]}
+              </option>
+            ))}
+          </Select>
         </Field>
-        <CertificateUpload file={certificate} onChange={setCertificate} existing={existingDocument} />
+        {level === "hallmark" && (
+          <Field label="HUID" error={errors.huid?.message} hint="The 6-character code laser-marked on the piece">
+            <Input autoComplete="off" maxLength={6} className="uppercase tracking-[0.2em]" placeholder="AB12CD" {...register("huid")} />
+          </Field>
+        )}
+        {level === "lab" && (
+          <>
+            <div className="grid gap-5 sm:grid-cols-2">
+              <Field label="Certificate ID" error={errors.certificate_id?.message}>
+                <Input autoComplete="off" placeholder="e.g. HM-26-014823" {...register("certificate_id")} />
+              </Field>
+              <Field label="Certificate date" error={errors.certificate_date?.message}>
+                <Input type="date" max={new Date().toISOString().slice(0, 10)} {...register("certificate_date")} />
+              </Field>
+            </div>
+            <Field label="Issuing authority" error={errors.issuing_authority?.message}>
+              <Input placeholder="e.g. assaying and hallmarking centre" {...register("issuing_authority")} />
+            </Field>
+            <CertificateUpload file={certificate} onChange={setCertificate} existing={existingDocument} />
+          </>
+        )}
       </Section>
 
       <Section step={4} title="Pricing" description="Each component is shown to the buyer. The total is added up for you.">
@@ -219,6 +277,59 @@ export function JewelleryForm({ defaultValues = emptyValues, submitLabel, cancel
             </Button>
           )}
         </div>
+      </Section>
+
+      <Section step={5} title="Listing and discount" description="Whether buyers can see the piece, and any offer on it.">
+        <Field label="Stock" error={errors.stock_status?.message}>
+          <Select {...register("stock_status")}>
+            {STOCK_STATUSES.map((s) => (
+              <option key={s} value={s}>
+                {STOCK_LABEL[s]}
+              </option>
+            ))}
+          </Select>
+        </Field>
+        <div className="space-y-1.5">
+          <label className="flex items-start gap-3">
+            <input type="checkbox" className="mt-0.5 size-4 accent-basalt" disabled={!canPublish} {...register("is_published")} />
+            <span>
+              <span className="block text-[13px] font-medium text-ink">Published</span>
+              <span className="block text-[13px] text-muted">
+                {canPublish
+                  ? "Buyers can see this piece and its QR code opens its page."
+                  : "Add a photo on the piece's page first. Until it's published, its QR code says the record wasn't found."}
+              </span>
+            </span>
+          </label>
+          {errors.is_published && (
+            <p role="alert" className="text-[13px] text-danger">
+              {errors.is_published.message}
+            </p>
+          )}
+        </div>
+        <div className="grid gap-5 sm:grid-cols-3">
+          <Field label="Discount" error={errors.discount_type?.message}>
+            <Select {...register("discount_type")}>
+              <option value="">No discount</option>
+              <option value="percent">Percent off</option>
+              <option value="flat">Flat amount off</option>
+            </Select>
+          </Field>
+          <Field label={discountType === "flat" ? "Amount off" : "Percent off"} error={errors.discount_value?.message}>
+            <Input
+              inputMode="decimal"
+              autoComplete="off"
+              disabled={!discountType}
+              prefix={discountType === "flat" ? "₹" : undefined}
+              suffix={discountType === "percent" ? <span className="pr-2 text-sm text-muted">%</span> : undefined}
+              {...register("discount_value")}
+            />
+          </Field>
+          <Field label="Ends on" optional error={errors.discount_ends_on?.message} hint="Last day of the offer">
+            <Input type="date" disabled={!discountType} {...register("discount_ends_on")} />
+          </Field>
+        </div>
+        <DiscountPreview input={toPreviewInput(values)} />
       </Section>
 
       <div className="sticky bottom-0 z-10 -mx-4 flex flex-col-reverse gap-2 border-t border-line bg-chalk/95 px-4 py-4 backdrop-blur sm:mx-0 sm:flex-row sm:justify-end sm:rounded-lg sm:border sm:bg-white sm:px-6">

@@ -6,10 +6,10 @@ import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { Skeleton } from "@/components/ui/skeleton";
 import type { Jewellery, SortField } from "@/types";
 import { cn } from "@/utils/cn";
-import { formatDate, formatINR, formatWeight } from "@/utils/format";
-import { StatusBadge } from "./StatusBadge";
+import { formatDate, formatINRRange, formatWeight } from "@/utils/format";
+import { LevelBadge, ListingBadge, StatusBadge } from "./StatusBadge";
 
-type ColumnKey = "id" | "type" | "purity" | "weight" | "certificate" | "price" | "status" | "created";
+type ColumnKey = "id" | "title" | "store" | "type" | "purity" | "weight" | "level" | "listing" | "price" | "status" | "created";
 
 interface Column {
   key: ColumnKey;
@@ -30,15 +30,20 @@ const COLUMNS: Record<ColumnKey, Column> = {
       </Link>
     ),
   },
-  type: { key: "type", label: "Type", sort: "type", render: (j) => j.type },
+  title: { key: "title", label: "Title", render: (j) => j.title },
+  store: { key: "store", label: "Store", render: (j) => j.store.name },
+  type: { key: "type", label: "Category", sort: "type", render: (j) => j.type },
   purity: { key: "purity", label: "Purity", render: (j) => j.purity },
   weight: { key: "weight", label: "Net weight", sort: "net_weight", align: "right", render: (j) => formatWeight(j.net_weight) },
-  certificate: {
-    key: "certificate",
-    label: "Certificate ID",
-    render: (j) => j.certificate_id ?? <span className="text-muted">None</span>,
+  level: { key: "level", label: "Verification", render: (j) => <LevelBadge level={j.verification_level} /> },
+  listing: { key: "listing", label: "Listing", render: (j) => <ListingBadge published={j.is_published} stock={j.stock_status} /> },
+  price: {
+    key: "price",
+    label: "Price now",
+    sort: "total_price",
+    align: "right",
+    render: (j) => formatINRRange(j.price.final_min, j.price.final_max),
   },
-  price: { key: "price", label: "Price", sort: "total_price", align: "right", render: (j) => formatINR(j.total_price) },
   status: { key: "status", label: "Status", render: (j) => <StatusBadge status={j.status} /> },
   created: { key: "created", label: "Created", sort: "created_at", render: (j) => formatDate(j.created_at) },
 };
@@ -161,13 +166,13 @@ export function JewelleryTable({ items, columns, loading, skeletonRows = 5, sort
                   <div className="min-w-0">
                     {COLUMNS.id.render(j)}
                     <p className="mt-0.5 truncate text-sm text-ink">
-                      {j.type}, {j.purity}, {formatWeight(j.net_weight)}
+                      {j.title}, {j.purity}, {formatWeight(j.net_weight)}
                     </p>
                   </div>
                   <StatusBadge status={j.status} />
                 </div>
                 <div className="mt-3 flex items-center justify-between">
-                  <span className="tabular text-[15px] font-semibold text-ink">{formatINR(j.total_price)}</span>
+                  <span className="tabular text-[15px] font-semibold text-ink">{formatINRRange(j.price.final_min, j.price.final_max)}</span>
                   <RowActions item={j} onDeactivate={onDeactivate} />
                 </div>
               </li>
