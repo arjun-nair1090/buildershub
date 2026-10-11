@@ -6,6 +6,7 @@ import { PublicLayout } from "@/components/layout/PublicLayout";
 import { AuthProvider } from "@/hooks/useAuth";
 import { LandingPage } from "@/pages/LandingPage";
 import { NotFoundPage } from "@/pages/NotFoundPage";
+import { StorePage } from "@/pages/StorePage";
 import { VerifyLookupPage } from "@/pages/VerifyLookupPage";
 import { VerifyPage } from "@/pages/VerifyPage";
 
@@ -47,6 +48,7 @@ export default function App() {
               <Route index element={<LandingPage />} />
               <Route path="verify" element={<VerifyLookupPage />} />
               <Route path="verify/:token" element={<VerifyPage />} />
+              <Route path="stores/:slug" element={<StorePage />} />
               <Route path="*" element={<NotFoundPage />} />
             </Route>
 
