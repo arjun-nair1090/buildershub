@@ -471,6 +471,55 @@ class PiecePrice(BaseModel):
     final_max: Decimal
 
 
+# ---------- Public pages ----------
+
+class CardPrice(BaseModel):
+    """A piece's price as a card shows it: the same numbers as its page, without the breakdown."""
+
+    final_min: Decimal
+    final_max: Decimal
+    original_min: Decimal
+    original_max: Decimal
+    discount_label: str | None
+
+
+class PieceCard(BaseModel):
+    jewellery_id: str
+    title: str
+    type: str
+    purity: str
+    net_weight: Decimal
+    stock_status: StockStatus
+    cover: PhotoOut | None
+    price: CardPrice
+
+
+class DesignCard(BaseModel):
+    """Never carries a Jewellery ID or verification level: a design is not a verified piece."""
+
+    public_id: str
+    title: str
+    category: str
+    purity_options: list[str]
+    weight_min: Decimal
+    weight_max: Decimal
+    price_min: Decimal
+    price_max: Decimal
+    cover: PhotoOut | None
+
+
+class PublicStore(StoreRef):
+    address: str
+    latitude: Decimal
+    longitude: Decimal
+    phone: str | None
+    whatsapp: str | None
+    hours: str
+    photos: list[PhotoOut]
+    pieces: list[PieceCard]
+    designs: list[DesignCard]
+
+
 class PublicVerification(BaseModel):
     """Everything a buyer sees. No internal ids, no document paths, no admin data."""
 

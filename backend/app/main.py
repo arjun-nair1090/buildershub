@@ -4,7 +4,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
 from app.config import get_settings
-from app.routers import auth, designs, jewellery, photos, settings as settings_router, stores, verify
+from app.routers import auth, designs, jewellery, photos, public, settings as settings_router, stores, verify
 
 settings = get_settings()
 
@@ -43,6 +43,7 @@ app.include_router(stores.router)
 app.include_router(photos.router)
 app.include_router(designs.router)
 app.include_router(verify.router)
+app.include_router(public.router)
 app.include_router(settings_router.router)
 
 
