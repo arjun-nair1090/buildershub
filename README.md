@@ -1,10 +1,81 @@
-# Jewlerify — Jewellery Transparency & Verification
+<div align="center">
 
-A jeweller registers a piece of jewellery. The system gives it a unique Jewellery ID, a digital record and a QR code. A buyer scans the QR code with their phone camera and sees the registered details, the certificate reference and an itemised price breakdown. No app is needed.
+<a href="https://jewlerify.vercel.app"><img src="docs/readme/banner.svg" width="100%" alt="Jewlerify: every jewel, verified, near you. A gold bar, the Jewlerify wordmark and a phone scanning a QR tag into a verified badge."></a>
 
-> The system verifies that a QR code corresponds to a registered digital record. It does **not** physically test gold purity, detect counterfeits, or independently validate certification.
+<br>
 
-**Stack:** React 19 + TypeScript + Tailwind CSS v4 (shadcn-style components on Radix, Lucide icons) · FastAPI · PostgreSQL 16 · SQLAlchemy 2 + Alembic · JWT auth · `qrcode` + Pillow for QR generation.
+[![Live](https://img.shields.io/badge/live-jewlerify.vercel.app-D4AE6A?style=for-the-badge&labelColor=1F2427)](https://jewlerify.vercel.app)
+[![React](https://img.shields.io/badge/React_19-1F2427?style=for-the-badge&logo=react&logoColor=61DAFB)](https://react.dev)
+[![TypeScript](https://img.shields.io/badge/TypeScript-1F2427?style=for-the-badge&logo=typescript&logoColor=3178C6)](https://www.typescriptlang.org)
+[![Tailwind](https://img.shields.io/badge/Tailwind_v4-1F2427?style=for-the-badge&logo=tailwindcss&logoColor=38BDF8)](https://tailwindcss.com)
+[![FastAPI](https://img.shields.io/badge/FastAPI-1F2427?style=for-the-badge&logo=fastapi&logoColor=05998B)](https://fastapi.tiangolo.com)
+[![Postgres](https://img.shields.io/badge/PostgreSQL-1F2427?style=for-the-badge&logo=postgresql&logoColor=6BA6E0)](https://www.postgresql.org)
+[![Vercel](https://img.shields.io/badge/Vercel-1F2427?style=for-the-badge&logo=vercel&logoColor=white)](https://vercel.com)
+
+**A marketplace of local jewellery stores where every piece carries a QR tag.**<br>
+Scan it to see the piece's purity, weight and verification level, priced live from today's gold rate. Then find the store and walk in.
+
+[**Open the live site →**](https://jewlerify.vercel.app) &nbsp;·&nbsp; [How it works](#how-it-works) &nbsp;·&nbsp; [Run it locally](#3-setup--local-development) &nbsp;·&nbsp; [API](#7-api-summary)
+
+<br>
+
+<img src="docs/readme/tour.gif" width="92%" alt="A tour of the site: the home page with its photo hero and live gold rate, the stores and newest pieces, a search for chain, a piece page with its live price breakdown, the store page with its map, and saving a piece in the photo feed.">
+
+</div>
+
+<br>
+
+## How it works
+
+<img src="docs/readme/how-it-works.svg" width="100%" alt="Four steps: Register (the store lists a piece with photos, purity, weight and a QR tag), Scan (any phone camera opens it, no app needed), Verify (declared, hallmark or lab level, priced at today's gold rate), Visit (near me, call, WhatsApp or directions).">
+
+## What's inside
+
+<table>
+<tr>
+<td width="50%" valign="top">
+
+### 🔍 For buyers
+- **Scan or type a tag.** Every piece has its own page and QR code, with a swipeable photo gallery.
+- **Honest verification.** *Declared by store*, *Hallmark linked* (with the BIS HUID) or *Lab verified* (with the certificate). The badge always matches what's on record.
+- **Live pricing.** Gold value from the IBJA rate, making charges, tax and any discount, itemised and adding up to the rupee.
+- **Browse and search.** Filter by category, purity, weight, price and distance; Pieces, Designs and Stores tabs.
+- **Near me.** Sorts by distance with the location kept on your phone. Say no and pick a city instead.
+- **Photo feed.** Pinterest-style, with a heart to save pieces on your device. No account.
+
+</td>
+<td width="50%" valign="top">
+
+### 🏪 For stores
+- **Admin for stores, pieces and made-to-order designs**, with up to 6 photos each (resized, metadata stripped).
+- **Discounts** as a percentage or a flat amount, with an end date. The original price is struck through and the final price is shown largest.
+- **Stock and publishing.** In stock, reserved or sold; nothing is public until it has a photo.
+- **QR codes** that keep working when the piece changes.
+
+### 🛡️ Built to be trusted
+- Security headers and a strict content security policy on every page.
+- Rate limits on login and verify, shared across serverless instances, storing only hashed IPs.
+- A plain-language [privacy page](https://jewlerify.vercel.app/privacy): buyers' locations and saves never leave the phone.
+
+</td>
+</tr>
+</table>
+
+## Under the hood
+
+```mermaid
+flowchart LR
+    buyer(["📱 Buyer"]) -->|scan · browse| cdn["Vercel edge"]
+    store(["🏪 Store team"]) -->|admin| cdn
+    cdn --> spa["React 19 SPA<br/>Vite · Tailwind v4"]
+    cdn -->|/api| api["FastAPI<br/>(serverless Python)"]
+    api --> db[("PostgreSQL<br/>Neon")]
+    api -->|gold rate, cached| ibja["metals.dev<br/>IBJA rate"]
+```
+
+> Jewlerify shows what is registered against a QR code. It does **not** physically test gold purity, detect counterfeits, or independently validate certification.
+
+**Stack:** React 19 + TypeScript + Tailwind CSS v4 (shadcn-style components on Radix, Lucide icons) · FastAPI · PostgreSQL 16 · SQLAlchemy 2 + Alembic · JWT auth · `qrcode` + Pillow for QR codes and photos.
 
 ---
 

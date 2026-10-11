@@ -1,0 +1,90 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 330" width="1200" height="330" role="img" aria-label="How it works: a store registers a piece, the buyer scans its tag, sees it verified with a live price, and visits the store.">
+  <defs>
+    <linearGradient id="gold" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#F3DDA6"/>
+      <stop offset=".5" stop-color="#D4AE6A"/>
+      <stop offset="1" stop-color="#9C7637"/>
+    </linearGradient>
+    <style>
+      text { font-family: 'Segoe UI', Helvetica, Arial, sans-serif; }
+      .title { font-family: Georgia, 'Times New Roman', serif; font-size: 26px; fill: #F3F1EA; }
+      .cap { font-size: 15px; fill: #F3F1EA; fill-opacity: .62; }
+      .num { font-size: 13px; font-weight: 700; letter-spacing: 2px; fill: #E2C38A; }
+      .track { stroke-dasharray: 6 10; animation: march 1.2s linear infinite; }
+      .runner { animation: run 6s cubic-bezier(.65,0,.35,1) infinite; }
+      .ring { transform-box: fill-box; transform-origin: center; animation: ring 6s ease-out infinite; opacity: 0; }
+      .s2 { animation-delay: 1.5s; } .s3 { animation-delay: 3s; } .s4 { animation-delay: 4.5s; }
+      .float { animation: float 3s ease-in-out infinite; }
+      .blink { animation: blink 1.4s steps(1) infinite; }
+      @keyframes march { to { stroke-dashoffset: -32; } }
+      @keyframes run { 0% { transform: translateX(0); } 100% { transform: translateX(900px); } }
+      @keyframes ring { 0% { transform: scale(.9); opacity: .9; } 22% { transform: scale(1.6); opacity: 0; } 100% { opacity: 0; } }
+      @keyframes float { 50% { transform: translateY(-6px); } }
+      @keyframes blink { 50% { opacity: .25; } }
+      @media (prefers-reduced-motion: reduce) { * { animation: none !important; } }
+    </style>
+  </defs>
+
+  <rect width="1200" height="330" rx="22" fill="#1F2427"/>
+
+  <!-- the path a piece's story travels -->
+  <path class="track" d="M150 120H1050" stroke="#E2C38A" stroke-opacity=".55" stroke-width="3" fill="none"/>
+  <g class="runner"><circle cx="150" cy="120" r="7" fill="#F3DDA6"/><circle cx="150" cy="120" r="14" fill="#F3DDA6" opacity=".18"/></g>
+
+  <!-- 1 register: a tagged gold bar -->
+  <g transform="translate(150 120)">
+    <circle class="ring" r="52" fill="none" stroke="#E2C38A" stroke-width="3"/>
+    <circle r="52" fill="#15191B" stroke="#E2C38A" stroke-opacity=".6" stroke-width="2"/>
+    <g class="float" transform="translate(-30 -18)">
+      <path d="M12 12l5-11h26l5 11Z" fill="#FBF0D2"/>
+      <path d="M2 34h56l-10-22H12Z" fill="url(#gold)"/>
+      <rect x="40" y="22" width="20" height="16" rx="2" fill="#F3F1EA" transform="rotate(12 50 30)"/>
+      <path d="M44 27h4v4h-4zM51 26h4v4h-4zM46 33h3v3h-3z" fill="#1F2427" transform="rotate(12 50 30)"/>
+    </g>
+  </g>
+  <text class="num" x="150" y="210" text-anchor="middle">01</text>
+  <text class="title" x="150" y="244" text-anchor="middle">Register</text>
+  <text class="cap" x="150" y="272" text-anchor="middle">The store lists a piece:</text>
+  <text class="cap" x="150" y="292" text-anchor="middle">photos, purity, weight, QR tag</text>
+
+  <!-- 2 scan: a phone -->
+  <g transform="translate(450 120)">
+    <circle class="ring s2" r="52" fill="none" stroke="#E2C38A" stroke-width="3"/>
+    <circle r="52" fill="#15191B" stroke="#E2C38A" stroke-opacity=".6" stroke-width="2"/>
+    <rect x="-17" y="-29" width="34" height="58" rx="7" fill="none" stroke="#F3F1EA" stroke-width="3"/>
+    <rect x="-10" y="-17" width="20" height="20" rx="2" fill="#F3F1EA"/>
+    <path d="M-7-14h5v5h-5zM2-14h5v5h-5zM-7-5h5v5h-5zM3-4h3v3h-3z" fill="#1F2427"/>
+    <rect class="blink" x="-13" y="9" width="26" height="3" rx="1.5" fill="#E2C38A"/>
+  </g>
+  <text class="num" x="450" y="210" text-anchor="middle">02</text>
+  <text class="title" x="450" y="244" text-anchor="middle">Scan</text>
+  <text class="cap" x="450" y="272" text-anchor="middle">Any phone camera opens</text>
+  <text class="cap" x="450" y="292" text-anchor="middle">the piece. No app needed.</text>
+
+  <!-- 3 verify: badge and live price -->
+  <g transform="translate(750 120)">
+    <circle class="ring s3" r="52" fill="none" stroke="#4CAF7A" stroke-width="3"/>
+    <circle r="52" fill="#15191B" stroke="#E2C38A" stroke-opacity=".6" stroke-width="2"/>
+    <circle cy="-8" r="18" fill="#2F7A55"/>
+    <path d="M-8-8l5 5 11-11" fill="none" stroke="#fff" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/>
+    <text y="30" text-anchor="middle" font-size="15" font-weight="700" fill="#E2C38A">₹ live</text>
+  </g>
+  <text class="num" x="750" y="210" text-anchor="middle">03</text>
+  <text class="title" x="750" y="244" text-anchor="middle">Verify</text>
+  <text class="cap" x="750" y="272" text-anchor="middle">Declared, hallmark or lab level,</text>
+  <text class="cap" x="750" y="292" text-anchor="middle">priced at today's gold rate</text>
+
+  <!-- 4 visit: map pin -->
+  <g transform="translate(1050 120)">
+    <circle class="ring s4" r="52" fill="none" stroke="#E2C38A" stroke-width="3"/>
+    <circle r="52" fill="#15191B" stroke="#E2C38A" stroke-opacity=".6" stroke-width="2"/>
+    <g class="float">
+      <path d="M0 26C-14 8-20-2-20-12a20 20 0 0 1 40 0c0 10-6 20-20 38Z" fill="url(#gold)"/>
+      <circle cy="-12" r="7" fill="#15191B"/>
+    </g>
+  </g>
+  <text class="num" x="1050" y="210" text-anchor="middle">04</text>
+  <text class="title" x="1050" y="244" text-anchor="middle">Visit</text>
+  <text class="cap" x="1050" y="272" text-anchor="middle">Near me, call, WhatsApp</text>
+  <text class="cap" x="1050" y="292" text-anchor="middle">or get directions</text>
+</svg>
