@@ -6,8 +6,10 @@ from app.constants import PURITY_PERCENT
 from app.database import get_db
 from app.models import Jewellery
 from app.schemas import PublicVerification, StoreRef
+from app.services.cards import price_now
 from app.services.photos import photo_out
-from app.services.pricing import gold_rate_out, piece_price, pricing_context
+from app.services.pricing import gold_rate_out, pricing_context
+from app.services.similar import similar_pieces
 
 router = APIRouter(prefix="/api/verify", tags=["public verification"])
 
@@ -39,6 +41,7 @@ def verify(token: str = Code, db: Session = Depends(get_db)) -> PublicVerificati
     item = visible_piece(db, token)
     ctx = pricing_context(db)
     lab = item.verification_level == "lab"
+    price = price_now(item, ctx)
 
     return PublicVerification(
         jewellery_id=item.jewellery_id,
@@ -62,5 +65,6 @@ def verify(token: str = Code, db: Session = Depends(get_db)) -> PublicVerificati
         record_status="ACTIVE",
         registered_on=item.created_at.date(),
         gold_rate=gold_rate_out(ctx.rate) if ctx.rate else None,
-        price=piece_price(item, ctx.rate, ctx.gst_percent, ctx.today),
+        price=price,
+        similar=similar_pieces(db, item, price, ctx),
     )

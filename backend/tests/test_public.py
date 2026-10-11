@@ -1,4 +1,5 @@
 from tests.test_designs import DESIGN, jpeg
+from tests.test_stores import STORE
 
 
 def published_design(client, auth, **changes) -> str:
@@ -100,3 +101,50 @@ def test_design_page_hides_drafts_and_inactive_stores(client, auth):
     client.post("/api/stores/test-store/deactivate", headers=auth)
     res = client.get(f"/api/public/designs/{pid}")
     assert res.status_code == 410 and res.json() == {"detail": "Design no longer listed"}
+
+
+# ---------- Similar pieces ----------
+# The payload is a 22K Ring at a registered price of 125000 (no gold rate in tests). Within ±30%: 87500-162500.
+
+def similar_ids(client, piece) -> list[str]:
+    res = client.get(f"/api/verify/{piece['verification_token']}")
+    assert res.status_code == 200, res.text
+    return [c["jewellery_id"] for c in res.json()["similar"]]
+
+
+def test_similar_pieces_rank_by_category_then_purity_then_price(client, publish):
+    me = publish()
+    a = publish(title="Ring, 22K, near")                                      # 4 + 2 + 1 = 7
+    b = publish(title="Ring, 18K, near", purity="18K")                        # 4 + 1 = 5
+    c = publish(title="Ring, 22K, far", gold_value="500000")                  # 4 + 2 = 6
+    d = publish(title="Necklace, 22K, near", type="Necklace")                 # 2 + 1 = 3
+    e = publish(title="Necklace, 18K, same price", type="Necklace", purity="18K")                     # 1, gap 0
+    g = publish(title="Necklace, 18K, a bit dearer", type="Necklace", purity="18K", gold_value="103500")  # 1, gap 5000
+    publish(title="Necklace, 18K, far", type="Necklace", purity="18K", gold_value="500000")         # 0: left out
+
+    assert similar_ids(client, me) == [x["jewellery_id"] for x in (a, c, b, d, e, g)]
+
+
+def test_similar_pieces_leave_out_what_a_buyer_cant_buy_here(client, auth, payload, publish):
+    me = publish()
+    keep = publish(title="Keep")
+    publish(title="Sold", stock_status="sold")
+    client.post("/api/jewellery", json=payload, headers=auth)  # a draft
+    gone = publish(title="Gone")
+    client.delete(f"/api/jewellery/{gone['jewellery_id']}", headers=auth)
+    other_store = client.post("/api/stores", json=STORE, headers=auth).json()["slug"]
+    publish(title="Elsewhere", store=other_store)
+
+    assert similar_ids(client, me) == [keep["jewellery_id"]]
+    assert similar_ids(client, keep) == [me["jewellery_id"]]  # never the piece itself
+
+
+def test_similar_pieces_empty_and_capped_at_eight(client, publish):
+    me = publish()
+    assert similar_ids(client, me) == []
+
+    for i in range(9):
+        publish(title=f"Ring {i}")
+    ids = similar_ids(client, me)
+    assert len(ids) == 8 and me["jewellery_id"] not in ids
+    assert client.get(f"/api/verify/{ids[0]}").status_code == 200  # cards link by Jewellery ID

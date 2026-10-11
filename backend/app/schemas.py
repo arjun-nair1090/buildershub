@@ -562,6 +562,7 @@ class PublicVerification(BaseModel):
     registered_on: date
     gold_rate: GoldRateOut | None
     price: PiecePrice
+    similar: list[PieceCard]  # up to 8 from the same store; empty is normal
 
 
 JewelleryOut.model_rebuild()

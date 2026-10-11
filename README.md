@@ -180,7 +180,9 @@ Interactive docs: http://localhost:8010/docs
 | PUT / DELETE | `/api/photos/{public_id}` | admin | Edit alt text / delete a photo |
 | GET | `/api/photos/{public_id}/full`, `/thumb` | public* | The image. *Public while its owner is visible to buyers, admin-only otherwise |
 | GET / PUT | `/api/settings` | admin | GST % and the current gold rate |
-| GET | `/api/verify/{token}` | public | Buyer view: store, photos, verification level, live gold rate and price. `404` not found or unpublished, `410` inactive (no details returned) |
+| GET | `/api/verify/{token}` | public | Buyer view: store, photos, verification level, live gold rate, price and up to 8 similar pieces from the same store. `404` not found or unpublished, `410` inactive (no details returned) |
+| GET | `/api/public/stores/{slug}` | public | Store page: details, photos, its pieces (sold last) and designs as cards. `404` unknown, `410` inactive |
+| GET | `/api/public/designs/{public_id}` | public | Design page. `404` unknown or unpublished, `410` store inactive |
 
 Validation errors return `422` as `{"detail": "...", "fields": {"field": "message"}}`.
 
