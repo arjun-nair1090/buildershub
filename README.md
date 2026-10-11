@@ -110,9 +110,12 @@ The Vite dev server forwards `/api/*` to the backend, so the frontend and API sh
 Created by the Alembic migrations in `alembic/versions/`:
 
 - **`users`**: `id, name, email, password_hash, role, status, token_version, created_at`
-- **`jewellery`**: `id, jewellery_id, type, description, colour, design_details, photo, purity, gross_weight, net_weight, certificate_id, issuing_authority, certificate_date, certificate_document, gold_value, making_charges, other_component_value, tax, total_price, making_percent_min, making_percent_max, verification_token, status, created_at, updated_at`
-- **`certificate_files`**: uploaded certificate documents and product photos (`name, data`)
-- **`store_settings`**: one row with the shop-wide `store_name` and `gst_percent`
+- **`stores`**: `id, slug, name, address, area, city, latitude, longitude, phone, whatsapp, hours, status, created_at, updated_at`
+- **`jewellery`** (pieces): `id, jewellery_id, verification_token, store_id, title, type, description, colour, design_details, purity, gross_weight, net_weight, verification_level, huid, certificate_id, issuing_authority, certificate_date, certificate_document, gold_value, making_charges, other_component_value, tax, total_price, making_percent_min, making_percent_max, discount_type, discount_value, discount_ends_on, stock_status, is_published, status, created_at, updated_at`
+- **`designs`** (made to order): `id, public_id, store_id, title, description, category, purity_options, weight_min, weight_max, price_min, price_max, making_days_min, making_days_max, is_published, created_at, updated_at`
+- **`photos`**: one row per photo of a store, piece or design (`public_id, store_id | piece_id | design_id, position, alt_text, image, thumbnail, width, height`). Uploads are resized to 1600 px and 600 px JPEGs with their metadata (including GPS) removed.
+- **`certificate_files`**: uploaded certificate documents (`name, data`)
+- **`store_settings`**: one row with the marketplace-wide `gst_percent`
 - **`gold_rates`**: each successful market fetch (`inr_per_gram_24k, source, fetched_at`); the latest is the current rate
 
 Money is stored as `NUMERIC(12,2)` and weights as `NUMERIC(10,3)`, so there's no floating-point rounding. Check constraints enforce `net_weight <= gross_weight` and a valid `status`.
@@ -120,7 +123,7 @@ Money is stored as `NUMERIC(12,2)` and weights as `NUMERIC(10,3)`, so there's no
 ```bash
 alembic upgrade head      # apply migrations
 alembic downgrade base    # drop everything
-python seed.py            # idempotent: adds missing pieces, removes the old demo records
+python seed.py            # idempotent: adds the placeholder store and any missing pieces
 ```
 
 ## 6. Demo login
@@ -144,7 +147,7 @@ Change `SEED_ADMIN_PASSWORD` before seeding anything other than a local demo.
 | JWL-26-EMQXKD, Jaguar bracelet, 6.14 g | `/verify/YDYXKM846872` |
 | unknown | `/verify/ABCDEFGHJKMN` (not found) |
 
-All five are 22K with no certificate reference yet, so they show as *Registered record* until a certificate ID is added. Set the store name under **Store settings**.
+All five are 22K and start as *Declared by store*, on a placeholder store in Mumbai. Edit the store (name, address, map location, phone, hours) under **Stores**, and raise a piece to Hallmark linked or Lab verified from its Edit page.
 
 Buyers can also type the printed Jewellery ID at `/verify`.
 
@@ -159,17 +162,25 @@ Interactive docs: http://localhost:8010/docs
 | GET | `/api/auth/me` | admin | Current user |
 | GET | `/api/jewellery` | admin | List with `search`, `type`, `purity`, `status`, `sort`, `order`, `page`, `page_size` |
 | POST | `/api/jewellery` | admin | Register a piece. Total is calculated unless `total_price` is given |
-| GET | `/api/jewellery/stats` | admin | Total / active / verified / inactive counts |
-| GET | `/api/jewellery/{jewellery_id}` | admin | One record |
+| GET | `/api/jewellery/stats` | admin | Pieces (total / published / in stock / inactive), stores and designs |
+| POST | `/api/jewellery/price-preview` | admin | The price buyers would see for the given figures and discount |
+| GET | `/api/jewellery/{jewellery_id}` | admin | One record, with its current price |
 | PUT | `/api/jewellery/{jewellery_id}` | admin | Update (QR stays the same) |
 | DELETE | `/api/jewellery/{jewellery_id}` | admin | Deactivate (soft delete) |
 | POST | `/api/jewellery/{jewellery_id}/activate` | admin | Reactivate |
 | GET | `/api/jewellery/{jewellery_id}/qr` | admin | Print-resolution QR PNG (~1200 px, 300 dpi) |
 | POST / GET / DELETE | `/api/jewellery/{jewellery_id}/certificate` | admin | Upload / download / remove certificate (PDF, JPG, PNG, ≤ 4 MB) |
-| POST / GET / DELETE | `/api/jewellery/{jewellery_id}/photo` | admin | Upload / view / remove the product photo (JPG, PNG, ≤ 4 MB) |
-| GET / PUT | `/api/settings` | admin | Store name, GST %, and the current gold rate |
-| GET | `/api/verify/{token}` | public | Buyer view, with store name, live gold rate and live price. `404` not found, `410` inactive (no details returned) |
-| GET | `/api/verify/{token}/photo` | public | The product photo, for active records only |
+| GET / POST | `/api/stores` | admin | List (with piece and design counts) / add a store |
+| GET / PUT / DELETE | `/api/stores/{slug}` | admin | One store / update / delete (`409` while it has pieces or designs) |
+| POST | `/api/stores/{slug}/activate`, `/deactivate` | admin | Show or hide the store and everything it sells |
+| GET / POST | `/api/designs` | admin | List with `store`, `published` / add a made-to-order design |
+| GET / PUT / DELETE | `/api/designs/{public_id}` | admin | One design / update / delete |
+| POST | `/api/{stores\|jewellery\|designs}/{key}/photos` | admin | Upload a photo (JPG, PNG, ≤ 4 MB; up to 6) |
+| PUT | `/api/{stores\|jewellery\|designs}/{key}/photos/order` | admin | Reorder photos; the first is the cover |
+| PUT / DELETE | `/api/photos/{public_id}` | admin | Edit alt text / delete a photo |
+| GET | `/api/photos/{public_id}/full`, `/thumb` | public* | The image. *Public while its owner is visible to buyers, admin-only otherwise |
+| GET / PUT | `/api/settings` | admin | GST % and the current gold rate |
+| GET | `/api/verify/{token}` | public | Buyer view: store, photos, verification level, live gold rate and price. `404` not found or unpublished, `410` inactive (no details returned) |
 
 Validation errors return `422` as `{"detail": "...", "fields": {"field": "message"}}`.
 
@@ -179,10 +190,11 @@ Validation errors return `422` as `{"detail": "...", "fields": {"field": "messag
 2. **Generate.** `GET /api/jewellery/{id}/qr` encodes `{PUBLIC_BASE_URL}/verify/{token}` with error correction level Q, rendered in brand basalt at ~1200 px with the Jewellery ID printed underneath.
 3. **Scan.** Any phone camera opens the URL in the browser.
 4. **Verify.** The page calls `GET /api/verify/{token}`:
-   - **Active with a certificate reference** → *Verified record*
-   - **Active without a certificate reference** → *Registered record* (honest about the missing certificate)
-   - **Deactivated** → *Record inactive*, with no jewellery details shown
-   - **Unknown** → *Verification record not found*
+   - **Lab verified** → certificate ID, issuer and date shown; a certificate file is on record
+   - **Hallmark linked** → the BIS HUID is shown
+   - **Declared by store** → the store's own details, with no certificate or HUID vouched for
+   - **Deactivated, or the store is inactive** → *Record inactive*, with no jewellery details shown
+   - **Unknown or unpublished** → *Verification record not found*
 
    The public response contains only buyer-facing fields: no internal ids, token, document path or admin data.
 
@@ -194,10 +206,12 @@ With `METALS_DEV_API_KEY` or `GOLDAPI_KEY` set, the buyer page shows a live gold
 
 - **Gold value** = net gold weight × (market rate per gram of pure gold × purity, e.g. 91.6% for 22K)
 - **Making charges** = the item's making range in % of that gold value (set per item; without a range, the fixed amount)
-- **Tax** = the store's GST % on gold value + making charges + other components
-- **Live price** = the sum, shown as a range when making charges are a range
+- **Tax** = the GST % on gold value + making charges + other components
+- **Original price** = the sum, shown as a range when making charges are a range
+- **Discount** = a percent or flat amount off both ends (at most 90%), until its end date; never on sold pieces
+- **Final price** = original − discount. Every line is rounded to the rupee first, so the lines add up exactly.
 
-With metals.dev the rate is the IBJA (India Bullion and Jewellers Association) benchmark, which includes import duty and tracks Indian shop rates; IBJA publishes it twice on working days. GoldAPI.io gives the international spot price in INR, which leaves out import duty and so runs below a typical Indian retail board rate. An open page re-checks every minute; the server calls the API at most once per `GOLD_RATE_TTL_MINUTES`, and after a failed call it keeps using the last known rate and waits 5 minutes before trying again. The registered price stays on the page for reference.
+With metals.dev the rate is the IBJA (India Bullion and Jewellers Association) benchmark, which includes import duty and tracks Indian shop rates; IBJA publishes it twice on working days. GoldAPI.io gives the international spot price in INR, which leaves out import duty and so runs below a typical Indian retail board rate. An open page re-checks every minute; the server calls the API at most once per `GOLD_RATE_TTL_MINUTES`, and after a failed call it keeps using the last known rate and waits 5 minutes before trying again. If no rate has ever been fetched, the registered amounts are used instead, so a price always shows.
 
 ## 9. Testing
 
