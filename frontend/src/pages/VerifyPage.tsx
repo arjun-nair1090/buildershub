@@ -3,11 +3,12 @@ import { useCallback, useEffect, useState, type CSSProperties, type ReactNode } 
 import { Link, useParams } from "react-router-dom";
 import { HallmarkStamp } from "@/components/jewellery/HallmarkStamp";
 import { PriceBreakdown } from "@/components/jewellery/PriceBreakdown";
+import { Gallery } from "@/components/public/Gallery";
+import { PieceTile } from "@/components/public/PieceTile";
 import { Skeleton } from "@/components/ui/skeleton";
 import { GoldRateTape, GoldRateTicker } from "@/components/verify/GoldRateTicker";
 import { RecordUnavailable } from "@/components/verify/RecordUnavailable";
 import { ApiError, errorMessage } from "@/services/api";
-import { photoService } from "@/services/photos";
 import { verifyService } from "@/services/verify";
 import { STOCK_LABEL, VERIFICATION_LABEL, type PublicVerification, type VerificationLevel } from "@/types";
 import { formatDate, formatPurity, formatWeight } from "@/utils/format";
@@ -86,33 +87,11 @@ function ResultBanner({ record, checkedAt }: { record: PublicVerification; check
       {/* A tab of the white card reaching up into the banner: whose piece this is. */}
       <p className="absolute bottom-0 left-3 max-w-[calc(100%-1.5rem)] truncate rounded-t-lg bg-white px-4 pb-1 pt-3 font-display text-[24px] leading-tight text-ink sm:left-6">
         <span className="sr-only">Store: </span>
-        {record.store.name}
+        <Link to={`/stores/${record.store.slug}`} className="underline-offset-4 hover:underline">
+          {record.store.name}
+        </Link>
       </p>
     </div>
-  );
-}
-
-function ProductPhoto({ record }: { record: PublicVerification }) {
-  const cover = record.photos[0];
-  if (!cover) return null;
-  return (
-    <a
-      href={photoService.url(cover.public_id, "full")}
-      target="_blank"
-      rel="noreferrer"
-      className="block overflow-hidden rounded-md border border-gold/50 p-1"
-      aria-label="Open the product photo"
-    >
-      <img
-        src={photoService.url(cover.public_id, "thumb")}
-        alt={cover.alt}
-        width={cover.width}
-        height={cover.height}
-        className="aspect-[3/4] w-28 rounded-[3px] object-cover sm:w-36"
-        loading="eager"
-        decoding="async"
-      />
-    </a>
   );
 }
 
@@ -132,6 +111,12 @@ function VerifiedRecord({ record, checkedAt }: { record: PublicVerification; che
       <article className="bg-white sm:rounded-lg sm:border sm:border-line sm:shadow-[0_30px_60px_-40px_rgba(21,25,27,0.45)]">
         <ResultBanner record={record} checkedAt={checkedAt} />
 
+        {record.photos.length > 0 && (
+          <div className="rise px-5 pt-7 sm:px-8" style={delay(120)}>
+            <Gallery photos={record.photos} sizes="(min-width: 1024px) 520px, (min-width: 640px) 560px, 100vw" />
+          </div>
+        )}
+
         <section className="rise flex items-start justify-between gap-4 px-5 py-7 sm:px-8" style={delay(150)}>
           <div className="min-w-0">
             <p className="text-[13px] font-semibold text-gold-deep">Jewellery details</p>
@@ -147,7 +132,6 @@ function VerifiedRecord({ record, checkedAt }: { record: PublicVerification; che
           </div>
           <div className="flex shrink-0 flex-col items-center gap-3">
             <HallmarkStamp purity={record.purity} percent={record.purity_percent} size="lg" className="mt-1 animate-[strike_650ms_450ms_cubic-bezier(.22,1,.36,1)_both]" />
-            <ProductPhoto record={record} />
           </div>
         </section>
 
@@ -262,12 +246,34 @@ function VerifiedRecord({ record, checkedAt }: { record: PublicVerification; che
         </div>
       )}
 
+      <SimilarPieces record={record} />
+
       <p className="px-5 py-8 text-center text-sm lg:col-span-2">
         <Link to="/verify" className="font-medium text-basalt underline-offset-4 hover:underline">
           Verify another item
         </Link>
       </p>
     </div>
+  );
+}
+
+/** Same store only. A scroller on phones, a grid on desktop. Not rendered when there are none. */
+function SimilarPieces({ record }: { record: PublicVerification }) {
+  if (record.similar.length === 0) return null;
+  return (
+    <section className="rise mt-10 lg:col-span-2" style={delay(660)} aria-labelledby="similar-heading">
+      <div className="px-5 sm:px-0">
+        <h2 id="similar-heading" className="font-display text-[24px] leading-tight text-ink">Similar pieces</h2>
+        <p className="mt-1 text-sm text-muted">More from {record.store.name}</p>
+      </div>
+      <div className="mt-5 flex snap-x gap-4 overflow-x-auto px-5 pb-2 [scrollbar-width:none] sm:px-0 lg:grid lg:grid-cols-4 lg:overflow-visible [&::-webkit-scrollbar]:hidden">
+        {record.similar.map((piece) => (
+          <div key={piece.jewellery_id} className="w-40 shrink-0 snap-start sm:w-48 lg:w-auto">
+            <PieceTile piece={piece} />
+          </div>
+        ))}
+      </div>
+    </section>
   );
 }
 
