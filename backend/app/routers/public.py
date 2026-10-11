@@ -1,11 +1,11 @@
-"""Pages buyers open without logging in: a store, and (in this router) a design. Read-only."""
+"""Pages buyers open without logging in: a store and a design. Read-only."""
 from fastapi import APIRouter, Depends, HTTPException, Path, status
 from sqlalchemy import case, select
 from sqlalchemy.orm import Session
 
 from app.database import get_db
 from app.models import Design, Jewellery, Store
-from app.schemas import PublicStore
+from app.schemas import PublicDesign, PublicStore, StoreRef
 from app.services.cards import design_card, piece_card, price_now
 from app.services.photos import photo_out
 from app.services.pricing import pricing_context
@@ -13,6 +13,7 @@ from app.services.pricing import pricing_context
 router = APIRouter(prefix="/api/public", tags=["public pages"])
 
 Slug = Path(min_length=1, max_length=80, pattern=r"^[A-Za-z0-9\-]+$")
+DesignId = Path(min_length=4, max_length=12, pattern=r"^[A-Za-z0-9]+$")
 SOLD_LAST = case((Jewellery.stock_status == "sold", 1), else_=0)
 
 
@@ -54,4 +55,33 @@ def store_page(slug: str = Slug, db: Session = Depends(get_db)) -> PublicStore:
         photos=[photo_out(p, store.name) for p in store.photos],
         pieces=[piece_card(p, price_now(p, ctx)) for p in pieces],
         designs=[design_card(d) for d in designs],
+    )
+
+
+@router.get(
+    "/designs/{public_id}",
+    response_model=PublicDesign,
+    responses={404: {"description": "No such design"}, 410: {"description": "Store inactive"}},
+)
+def design_page(public_id: str = DesignId, db: Session = Depends(get_db)) -> PublicDesign:
+    design = db.scalar(select(Design).where(Design.public_id == public_id.upper()))
+    if design is None or not design.is_published:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Design not found")
+    if design.store.status != "active":
+        raise HTTPException(status_code=status.HTTP_410_GONE, detail="Design no longer listed")
+
+    return PublicDesign(
+        public_id=design.public_id,
+        store=StoreRef.model_validate(design.store),
+        title=design.title,
+        description=design.description,
+        category=design.category,
+        purity_options=design.purities,
+        weight_min=design.weight_min,
+        weight_max=design.weight_max,
+        price_min=design.price_min,
+        price_max=design.price_max,
+        making_days_min=design.making_days_min,
+        making_days_max=design.making_days_max,
+        photos=[photo_out(p, design.title) for p in design.photos],
     )

@@ -520,6 +520,22 @@ class PublicStore(StoreRef):
     designs: list[DesignCard]
 
 
+class PublicDesign(BaseModel):
+    public_id: str
+    store: StoreRef
+    title: str
+    description: str | None
+    category: str
+    purity_options: list[str]
+    weight_min: Decimal
+    weight_max: Decimal
+    price_min: Decimal
+    price_max: Decimal
+    making_days_min: int
+    making_days_max: int
+    photos: list[PhotoOut]
+
+
 class PublicVerification(BaseModel):
     """Everything a buyer sees. No internal ids, no document paths, no admin data."""
 

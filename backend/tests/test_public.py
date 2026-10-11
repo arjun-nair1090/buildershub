@@ -72,3 +72,31 @@ def test_card_prices_match_the_piece_page(client, publish):
         assert card["discount_label"] == (page["discount"]["label"] if page["discount"] else None)
     assert cards[deal["jewellery_id"]]["discount_label"] == "10% off"
     assert cards[sold["jewellery_id"]]["discount_label"] is None  # a sold piece shows no discount
+
+
+# ---------- Design page ----------
+
+def test_design_page(client, auth):
+    pid = published_design(client, auth)
+    res = client.get(f"/api/public/designs/{pid.lower()}")  # typed in another case
+    assert res.status_code == 200, res.text
+    body = res.json()
+    assert body["public_id"] == pid and body["title"] == "Temple necklace"
+    assert body["store"] == {"slug": "test-store", "name": "Test Jewellers", "area": "Test Area", "city": "Mumbai"}
+    assert body["purity_options"] == ["22K", "18K"]
+    assert (body["making_days_min"], body["making_days_max"]) == (14, 21)
+    assert len(body["photos"]) == 1
+    for absent in ("jewellery_id", "verification_level", "is_published", "id", "created_at", "updated_at"):
+        assert absent not in body
+
+
+def test_design_page_hides_drafts_and_inactive_stores(client, auth):
+    draft = client.post("/api/designs", json=DESIGN, headers=auth).json()["public_id"]
+    for pid in (draft, "DSN0000000"):
+        res = client.get(f"/api/public/designs/{pid}")
+        assert res.status_code == 404 and res.json() == {"detail": "Design not found"}
+
+    pid = published_design(client, auth)
+    client.post("/api/stores/test-store/deactivate", headers=auth)
+    res = client.get(f"/api/public/designs/{pid}")
+    assert res.status_code == 410 and res.json() == {"detail": "Design no longer listed"}
