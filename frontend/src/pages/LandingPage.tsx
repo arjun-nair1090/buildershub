@@ -101,7 +101,7 @@ export function LandingPage() {
         />
         <div
           aria-hidden
-          className="absolute inset-0 -z-10 bg-gradient-to-t from-basalt via-basalt/85 to-basalt/40 lg:bg-gradient-to-r lg:from-basalt lg:from-45% lg:via-basalt/70 lg:via-60% lg:to-transparent"
+          className="absolute inset-0 -z-10 bg-gradient-to-t from-basalt via-basalt/85 to-basalt/40 lg:bg-gradient-to-r lg:from-basalt lg:from-50% lg:via-basalt/70 lg:via-65% lg:to-transparent"
         />
         <div className="mx-auto max-w-6xl px-4 pb-16 pt-28 sm:px-6 sm:pt-36 lg:pb-28 lg:pt-24">
           <div className="max-w-xl">

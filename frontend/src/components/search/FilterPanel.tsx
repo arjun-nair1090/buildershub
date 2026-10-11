@@ -11,7 +11,7 @@ interface FilterPanelProps {
 
 function Group({ title, children }: { title: string; children: ReactNode }) {
   return (
-    <fieldset className="border-t border-line py-4 first:border-t-0 first:pt-0">
+    <fieldset className="pb-5">
       <legend className="mb-2.5 text-[13px] font-semibold text-gold-deep">{title}</legend>
       {children}
     </fieldset>
