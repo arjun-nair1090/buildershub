@@ -1,6 +1,6 @@
 import re
 from datetime import date, datetime
-from decimal import Decimal
+from decimal import Decimal, InvalidOperation
 from typing import Annotated, Literal
 
 from pydantic import BaseModel, ConfigDict, Field, ValidationInfo, field_validator, model_validator
@@ -26,6 +26,7 @@ Weight = Annotated[Decimal, Field(gt=0, le=100000, max_digits=10, decimal_places
 Money = Annotated[Decimal, Field(ge=0, le=999999999, max_digits=12, decimal_places=2)]
 Percent = Annotated[Decimal, Field(ge=0, le=100, max_digits=5, decimal_places=2)]
 Slug = Annotated[str, Field(min_length=2, max_length=80, pattern=r"^[a-z0-9]+(?:-[a-z0-9]+)*$")]
+Phone = Annotated[str, Field(pattern=r"^\+?\d{8,15}$")]
 
 
 # ---------- Auth ----------
@@ -104,6 +105,65 @@ class PhotoOut(BaseModel):
     width: int
     height: int
     position: int
+
+
+# ---------- Stores ----------
+
+class StoreIn(BaseModel):
+    name: str = Field(min_length=2, max_length=120)
+    slug: Slug | None = None  # generated from the name when omitted
+    address: str = Field(min_length=5, max_length=500)
+    area: str = Field(min_length=2, max_length=80)
+    city: str = Field(min_length=2, max_length=80)
+    latitude: Decimal = Field(ge=-90, le=90)
+    longitude: Decimal = Field(ge=-180, le=180)
+    phone: Phone | None = None
+    whatsapp: Phone | None = None
+    hours: str = Field(min_length=2, max_length=200)
+
+    @field_validator("name", "address", "area", "city", "hours", mode="before")
+    @classmethod
+    def strip(cls, v: object) -> object:
+        return v.strip() if isinstance(v, str) else v
+
+    @field_validator("slug", mode="before")
+    @classmethod
+    def normalise_slug(cls, v: object) -> object:
+        if isinstance(v, str):
+            return v.strip().lower() or None
+        return v
+
+    @field_validator("phone", "whatsapp", mode="before")
+    @classmethod
+    def digits_only(cls, v: object) -> object:
+        """Accepts "+91 98200 00000" or "(022) 2345-6789" and stores just the digits and a leading +."""
+        if isinstance(v, str):
+            return re.sub(r"[\s\-().]", "", v) or None
+        return v
+
+    @field_validator("latitude", "longitude", mode="before")
+    @classmethod
+    def six_places(cls, v: object) -> object:
+        """Pasted map coordinates often have 8+ decimals; 6 is about 10 cm."""
+        try:
+            return Decimal(str(v)).quantize(Decimal("0.000001"))
+        except (InvalidOperation, ValueError):
+            return v
+
+
+class StoreOut(StoreRef):
+    address: str
+    latitude: Decimal
+    longitude: Decimal
+    phone: str | None
+    whatsapp: str | None
+    hours: str
+    status: str
+    piece_count: int
+    design_count: int
+    photos: list[PhotoOut]
+    created_at: datetime
+    updated_at: datetime
 
 
 # ---------- Jewellery ----------
