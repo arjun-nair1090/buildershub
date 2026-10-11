@@ -25,6 +25,8 @@ const TeamPage = named(() => import("@/pages/admin/TeamPage"), "TeamPage");
 const SettingsPage = named(() => import("@/pages/admin/SettingsPage"), "SettingsPage");
 const StoreListPage = named(() => import("@/pages/admin/StoreListPage"), "StoreListPage");
 const StoreFormPage = named(() => import("@/pages/admin/StoreFormPage"), "StoreFormPage");
+const DesignListPage = named(() => import("@/pages/admin/DesignListPage"), "DesignListPage");
+const DesignFormPage = named(() => import("@/pages/admin/DesignFormPage"), "DesignFormPage");
 
 function PageLoader() {
   return (
@@ -59,6 +61,9 @@ export default function App() {
                 <Route path="stores" element={<StoreListPage />} />
                 <Route path="stores/new" element={<StoreFormPage />} />
                 <Route path="stores/:slug/edit" element={<StoreFormPage />} />
+                <Route path="designs" element={<DesignListPage />} />
+                <Route path="designs/new" element={<DesignFormPage />} />
+                <Route path="designs/:id/edit" element={<DesignFormPage />} />
                 <Route path="team" element={<TeamPage />} />
                 <Route path="settings" element={<SettingsPage />} />
               </Route>
