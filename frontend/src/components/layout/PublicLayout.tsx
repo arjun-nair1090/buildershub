@@ -61,6 +61,9 @@ export function PublicFooter() {
             : "Jewlerify verifies the information associated with a registered digital record. It does not independently perform physical gold purity testing."}
         </p>
         <div className="flex shrink-0 items-center gap-4">
+          <Link to="/privacy" className="underline-offset-4 hover:text-ink hover:underline">
+            Privacy
+          </Link>
           <Link to="/admin/login" className="underline-offset-4 hover:text-ink hover:underline sm:hidden">
             Jeweller login
           </Link>

@@ -8,6 +8,7 @@ import { DesignPage } from "@/pages/DesignPage";
 import { FeedPage } from "@/pages/FeedPage";
 import { LandingPage } from "@/pages/LandingPage";
 import { NotFoundPage } from "@/pages/NotFoundPage";
+import { PrivacyPage } from "@/pages/PrivacyPage";
 import { SearchPage } from "@/pages/SearchPage";
 import { StorePage } from "@/pages/StorePage";
 import { VerifyLookupPage } from "@/pages/VerifyLookupPage";
@@ -55,6 +56,7 @@ export default function App() {
               <Route path="designs/:id" element={<DesignPage />} />
               <Route path="search" element={<SearchPage />} />
               <Route path="feed" element={<FeedPage />} />
+              <Route path="privacy" element={<PrivacyPage />} />
               <Route path="*" element={<NotFoundPage />} />
             </Route>
 
