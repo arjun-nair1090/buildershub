@@ -17,6 +17,15 @@ DesignId = Path(min_length=4, max_length=12, pattern=r"^[A-Za-z0-9]+$")
 SOLD_LAST = case((Jewellery.stock_status == "sold", 1), else_=0)
 
 
+def international(number: str | None) -> str | None:
+    """wa.me links need the country code. Numbers are stored as digits with an optional leading +, and a
+    store may have entered a local Indian mobile ("9820012345" or "09820012345"): those get +91."""
+    if not number or number.startswith("+"):
+        return number
+    digits = number.lstrip("0")
+    return f"+91{digits}" if len(digits) == 10 else f"+{digits}"
+
+
 @router.get(
     "/stores/{slug}",
     response_model=PublicStore,
@@ -50,7 +59,7 @@ def store_page(slug: str = Slug, db: Session = Depends(get_db)) -> PublicStore:
         latitude=store.latitude,
         longitude=store.longitude,
         phone=store.phone,
-        whatsapp=store.whatsapp,
+        whatsapp=international(store.whatsapp),
         hours=store.hours,
         photos=[photo_out(p, store.name) for p in store.photos],
         pieces=[piece_card(p, price_now(p, ctx)) for p in pieces],

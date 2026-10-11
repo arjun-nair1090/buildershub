@@ -1,3 +1,7 @@
+import pytest
+from sqlalchemy import select
+
+from app.models import Store
 from tests.test_designs import DESIGN, jpeg
 from tests.test_stores import STORE
 
@@ -59,6 +63,19 @@ def test_store_page_unknown_and_inactive(client, auth):
     res = client.get("/api/public/stores/test-store")
     assert res.status_code == 410 and res.json() == {"detail": "Store no longer listed"}
 
+
+
+@pytest.mark.parametrize("stored, public", [
+    ("9820012345", "+919820012345"),       # entered without a country code: India
+    ("09820012345", "+919820012345"),      # with the trunk 0
+    ("919820012345", "+919820012345"),
+    ("+447700900123", "+447700900123"),    # already international
+])
+def test_store_page_whatsapp_is_international(client, db, stored, public):
+    """wa.me needs the country code; a bare 10-digit Indian number would open the wrong chat."""
+    db.scalar(select(Store).where(Store.slug == "test-store")).whatsapp = stored
+    db.commit()
+    assert client.get("/api/public/stores/test-store").json()["whatsapp"] == public
 
 def test_card_prices_match_the_piece_page(client, publish):
     deal = publish(title="Deal", discount_type="percent", discount_value="10")
