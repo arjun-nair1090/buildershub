@@ -79,5 +79,6 @@ def test_gold_rate_endpoint(client, db):
     db.add(GoldRate(inr_per_gram_24k=Decimal("10000"), source="test", fetched_at=datetime.now(timezone.utc)))
     db.commit()
     rate = client.get("/api/public/gold-rate").json()
-    assert Decimal(rate["per_gram"]["24K"]) == Decimal("9990")  # 24K is 99.9% pure and Decimal(rate["per_gram"]["22K"]) == Decimal("9160")
+    assert Decimal(rate["per_gram"]["24K"]) == Decimal("9990")  # 24K is 99.9% pure
+    assert Decimal(rate["per_gram"]["22K"]) == Decimal("9160")
     assert client.get("/api/public/catalog").json()["gold_rate"]["per_gram"] == rate["per_gram"]
