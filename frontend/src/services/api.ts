@@ -30,6 +30,11 @@ export function setUnauthorizedHandler(handler: (() => void) | null) {
   onUnauthorized = handler;
 }
 
+/** Absolute URL for API resources loaded directly by the browser, such as <img> sources. */
+export function apiUrl(path: string): string {
+  return `${BASE_URL}${path}`;
+}
+
 function buildUrl(path: string, query?: Query): string {
   const url = `${BASE_URL}${path}`;
   if (!query) return url;

@@ -21,7 +21,7 @@ export function CodeEntryForm({ className, tone = "light", autoFocus }: CodeEntr
     e.preventDefault();
     const cleaned = code.trim().toUpperCase().replace(/\s+/g, "");
     if (!/^[A-Z0-9-]{4,32}$/.test(cleaned)) {
-      setError("Enter the ID exactly as printed, for example JWL-26-A8F72K.");
+      setError("Enter the ID exactly as printed, for example JWL-26-ABKUCR.");
       return;
     }
     setError(null);
@@ -38,7 +38,7 @@ export function CodeEntryForm({ className, tone = "light", autoFocus }: CodeEntr
           id="jewellery-code"
           value={code}
           onChange={(e) => setCode(e.target.value)}
-          placeholder="JWL-26-A8F72K"
+          placeholder="JWL-26-ABKUCR"
           autoComplete="off"
           autoCapitalize="characters"
           spellCheck={false}

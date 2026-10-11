@@ -27,7 +27,8 @@ buildershub/
 │   │   └── services/           # qr.py, files.py (upload checks), identifiers.py
 │   ├── alembic/versions/       # database migrations
 │   ├── tests/                  # pytest API tests
-│   ├── seed.py                 # admin user + 10 demo records
+│   ├── seed.py                 # admin user + the store's 5 pieces
+│   ├── seed_photos/            # product photos loaded by seed.py
 │   └── uploads/                # certificate documents (git-ignored)
 └── frontend/
     └── src/
@@ -47,7 +48,7 @@ Requires Docker Desktop.
 docker compose up --build
 ```
 
-Open **http://localhost:8080**. Migrations and demo data run automatically on first start.
+Open **http://localhost:8080**. Migrations and the seed run automatically on first start.
 
 ## 3. Setup — local development
 
@@ -65,7 +66,7 @@ pip install -r requirements-dev.txt
 copy .env.example .env                  # macOS/Linux: cp .env.example .env
 #   then set JWT_SECRET in .env (see section 4)
 alembic upgrade head                    # create tables
-python seed.py                          # admin user + demo jewellery
+python seed.py                          # admin user + the store's jewellery
 uvicorn app.main:app --reload --port 8010
 
 # 3. Frontend (new terminal)
@@ -91,7 +92,10 @@ The Vite dev server forwards `/api/*` to the backend, so the frontend and API sh
 | `REMEMBER_ME_EXPIRE_DAYS` | Session length with "Keep me signed in" | `14` |
 | `CORS_ORIGINS` | Comma-separated allowed browser origins | `http://localhost:5173` |
 | `PUBLIC_BASE_URL` | Public frontend URL. QR codes encode `{PUBLIC_BASE_URL}/verify/{token}` | `http://localhost:5173` |
-| `MAX_UPLOAD_MB` | Certificate upload size limit (kept under Vercel's 4.5 MB request cap) | `4` |
+| `MAX_UPLOAD_MB` | Certificate and photo upload size limit (kept under Vercel's 4.5 MB request cap) | `4` |
+| `METALS_DEV_API_KEY` | [metals.dev](https://metals.dev) key for the live gold rate (free plan, IBJA rate). Takes priority over `GOLDAPI_KEY`. With neither set, buyers see the registered prices | — |
+| `GOLDAPI_KEY` | [GoldAPI.io](https://www.goldapi.io) key for the live gold rate (international spot rate) | — |
+| `GOLD_RATE_TTL_MINUTES` | How long a fetched rate is reused. Every page view reads the cached rate, so API calls stay at about one per interval. The default keeps within the free plans' 100 requests a month | `480` |
 | `SEED_ADMIN_NAME` / `SEED_ADMIN_EMAIL` / `SEED_ADMIN_PASSWORD` | Admin account created by `seed.py` | see below |
 
 **`frontend/.env.local`**
@@ -103,17 +107,20 @@ The Vite dev server forwards `/api/*` to the backend, so the frontend and API sh
 
 ## 5. Database
 
-Two tables, created by the Alembic migration `0001_initial`:
+Created by the Alembic migrations in `alembic/versions/`:
 
-- **`users`**: `id, name, email, password_hash, role, status, created_at`
-- **`jewellery`**: `id, jewellery_id, type, description, purity, gross_weight, net_weight, certificate_id, issuing_authority, certificate_date, certificate_document, gold_value, making_charges, other_component_value, tax, total_price, verification_token, status, created_at, updated_at`
+- **`users`**: `id, name, email, password_hash, role, status, token_version, created_at`
+- **`jewellery`**: `id, jewellery_id, type, description, colour, design_details, photo, purity, gross_weight, net_weight, certificate_id, issuing_authority, certificate_date, certificate_document, gold_value, making_charges, other_component_value, tax, total_price, making_percent_min, making_percent_max, verification_token, status, created_at, updated_at`
+- **`certificate_files`**: uploaded certificate documents and product photos (`name, data`)
+- **`store_settings`**: one row with the shop-wide `store_name` and `gst_percent`
+- **`gold_rates`**: each successful market fetch (`inr_per_gram_24k, source, fetched_at`); the latest is the current rate
 
 Money is stored as `NUMERIC(12,2)` and weights as `NUMERIC(10,3)`, so there's no floating-point rounding. Check constraints enforce `net_weight <= gross_weight` and a valid `status`.
 
 ```bash
 alembic upgrade head      # apply migrations
 alembic downgrade base    # drop everything
-python seed.py            # idempotent: only seeds an empty jewellery table
+python seed.py            # idempotent: adds missing pieces, removes the old demo records
 ```
 
 ## 6. Demo login
@@ -126,14 +133,18 @@ python seed.py            # idempotent: only seeds an empty jewellery table
 
 Change `SEED_ADMIN_PASSWORD` before seeding anything other than a local demo.
 
-### Demo verification links
+### Verification links
 
-| Jewellery | Link | Result |
-|---|---|---|
-| JWL-26-A8F72K, 22K diamond ring | `/verify/K7Q2M9XRT4HP` | Verified record |
-| JWL-26-R5V2HJ, 14K band (no certificate) | `/verify/P4KD9XN3QW6M` | Registered record |
-| JWL-26-H6Q9YT, retired choker | `/verify/N7WC4M8ZK3RX` | Record inactive |
-| unknown | `/verify/ABCDEFGHJKMN` | Verification record not found |
+| Jewellery | Link |
+|---|---|
+| JWL-26-B2TPBR, Nakshi kada, 25.94 g | `/verify/UWPVS7T9QZR9` |
+| JWL-26-C7HWNK, Hollow chain, 8.85 g | `/verify/PHY5GUC34N8U` |
+| JWL-26-RF3D4S, Rani haar, 10.76 g | `/verify/2HGN47ZX72WF` |
+| JWL-26-ABKUCR, Casting ring, 4.88 g | `/verify/T3CMCQCGXRFB` |
+| JWL-26-EMQXKD, Jaguar bracelet, 6.14 g | `/verify/YDYXKM846872` |
+| unknown | `/verify/ABCDEFGHJKMN` (not found) |
+
+All five are 22K with no certificate reference yet, so they show as *Registered record* until a certificate ID is added. Set the store name under **Store settings**.
 
 Buyers can also type the printed Jewellery ID at `/verify`.
 
@@ -155,7 +166,10 @@ Interactive docs: http://localhost:8010/docs
 | POST | `/api/jewellery/{jewellery_id}/activate` | admin | Reactivate |
 | GET | `/api/jewellery/{jewellery_id}/qr` | admin | Print-resolution QR PNG (~1200 px, 300 dpi) |
 | POST / GET / DELETE | `/api/jewellery/{jewellery_id}/certificate` | admin | Upload / download / remove certificate (PDF, JPG, PNG, ≤ 4 MB) |
-| GET | `/api/verify/{token}` | public | Buyer view. `404` not found, `410` inactive (no details returned) |
+| POST / GET / DELETE | `/api/jewellery/{jewellery_id}/photo` | admin | Upload / view / remove the product photo (JPG, PNG, ≤ 4 MB) |
+| GET / PUT | `/api/settings` | admin | Store name, GST %, and the current gold rate |
+| GET | `/api/verify/{token}` | public | Buyer view, with store name, live gold rate and live price. `404` not found, `410` inactive (no details returned) |
+| GET | `/api/verify/{token}/photo` | public | The product photo, for active records only |
 
 Validation errors return `422` as `{"detail": "...", "fields": {"field": "message"}}`.
 
@@ -173,6 +187,17 @@ Validation errors return `422` as `{"detail": "...", "fields": {"field": "messag
    The public response contains only buyer-facing fields: no internal ids, token, document path or admin data.
 
 **Scanning from a real phone during development:** set `PUBLIC_BASE_URL=http://<your-computer's-LAN-IP>:5173` in `backend/.env` and restart the backend. Find the IP with `ipconfig`. Add the same origin to `CORS_ORIGINS` only if you use `VITE_API_BASE_URL`. The phone must be on the same Wi-Fi, and Windows may ask you to allow Node through the firewall. QR codes are generated on request, so re-download them after changing the URL.
+
+### Live pricing
+
+With `METALS_DEV_API_KEY` or `GOLDAPI_KEY` set, the buyer page shows a live gold rate ticker and prices the piece at today's rate:
+
+- **Gold value** = net gold weight × (market rate per gram of pure gold × purity, e.g. 91.6% for 22K)
+- **Making charges** = the item's making range in % of that gold value (set per item; without a range, the fixed amount)
+- **Tax** = the store's GST % on gold value + making charges + other components
+- **Live price** = the sum, shown as a range when making charges are a range
+
+With metals.dev the rate is the IBJA (India Bullion and Jewellers Association) benchmark, which includes import duty and tracks Indian shop rates; IBJA publishes it twice on working days. GoldAPI.io gives the international spot price in INR, which leaves out import duty and so runs below a typical Indian retail board rate. An open page re-checks every minute; the server calls the API at most once per `GOLD_RATE_TTL_MINUTES`, and after a failed call it keeps using the last known rate and waits 5 minutes before trying again. The registered price stays on the page for reference.
 
 ## 9. Testing
 

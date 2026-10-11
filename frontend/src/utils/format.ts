@@ -21,6 +21,25 @@ export function formatINR(value: string | number | null | undefined): string {
   return Number.isInteger(n) ? inr.format(n) : inrPaise.format(n);
 }
 
+/** ₹9,160 – ₹13,740, or a single amount when both ends match. */
+export function formatINRRange(min: string | number, max: string | number): string {
+  return Number(min) === Number(max) ? formatINR(min) : `${formatINR(min)} – ${formatINR(max)}`;
+}
+
+/** 12% or 12.5%, without trailing zeros from the API's "12.50". */
+export function formatPercent(value: string | number): string {
+  return `${Number(value)}%`;
+}
+
+/** "just now", "12 min ago", "3 h ago", or a date for anything older than a day. */
+export function formatAgo(iso: string, now = Date.now()): string {
+  const minutes = Math.round((now - new Date(iso).getTime()) / 60000);
+  if (minutes < 1) return "just now";
+  if (minutes < 60) return `${minutes} min ago`;
+  if (minutes < 24 * 60) return `${Math.round(minutes / 60)} h ago`;
+  return `on ${formatDate(iso)}`;
+}
+
 /** 16.02 g — two decimals unless the third is significant. */
 export function formatWeight(value: string | number | null | undefined): string {
   if (value === null || value === undefined || value === "") return "—";

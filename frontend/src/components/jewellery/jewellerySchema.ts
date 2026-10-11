@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { JEWELLERY_TYPES, PURITIES, type Jewellery, type JewelleryInput } from "@/types";
+import { GOLD_COLOURS, JEWELLERY_TYPES, PURITIES, type Jewellery, type JewelleryInput } from "@/types";
 import { sumMoney } from "@/utils/format";
 
 const weight = z
@@ -21,12 +21,20 @@ const optionalMoney = z
   .trim()
   .regex(/^(\d+(\.\d{1,2})?)?$/, "Use a number with up to 2 decimals, without commas");
 
+const optionalPercent = z
+  .string()
+  .trim()
+  .regex(/^(\d{1,3}(\.\d{1,2})?)?$/, "Use a percentage with up to 2 decimals, e.g. 12.5")
+  .refine((v) => !v || Number(v) <= 100, "Must be 100% or less");
+
 const today = () => new Date().toISOString().slice(0, 10);
 
 export const jewellerySchema = z
   .object({
     type: z.enum(JEWELLERY_TYPES, { message: "Choose a jewellery type" }),
     description: z.string().trim().min(3, "Describe the piece in a few words").max(500, "Keep it under 500 characters"),
+    colour: z.union([z.enum(GOLD_COLOURS), z.literal("")]),
+    design_details: z.string().trim().max(1000, "Keep it under 1000 characters"),
     purity: z.enum(PURITIES, { message: "Choose the purity" }),
     gross_weight: weight,
     net_weight: weight,
@@ -43,6 +51,8 @@ export const jewellerySchema = z
     tax: money("tax"),
     manual_total: z.boolean(),
     total_price: optionalMoney,
+    making_percent_min: optionalPercent,
+    making_percent_max: optionalPercent,
   })
   .superRefine((v, ctx) => {
     if (Number(v.net_weight) > Number(v.gross_weight)) {
@@ -50,6 +60,12 @@ export const jewellerySchema = z
     }
     if (!v.certificate_id && (v.issuing_authority || v.certificate_date)) {
       ctx.addIssue({ code: "custom", path: ["certificate_id"], message: "Add the certificate ID for these details" });
+    }
+    if (Boolean(v.making_percent_min) !== Boolean(v.making_percent_max)) {
+      const path = v.making_percent_min ? "making_percent_max" : "making_percent_min";
+      ctx.addIssue({ code: "custom", path: [path], message: "Enter both ends of the range, or neither" });
+    } else if (v.making_percent_min && Number(v.making_percent_min) > Number(v.making_percent_max)) {
+      ctx.addIssue({ code: "custom", path: ["making_percent_max"], message: "Can't be below the minimum" });
     }
     if (v.manual_total && !v.total_price) {
       ctx.addIssue({ code: "custom", path: ["total_price"], message: "Enter the corrected total" });
@@ -61,6 +77,8 @@ export type JewelleryFormValues = z.infer<typeof jewellerySchema>;
 export const emptyValues: JewelleryFormValues = {
   type: "" as JewelleryFormValues["type"],
   description: "",
+  colour: "",
+  design_details: "",
   purity: "22K",
   gross_weight: "",
   net_weight: "",
@@ -73,6 +91,8 @@ export const emptyValues: JewelleryFormValues = {
   tax: "",
   manual_total: false,
   total_price: "",
+  making_percent_min: "",
+  making_percent_max: "",
 };
 
 /** Strip API decimals like "98500.00" to "98500" for editing. */
@@ -84,6 +104,8 @@ export function toFormValues(item: Jewellery): JewelleryFormValues {
   return {
     type: item.type,
     description: item.description,
+    colour: item.colour ?? "",
+    design_details: item.design_details ?? "",
     purity: item.purity,
     gross_weight: plain(item.gross_weight),
     net_weight: plain(item.net_weight),
@@ -96,6 +118,8 @@ export function toFormValues(item: Jewellery): JewelleryFormValues {
     tax: plain(item.tax),
     manual_total: manual,
     total_price: manual ? plain(item.total_price) : "",
+    making_percent_min: item.making_percent_min === null ? "" : plain(item.making_percent_min),
+    making_percent_max: item.making_percent_max === null ? "" : plain(item.making_percent_max),
   };
 }
 
@@ -103,6 +127,8 @@ export function toInput(v: JewelleryFormValues): JewelleryInput {
   return {
     type: v.type,
     description: v.description,
+    colour: v.colour || null,
+    design_details: v.design_details || null,
     purity: v.purity,
     gross_weight: v.gross_weight,
     net_weight: v.net_weight,
@@ -114,5 +140,7 @@ export function toInput(v: JewelleryFormValues): JewelleryInput {
     other_component_value: v.other_component_value || "0",
     tax: v.tax,
     total_price: v.manual_total ? v.total_price : null,
+    making_percent_min: v.making_percent_min || null,
+    making_percent_max: v.making_percent_max || null,
   };
 }

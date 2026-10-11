@@ -13,11 +13,12 @@ import { EmptyState } from "@/components/ui/empty-state";
 import { DataRow, Panel, PanelHeader } from "@/components/ui/panel";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useJewelleryRecord } from "@/hooks/useJewellery";
+import { usePhoto } from "@/hooks/usePhoto";
 import { useQrImage } from "@/hooks/useQrImage";
 import { errorMessage } from "@/services/api";
 import { jewelleryService } from "@/services/jewellery";
 import { certificateFilename, saveBlob } from "@/utils/download";
-import { formatDate, formatPurity, formatWeight } from "@/utils/format";
+import { formatDate, formatPercent, formatPurity, formatWeight } from "@/utils/format";
 
 const backLink = (
   <Link to="/admin/jewellery" className="mb-4 inline-flex items-center gap-1.5 text-sm text-muted hover:text-ink">
@@ -64,6 +65,7 @@ export function JewelleryDetailPage() {
   const { id = "" } = useParams();
   const { item, setItem, error, notFound, loading, reload } = useJewelleryRecord(id);
   const qr = useQrImage(item?.jewellery_id);
+  const photoUrl = usePhoto(item?.jewellery_id, item?.has_photo);
 
   useEffect(() => {
     document.title = id;
@@ -175,13 +177,33 @@ export function JewelleryDetailPage() {
 
       <div className="grid items-start gap-6 lg:grid-cols-[1fr_320px]">
         <div className="grid gap-6 md:grid-cols-2">
-          <InfoCard title="Jewellery information">
+          <InfoCard
+            title="Jewellery information"
+            aside={photoUrl && <img src={photoUrl} alt={`Photo of ${item.jewellery_id}`} className="size-14 rounded-sm border border-line object-cover" />}
+          >
             <dl className="divide-y divide-line">
               <DataRow label="Type" value={item.type} />
+              <DataRow label="Colour" value={item.colour ?? <span className="text-muted">Not specified</span>} />
               <div className="py-2.5">
                 <dt className="text-[13px] text-muted">Description</dt>
                 <dd className="mt-1 text-[15px] leading-relaxed text-ink">{item.description}</dd>
               </div>
+              {item.design_details && (
+                <div className="py-2.5">
+                  <dt className="text-[13px] text-muted">Design details</dt>
+                  <dd className="mt-1 text-[15px] leading-relaxed text-ink">{item.design_details}</dd>
+                </div>
+              )}
+              {!item.has_photo && (
+                <DataRow
+                  label="Photo"
+                  value={
+                    <Link to={`/admin/jewellery/${item.jewellery_id}/edit`} className="text-basalt hover:underline">
+                      Add a photo
+                    </Link>
+                  }
+                />
+              )}
             </dl>
           </InfoCard>
 
@@ -224,6 +246,11 @@ export function JewelleryDetailPage() {
 
           <InfoCard title="Price transparency">
             <PriceBreakdown {...item} className="py-3" />
+            <p className="border-t border-line py-3 text-[13px] text-muted">
+              {item.making_percent_min !== null && item.making_percent_max !== null
+                ? `Buyers see making charges as ${formatPercent(item.making_percent_min)}–${formatPercent(item.making_percent_max)} of the live gold value.`
+                : "No making charges range: buyers see the fixed amount above."}
+            </p>
           </InfoCard>
         </div>
 

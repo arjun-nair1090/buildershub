@@ -4,7 +4,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
 from app.config import get_settings
-from app.routers import auth, jewellery, verify
+from app.routers import auth, jewellery, settings as settings_router, verify
 
 settings = get_settings()
 
@@ -40,6 +40,7 @@ async def validation_error_handler(_: Request, exc: RequestValidationError) -> J
 app.include_router(auth.router)
 app.include_router(jewellery.router)
 app.include_router(verify.router)
+app.include_router(settings_router.router)
 
 
 @app.get("/api/health", tags=["meta"])

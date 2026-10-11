@@ -9,6 +9,7 @@ import { PageHeader } from "@/components/layout/AdminLayout";
 import { Panel } from "@/components/ui/panel";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useJewelleryRecord } from "@/hooks/useJewellery";
+import { usePhoto } from "@/hooks/usePhoto";
 import { errorMessage } from "@/services/api";
 import { jewelleryService } from "@/services/jewellery";
 import { certificateFilename, saveBlob } from "@/utils/download";
@@ -18,6 +19,7 @@ export function EditJewelleryPage() {
   const { id = "" } = useParams();
   const navigate = useNavigate();
   const { item, setItem, error, notFound, loading, reload } = useJewelleryRecord(id);
+  const photoUrl = usePhoto(item?.jewellery_id, item?.has_photo);
 
   useEffect(() => {
     document.title = `Edit ${id}`;
@@ -83,13 +85,35 @@ export function EditJewelleryPage() {
               }
             : null
         }
-        onSubmit={async (input, certificate) => {
+        existingPhoto={
+          item.has_photo
+            ? {
+                url: photoUrl,
+                onRemove: () =>
+                  jewelleryService
+                    .removePhoto(item.jewellery_id)
+                    .then((updated) => {
+                      setItem(updated);
+                      toast.success("Photo removed.");
+                    })
+                    .catch((err) => toast.error(errorMessage(err))),
+              }
+            : null
+        }
+        onSubmit={async (input, certificate, photo) => {
           await jewelleryService.update(item.jewellery_id, input);
           if (certificate) {
             try {
               await jewelleryService.uploadCertificate(item.jewellery_id, certificate);
             } catch (err) {
               toast.error(`Changes saved, but the certificate didn't upload: ${errorMessage(err)}`);
+            }
+          }
+          if (photo) {
+            try {
+              await jewelleryService.uploadPhoto(item.jewellery_id, photo);
+            } catch (err) {
+              toast.error(`Changes saved, but the photo didn't upload: ${errorMessage(err)}`);
             }
           }
           toast.success("Changes saved successfully.");

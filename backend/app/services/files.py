@@ -24,12 +24,16 @@ def _reject(message: str) -> HTTPException:
     return HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=message)
 
 
-async def save_certificate(db: Session, upload: UploadFile) -> str:
+CERTIFICATE_TYPES = (".pdf", ".png", ".jpg", ".jpeg")
+PHOTO_TYPES = (".png", ".jpg", ".jpeg")
+
+
+async def _save(db: Session, upload: UploadFile, label: str, extensions: tuple[str, ...], kinds: str) -> str:
     """Validate the upload and stage it in the session; the caller commits."""
     settings = get_settings()
     ext = Path(upload.filename or "").suffix.lower()
-    if ext not in ALLOWED:
-        raise _reject("Certificate must be a PDF, JPG or PNG file")
+    if ext not in extensions:
+        raise _reject(f"{label} must be a {kinds} file")
     mime_types, magic = ALLOWED[ext]
     if upload.content_type not in mime_types:
         raise _reject("File type does not match its extension")
@@ -37,22 +41,30 @@ async def save_certificate(db: Session, upload: UploadFile) -> str:
     limit = settings.max_upload_mb * 1024 * 1024
     data = await upload.read(limit + 1)
     if len(data) > limit:
-        raise _reject(f"Certificate must be {settings.max_upload_mb} MB or smaller")
+        raise _reject(f"{label} must be {settings.max_upload_mb} MB or smaller")
     if not data.startswith(magic):
-        raise _reject("File contents are not a valid PDF, JPG or PNG")
+        raise _reject(f"File contents are not a valid {kinds}")
 
     stored_name = f"{uuid.uuid4().hex}{'.jpg' if ext == '.jpeg' else ext}"
     db.add(CertificateFile(name=stored_name, data=data))
     return stored_name
 
 
-def load_certificate(db: Session, stored_name: str) -> bytes:
+async def save_certificate(db: Session, upload: UploadFile) -> str:
+    return await _save(db, upload, "Certificate", CERTIFICATE_TYPES, "PDF, JPG or PNG")
+
+
+async def save_photo(db: Session, upload: UploadFile) -> str:
+    return await _save(db, upload, "Photo", PHOTO_TYPES, "JPG or PNG")
+
+
+def load_file(db: Session, stored_name: str) -> bytes:
     row = db.get(CertificateFile, stored_name)
     if row is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Document not found")
     return row.data
 
 
-def delete_certificate(db: Session, stored_name: str | None) -> None:
+def delete_file(db: Session, stored_name: str | None) -> None:
     if stored_name:
         db.execute(delete(CertificateFile).where(CertificateFile.name == stored_name))

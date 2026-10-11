@@ -1,59 +1,77 @@
-"""Seed the database with an admin account and demo jewellery records.
+"""Seed the database with an admin account and the store's jewellery.
 
-Idempotent: the admin is only created if the email is missing, and demo jewellery
-is only inserted into an empty table.  Run with:  python seed.py
+Idempotent: the admin is only created if the email is missing, and each piece is only inserted
+if its Jewellery ID isn't there yet. Records from the old demo data set are removed.
+Run with:  python seed.py
 """
-from datetime import date, datetime, timedelta, timezone
+from datetime import datetime, timedelta, timezone
 from decimal import ROUND_HALF_UP, Decimal
+from pathlib import Path
 
-from sqlalchemy import func, select
+from sqlalchemy import delete, select
 
 from app.config import get_settings
 from app.database import SessionLocal
-from app.models import Jewellery, User
+from app.models import CertificateFile, Jewellery, User
 from app.security import hash_password
+from app.services.store import get_store
 
 D = Decimal
 GST = D("0.03")
+PHOTOS = Path(__file__).resolve().parent / "seed_photos"
 
-# (jewellery_id, token, type, description, purity, gross, net, certificate (id, authority, date) | None,
-#  gold_value, making, other, tax | None -> 3% GST, status, days_ago)
-DEMO = [
-    ("JWL-26-A8F72K", "K7Q2M9XRT4HP", "Ring", "22K gold diamond ring with a 0.30 ct solitaire",
-     "22K", "16.02", "15.42", ("DEMO-HM-26-014823", "Northgate Assay & Hallmarking Centre", date(2026, 9, 14)),
-     "98500", "12000", "4000", "10500", "active", 2),
-    ("JWL-26-N4C9TE", "R3XW8D5MZ2QF", "Necklace", "22K gold temple necklace with antique matte finish",
-     "22K", "42.80", "41.95", ("DEMO-HM-26-015107", "Northgate Assay & Hallmarking Centre", date(2026, 9, 10)),
-     "267980", "38500", "0", None, "active", 5),
-    ("JWL-26-B6H3PV", "M9T4KC7WX3NE", "Bracelet", "18K gold Cuban link bracelet, polished",
-     "18K", "12.40", "12.10", ("DEMO-HM-26-013992", "Meridian Assay Laboratory", date(2026, 8, 28)),
-     "63280", "9200", "0", None, "active", 9),
-    ("JWL-26-C2R7MW", "H5PZ2V8QK6RA", "Chain", "22K gold rope chain, 20 inch",
-     "22K", "18.25", "18.25", ("DEMO-HM-26-015230", "Northgate Assay & Hallmarking Centre", date(2026, 9, 18)),
-     "116580", "11700", "0", None, "active", 12),
-    ("JWL-26-E9K5DS", "T2NE6WX4H8MC", "Earrings", "18K gold drop earrings with ruby accents",
-     "18K", "6.90", "6.10", ("DEMO-GTL-26-90311", "Meridian Gem Testing Laboratory", date(2026, 8, 30)),
-     "31900", "6800", "14500", None, "active", 16),
-    ("JWL-26-G8F4XB", "W6CQ3T9MP2KZ", "Bangle", "22K gold bangle pair with hand-finished filigree",
-     "22K", "28.60", "28.20", ("DEMO-HM-26-014461", "Northgate Assay & Hallmarking Centre", date(2026, 8, 21)),
-     "180140", "24600", "0", None, "active", 21),
-    ("JWL-26-P3L8QN", "Z8HM5R2XW7TD", "Pendant", "22K gold Lakshmi pendant with temple motif",
-     "22K", "5.35", "5.20", ("DEMO-HM-26-014105", "Northgate Assay & Hallmarking Centre", date(2026, 8, 12)),
-     "33220", "4100", "0", None, "active", 27),
-    ("JWL-26-R5V2HJ", "P4KD9XN3QW6M", "Ring", "14K gold band, brushed satin finish",
-     "14K", "4.10", "4.10", None,
-     "16730", "2400", "0", None, "active", 33),
-    ("JWL-26-U7W3ZC", "X3RT7KP9MC2W", "Pendant", "24K gold coin pendant, 10 g",
-     "24K", "10.00", "10.00", ("DEMO-HM-26-012870", "Meridian Assay Laboratory", date(2026, 7, 29)),
-     "69700", "1500", "0", None, "active", 41),
-    ("JWL-26-H6Q9YT", "N7WC4M8ZK3RX", "Necklace", "22K gold choker with kundan setting (retired record)",
-     "22K", "36.40", "33.90", ("DEMO-HM-26-011764", "Northgate Assay & Hallmarking Centre", date(2026, 7, 2)),
-     "216550", "32000", "22500", None, "inactive", 58),
+# 22K rate per gram used for the registered (billed) amounts. Buyers see the live market price
+# whenever a gold rate API key is set; these figures are the fallback.
+REGISTERED_RATE_22K = D("13700")  # IBJA 22K, 11 Oct 2026
+
+# (jewellery_id, token, type, description, colour, design details, purity, weight (g),
+#  making charges range in % of gold value, photo, days_ago)
+# The weights on the tags are used as both gross and net gold weight. Correct them from Edit if a
+# piece's gross weight differs (stones, strap).
+PRODUCTS = [
+    ("JWL-26-B2TPBR", "UWPVS7T9QZR9", "Bangle", "Nakshi kada in 22K gold",
+     "Yellow gold",
+     "Hand-engraved nakshi work with twin lion-head clasp and red stone eyes, ribbed body and leaf-pattern border.",
+     "22K", "25.940", ("14", "18"), "nakshi-kada.jpg", 1),
+    ("JWL-26-C7HWNK", "PHY5GUC34N8U", "Chain", "Hollow chain in 22K gold",
+     "Yellow gold",
+     "Lightweight hollow links woven in a twisted rope pattern.",
+     "22K", "8.850", ("8", "12"), "hollow-chain.jpg", 2),
+    ("JWL-26-RF3D4S", "2HGN47ZX72WF", "Necklace", "Rani haar in 22K gold with a peacock pendant",
+     "Yellow gold",
+     "Round peacock pendant with red, green and blue enamel, floral centrepiece with stone accents, "
+     "teardrop charm and fine chain sides.",
+     "22K", "10.760", ("12", "16"), "rani-haar.jpg", 3),
+    ("JWL-26-ABKUCR", "T3CMCQCGXRFB", "Ring", "Casting ring in 22K gold",
+     "Yellow gold",
+     "Square signet face with a red enamel monogram on a textured ground, Greek key border and engraved shoulders.",
+     "22K", "4.880", ("10", "14"), "casting-ring.jpg", 4),
+    ("JWL-26-EMQXKD", "YDYXKM846872", "Bracelet", "Jaguar bracelet in 22K gold",
+     "Yellow gold",
+     "Twin interlocking jaguars set with white stones and green enamel spots, on a black rubber strap.",
+     "22K", "6.140", ("12", "16"), "jaguar-bracelet.jpg", 5),
+]
+
+# Jewellery IDs of the sample records shipped with earlier versions.
+OLD_DEMO_IDS = [
+    "JWL-26-A8F72K", "JWL-26-N4C9TE", "JWL-26-B6H3PV", "JWL-26-C2R7MW", "JWL-26-E9K5DS",
+    "JWL-26-G8F4XB", "JWL-26-P3L8QN", "JWL-26-R5V2HJ", "JWL-26-U7W3ZC", "JWL-26-H6Q9YT",
 ]
 
 
-def money(value: str | Decimal) -> Decimal:
-    return D(value).quantize(D("0.01"), rounding=ROUND_HALF_UP)
+def rupees(value: Decimal) -> Decimal:
+    return value.quantize(D("1"), rounding=ROUND_HALF_UP)
+
+
+def remove_old_demo(db) -> None:
+    old = db.scalars(select(Jewellery).where(Jewellery.jewellery_id.in_(OLD_DEMO_IDS))).all()
+    for item in old:
+        for name in (item.certificate_document, item.photo):
+            if name:
+                db.execute(delete(CertificateFile).where(CertificateFile.name == name))
+        db.delete(item)
+    if old:
+        print(f"Removed {len(old)} old demo records")
 
 
 def seed() -> None:
@@ -71,37 +89,46 @@ def seed() -> None:
             ))
             print(f"Created admin user {email}")
 
-        if db.scalar(select(func.count(Jewellery.id))):
-            print("Jewellery table already has data; skipping demo records.")
-        else:
-            now = datetime.now(timezone.utc)
-            for (jid, token, jtype, desc, purity, gross, net, cert, gold, making, other, tax,
-                 status, days_ago) in DEMO:
-                gold, making, other = money(gold), money(making), money(other)
-                # GST rounded to whole rupees, as on a typical retail bill.
-                tax = money(tax) if tax else money((gold + making + other) * GST).quantize(D("1"), rounding=ROUND_HALF_UP)
-                created = now - timedelta(days=days_ago, hours=days_ago % 7)
-                db.add(Jewellery(
-                    jewellery_id=jid,
-                    verification_token=token,
-                    type=jtype,
-                    description=desc,
-                    purity=purity,
-                    gross_weight=D(gross),
-                    net_weight=D(net),
-                    certificate_id=cert[0] if cert else None,
-                    issuing_authority=cert[1] if cert else None,
-                    certificate_date=cert[2] if cert else None,
-                    gold_value=gold,
-                    making_charges=making,
-                    other_component_value=other,
-                    tax=tax,
-                    total_price=gold + making + other + tax,
-                    status=status,
-                    created_at=created,
-                    updated_at=created,
-                ))
-            print(f"Inserted {len(DEMO)} demo jewellery records")
+        remove_old_demo(db)
+        get_store(db)
+
+        existing = set(db.scalars(select(Jewellery.jewellery_id)))
+        now = datetime.now(timezone.utc)
+        added = 0
+        for (jid, token, jtype, desc, colour, design, purity, weight, (pmin, pmax), photo,
+             days_ago) in PRODUCTS:
+            if jid in existing:
+                continue
+            gold = rupees(D(weight) * REGISTERED_RATE_22K)
+            making = rupees(gold * (D(pmin) + D(pmax)) / 2 / 100)
+            tax = rupees((gold + making) * GST)
+            photo_name = f"seed-{jid.lower()}.jpg"
+            db.merge(CertificateFile(name=photo_name, data=(PHOTOS / photo).read_bytes()))
+            created = now - timedelta(days=days_ago)
+            db.add(Jewellery(
+                jewellery_id=jid,
+                verification_token=token,
+                type=jtype,
+                description=desc,
+                colour=colour,
+                design_details=design,
+                photo=photo_name,
+                purity=purity,
+                gross_weight=D(weight),
+                net_weight=D(weight),
+                gold_value=gold,
+                making_charges=making,
+                other_component_value=D("0"),
+                tax=tax,
+                total_price=gold + making + tax,
+                making_percent_min=D(pmin),
+                making_percent_max=D(pmax),
+                status="active",
+                created_at=created,
+                updated_at=created,
+            ))
+            added += 1
+        print(f"Inserted {added} jewellery records" if added else "Jewellery already seeded")
         db.commit()
     finally:
         db.close()

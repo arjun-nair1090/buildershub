@@ -1,5 +1,5 @@
 import * as Dialog from "@radix-ui/react-dialog";
-import { Gem, LayoutDashboard, LogOut, Menu, Plus, Users, X } from "lucide-react";
+import { Gem, LayoutDashboard, LogOut, Menu, Plus, Store, Users, X } from "lucide-react";
 import { useState, type ReactNode } from "react";
 import { NavLink, Outlet, useLocation, useNavigate } from "react-router-dom";
 import { toast } from "sonner";
@@ -12,6 +12,7 @@ const NAV = [
   { to: "/admin/jewellery", label: "Jewellery", icon: Gem, end: true },
   { to: "/admin/jewellery/new", label: "Add jewellery", icon: Plus, end: true },
   { to: "/admin/team", label: "Team", icon: Users, end: true },
+  { to: "/admin/settings", label: "Store settings", icon: Store, end: true },
 ];
 
 function NavItems({ onNavigate }: { onNavigate?: () => void }) {

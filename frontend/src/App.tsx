@@ -22,6 +22,7 @@ const AddJewelleryPage = named(() => import("@/pages/admin/AddJewelleryPage"), "
 const JewelleryDetailPage = named(() => import("@/pages/admin/JewelleryDetailPage"), "JewelleryDetailPage");
 const EditJewelleryPage = named(() => import("@/pages/admin/EditJewelleryPage"), "EditJewelleryPage");
 const TeamPage = named(() => import("@/pages/admin/TeamPage"), "TeamPage");
+const SettingsPage = named(() => import("@/pages/admin/SettingsPage"), "SettingsPage");
 
 function PageLoader() {
   return (
@@ -54,6 +55,7 @@ export default function App() {
                 <Route path="jewellery/:id" element={<JewelleryDetailPage />} />
                 <Route path="jewellery/:id/edit" element={<EditJewelleryPage />} />
                 <Route path="team" element={<TeamPage />} />
+                <Route path="settings" element={<SettingsPage />} />
               </Route>
             </Route>
           </Routes>

@@ -35,6 +35,9 @@ class Jewellery(Base):
 
     type: Mapped[str] = mapped_column(String(30), index=True)
     description: Mapped[str] = mapped_column(Text)
+    colour: Mapped[str | None] = mapped_column(String(30))
+    design_details: Mapped[str | None] = mapped_column(Text)
+    photo: Mapped[str | None] = mapped_column(String(255))  # stored file name, like certificate_document
 
     purity: Mapped[str] = mapped_column(String(10))
     gross_weight: Mapped[Decimal] = mapped_column(Numeric(10, 3))
@@ -50,6 +53,9 @@ class Jewellery(Base):
     other_component_value: Mapped[Decimal] = mapped_column(Numeric(12, 2), default=Decimal("0"))
     tax: Mapped[Decimal] = mapped_column(Numeric(12, 2))
     total_price: Mapped[Decimal] = mapped_column(Numeric(12, 2))
+    # Making charges shown to buyers as a range, in % of the live gold value. Null: show the fixed amount.
+    making_percent_min: Mapped[Decimal | None] = mapped_column(Numeric(5, 2))
+    making_percent_max: Mapped[Decimal | None] = mapped_column(Numeric(5, 2))
 
     status: Mapped[str] = mapped_column(String(20), default="active", index=True)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow, index=True)
@@ -65,9 +71,35 @@ class Jewellery(Base):
 
 
 class CertificateFile(Base):
-    """Uploaded certificate bytes. Kept in the database because serverless hosts have no lasting disk."""
+    """Uploaded file bytes: certificate documents and product photos. Kept in the database
+    because serverless hosts have no lasting disk."""
 
     __tablename__ = "certificate_files"
 
     name: Mapped[str] = mapped_column(String(64), primary_key=True)  # random hex + extension
     data: Mapped[bytes] = mapped_column(LargeBinary)
+
+
+class StoreSettings(Base):
+    """Shop-wide settings. Always a single row with id 1."""
+
+    __tablename__ = "store_settings"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    store_name: Mapped[str] = mapped_column(String(120), default="", server_default="")
+    gst_percent: Mapped[Decimal] = mapped_column(Numeric(5, 2), default=Decimal("3.00"), server_default="3.00")
+    # Last time a gold rate fetch was attempted, successful or not. Stops a failing feed being retried
+    # on every page view and burning the API quota.
+    gold_rate_checked_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+
+
+class GoldRate(Base):
+    """One row per successful market fetch. The latest row is the current rate; the one before it
+    gives the ticker its up/down movement."""
+
+    __tablename__ = "gold_rates"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    inr_per_gram_24k: Mapped[Decimal] = mapped_column(Numeric(12, 2))  # pure gold, per gram
+    source: Mapped[str] = mapped_column(String(40))
+    fetched_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow, index=True)

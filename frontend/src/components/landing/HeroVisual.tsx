@@ -108,7 +108,7 @@ export function HeroVisual() {
         <div className="rise absolute bottom-7 left-6 w-[28%] sm:left-8" style={delay(1150)}>
           <div className="-rotate-[5deg] rounded-[6px] bg-white p-[9%] shadow-[0_18px_30px_-14px_rgba(0,0,0,0.7)]">
             <DecorativeQr className="w-full text-basalt" />
-            <p className="tabular mt-1.5 text-center text-[7px] tracking-[0.1em] text-basalt sm:text-[9px]">JWL-26-A8F72K</p>
+            <p className="tabular mt-1.5 text-center text-[7px] tracking-[0.1em] text-basalt sm:text-[9px]">JWL-26-ABKUCR</p>
           </div>
         </div>
       </div>
@@ -129,9 +129,9 @@ export function HeroVisual() {
         </div>
         <dl className="space-y-1.5 px-4 py-3 text-[11px] sm:px-5 sm:py-4 sm:text-[13px]">
           {[
-            ["Jewellery ID", "JWL-26-A8F72K"],
+            ["Jewellery ID", "JWL-26-ABKUCR"],
             ["Purity", "22K / 91.6%"],
-            ["Net gold", "15.42 g"],
+            ["Net gold", "4.88 g"],
           ].map(([k, v]) => (
             <div key={k} className="flex justify-between gap-3">
               <dt className="text-muted">{k}</dt>

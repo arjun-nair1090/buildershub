@@ -1,5 +1,7 @@
 from decimal import Decimal
 
+import pytest
+
 from tests.conftest import ADMIN_EMAIL
 
 PNG_1PX = bytes.fromhex(
@@ -249,3 +251,136 @@ def test_certificate_upload_rejects_bad_files(client, auth, payload):
     # Right extension and MIME type, wrong contents.
     res = client.post(url, files={"file": ("fake.pdf", b"MZ not a pdf", "application/pdf")}, headers=auth)
     assert res.status_code == 422
+
+
+def test_photo_upload_flow(client, auth, payload):
+    created = client.post("/api/jewellery", json=payload, headers=auth).json()
+    jid, token = created["jewellery_id"], created["verification_token"]
+    assert created["has_photo"] is False
+    assert client.get(f"/api/verify/{token}").json()["photo_version"] is None
+
+    res = client.post(f"/api/jewellery/{jid}/photo", files={"file": ("p.png", PNG_1PX, "image/png")}, headers=auth)
+    assert res.status_code == 200 and res.json()["has_photo"] is True
+    assert client.get(f"/api/jewellery/{jid}/photo", headers=auth).content == PNG_1PX
+
+    # Buyers fetch it through the verification code, without signing in.
+    version = client.get(f"/api/verify/{token}").json()["photo_version"]
+    assert version
+    res = client.get(f"/api/verify/{token}/photo")
+    assert res.status_code == 200 and res.content == PNG_1PX
+
+    res = client.post(f"/api/jewellery/{jid}/photo", files={"file": ("p.pdf", b"%PDF-1.4", "application/pdf")}, headers=auth)
+    assert res.status_code == 422  # photos are images only
+
+    client.delete(f"/api/jewellery/{jid}", headers=auth)
+    assert client.get(f"/api/verify/{token}/photo").status_code == 410
+
+    assert client.delete(f"/api/jewellery/{jid}/photo", headers=auth).json()["has_photo"] is False
+
+
+def test_design_fields_and_making_range_validation(client, auth, payload):
+    body = {**payload, "colour": "Rose gold", "design_details": "Floral filigree",
+            "making_percent_min": "10", "making_percent_max": "14"}
+    created = client.post("/api/jewellery", json=body, headers=auth).json()
+    assert created["colour"] == "Rose gold" and Decimal(created["making_percent_max"]) == 14
+    public = client.get(f"/api/verify/{created['verification_token']}").json()
+    assert public["design_details"] == "Floral filigree" and public["colour"] == "Rose gold"
+
+    for bad in ({"making_percent_min": "10"}, {"making_percent_min": "15", "making_percent_max": "10"},
+                {"colour": "Purple gold"}):
+        assert client.post("/api/jewellery", json={**payload, **bad}, headers=auth).status_code == 422, bad
+
+
+def test_store_settings(client, auth, payload):
+    assert client.get("/api/settings").status_code == 401
+    res = client.get("/api/settings", headers=auth).json()
+    assert res["store_name"] == "" and Decimal(res["gst_percent"]) == 3
+    assert res["gold_feed_configured"] is False and res["gold_rate"] is None
+
+    res = client.put("/api/settings", json={"store_name": "  Example Jewellers ", "gst_percent": "3"}, headers=auth)
+    assert res.status_code == 200 and res.json()["store_name"] == "Example Jewellers"
+
+    token = client.post("/api/jewellery", json=payload, headers=auth).json()["verification_token"]
+    body = client.get(f"/api/verify/{token}").json()
+    assert body["store_name"] == "Example Jewellers"
+    assert body["gold_rate"] is None and body["live_price"] is None  # no feed: registered prices only
+
+
+def test_live_price_from_market_rate(client, auth, payload, monkeypatch):
+    from app.config import get_settings
+    from app.services import gold_rate
+
+    calls = []
+
+    def fake_fetch(provider, key):
+        calls.append((provider, key))
+        return Decimal("10000.00"), "test feed"
+
+    monkeypatch.setattr(get_settings(), "goldapi_key", "test-key")
+    monkeypatch.setattr(gold_rate, "fetch_inr_per_gram_24k", fake_fetch)
+
+    body = {**payload, "net_weight": "10", "other_component_value": "1000",
+            "making_percent_min": "10", "making_percent_max": "15"}
+    token = client.post("/api/jewellery", json=body, headers=auth).json()["verification_token"]
+
+    res = client.get(f"/api/verify/{token}").json()
+    rate, live = res["gold_rate"], res["live_price"]
+    assert Decimal(rate["per_gram"]["22K"]) == Decimal("9160")
+    assert rate["change_percent"] is None
+    # 10 g x 9,160 = 91,600; making 10-15% = 9,160-13,740; GST 3% on gold + making + stones.
+    assert Decimal(live["gold_value"]) == 91600
+    assert (Decimal(live["making_charges_min"]), Decimal(live["making_charges_max"])) == (9160, 13740)
+    assert (Decimal(live["tax_min"]), Decimal(live["tax_max"])) == (3053, 3190)
+    assert (Decimal(live["total_min"]), Decimal(live["total_max"])) == (104813, 109530)
+
+    # Within the cache window the API isn't called again.
+    client.get(f"/api/verify/{token}")
+    assert calls == [("goldapi", "test-key")]
+
+
+def test_gold_rate_falls_back_to_last_known(client, auth, payload, monkeypatch):
+    from datetime import datetime, timedelta, timezone
+
+    from app.config import get_settings
+    from app.database import get_db
+    from app.main import app
+    from app.models import GoldRate
+    from app.services import gold_rate
+
+    db = next(app.dependency_overrides[get_db]())
+    old = datetime.now(timezone.utc) - timedelta(days=1)
+    db.add_all([GoldRate(inr_per_gram_24k=Decimal("9800"), source="test", fetched_at=old - timedelta(hours=1)),
+                GoldRate(inr_per_gram_24k=Decimal("10000"), source="test", fetched_at=old)])
+    db.commit()
+
+    def failing_fetch(provider, key):
+        raise OSError("network down")
+
+    monkeypatch.setattr(get_settings(), "goldapi_key", "test-key")
+    monkeypatch.setattr(gold_rate, "fetch_inr_per_gram_24k", failing_fetch)
+
+    token = client.post("/api/jewellery", json=payload, headers=auth).json()["verification_token"]
+    rate = client.get(f"/api/verify/{token}").json()["gold_rate"]
+    assert Decimal(rate["per_gram"]["24K"]) == Decimal("9990")
+    assert Decimal(rate["change_percent"]) == Decimal("2.04")
+
+
+def test_metals_dev_prefers_ibja_rate(monkeypatch):
+    from app.services import gold_rate
+
+    seen = []
+
+    def fake_get_json(request):
+        seen.append(request.full_url)
+        return {"status": "success", "metals": {"gold": 9500.123, "ibja_gold": 10920.5}}
+
+    monkeypatch.setattr(gold_rate, "_get_json", fake_get_json)
+    assert gold_rate.fetch_inr_per_gram_24k("metals.dev", "k") == (Decimal("10920.50"), "IBJA via metals.dev")
+    assert "currency=INR" in seen[0] and "unit=g" in seen[0]
+
+    monkeypatch.setattr(gold_rate, "_get_json", lambda r: {"status": "success", "metals": {"gold": 9500.123}})
+    assert gold_rate.fetch_inr_per_gram_24k("metals.dev", "k") == (Decimal("9500.12"), "metals.dev")
+
+    monkeypatch.setattr(gold_rate, "_get_json", lambda r: {"status": "failure", "error_code": 1101})
+    with pytest.raises(ValueError):
+        gold_rate.fetch_inr_per_gram_24k("metals.dev", "bad")

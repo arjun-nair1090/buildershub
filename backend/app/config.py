@@ -26,6 +26,13 @@ class Settings(BaseSettings):
     # Vercel Functions cap request bodies at 4.5 MB, so uploads stay under that.
     max_upload_mb: int = 4
 
+    # Live gold rate from metals.dev (https://metals.dev) or GoldAPI.io (https://www.goldapi.io); metals.dev is
+    # used when both are set. Without a key, buyers see the registered prices.
+    metals_dev_api_key: str = ""
+    goldapi_key: str = ""
+    # How long a fetched rate is reused. 480 (8 h) is about 90 requests a month, inside the free plans' 100.
+    gold_rate_ttl_minutes: int = 480
+
     seed_admin_name: str = "Store Administrator"
     seed_admin_email: str = "admin@jewelverify.demo"
     seed_admin_password: str = "Admin@12345"

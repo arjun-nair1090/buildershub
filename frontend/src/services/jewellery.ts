@@ -23,4 +23,12 @@ export const jewelleryService = {
   },
   downloadCertificate: (id: string) => requestBlob(`${one(id)}/certificate`),
   removeCertificate: (id: string) => request<Jewellery>(`${one(id)}/certificate`, { method: "DELETE" }),
+
+  uploadPhoto: (id: string, file: File) => {
+    const form = new FormData();
+    form.append("file", file);
+    return request<Jewellery>(`${one(id)}/photo`, { method: "POST", body: form });
+  },
+  photo: (id: string) => requestBlob(`${one(id)}/photo`),
+  removePhoto: (id: string) => request<Jewellery>(`${one(id)}/photo`, { method: "DELETE" }),
 };

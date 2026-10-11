@@ -141,6 +141,13 @@
   }
 }
 
+/* Ticker tape: the content is rendered twice, so sliding by half loops seamlessly. */
+@keyframes ticker {
+  to {
+    transform: translateX(-50%);
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,

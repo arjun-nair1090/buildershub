@@ -9,17 +9,19 @@ import { Field } from "@/components/ui/field";
 import { Input, Select, Textarea } from "@/components/ui/input";
 import { Panel } from "@/components/ui/panel";
 import { ApiError } from "@/services/api";
-import { JEWELLERY_TYPES, PURITIES, PURITY_PERCENT, type JewelleryInput } from "@/types";
-import { formatINR, sumMoney } from "@/utils/format";
+import { GOLD_COLOURS, JEWELLERY_TYPES, PURITIES, PURITY_PERCENT, type JewelleryInput } from "@/types";
+import { formatINR, formatINRRange, sumMoney } from "@/utils/format";
 import { CertificateUpload } from "./CertificateUpload";
 import { emptyValues, jewellerySchema, toInput, type JewelleryFormValues } from "./jewellerySchema";
+import { PhotoUpload } from "./PhotoUpload";
 
 interface JewelleryFormProps {
   defaultValues?: JewelleryFormValues;
   submitLabel: string;
   cancelTo: string;
   existingDocument?: { onDownload: () => void; onRemove: () => void } | null;
-  onSubmit: (input: JewelleryInput, certificate: File | null) => Promise<void>;
+  existingPhoto?: { url: string | null; onRemove: () => void } | null;
+  onSubmit: (input: JewelleryInput, certificate: File | null, photo: File | null) => Promise<void>;
 }
 
 function Section({ step, title, description, children }: { step: number; title: string; description: string; children: ReactNode }) {
@@ -35,8 +37,9 @@ function Section({ step, title, description, children }: { step: number; title: 
   );
 }
 
-export function JewelleryForm({ defaultValues = emptyValues, submitLabel, cancelTo, existingDocument, onSubmit }: JewelleryFormProps) {
+export function JewelleryForm({ defaultValues = emptyValues, submitLabel, cancelTo, existingDocument, existingPhoto, onSubmit }: JewelleryFormProps) {
   const [certificate, setCertificate] = useState<File | null>(null);
+  const [photo, setPhoto] = useState<File | null>(null);
   const {
     register,
     handleSubmit,
@@ -46,15 +49,19 @@ export function JewelleryForm({ defaultValues = emptyValues, submitLabel, cancel
     formState: { errors, isSubmitting },
   } = useForm<JewelleryFormValues>({ resolver: zodResolver(jewellerySchema), defaultValues, mode: "onTouched" });
 
-  const [gold, making, other, tax, manual, purity] = useWatch({
+  const [gold, making, other, tax, manual, purity, makingMin, makingMax] = useWatch({
     control,
-    name: ["gold_value", "making_charges", "other_component_value", "tax", "manual_total", "purity"],
+    name: ["gold_value", "making_charges", "other_component_value", "tax", "manual_total", "purity", "making_percent_min", "making_percent_max"],
   });
   const calculated = sumMoney(gold, making, other, tax);
+  const rangeExample =
+    Number(gold) > 0 && makingMin && makingMax
+      ? formatINRRange(Math.round((Number(gold) * Number(makingMin)) / 100), Math.round((Number(gold) * Number(makingMax)) / 100))
+      : null;
 
   async function submit(values: JewelleryFormValues) {
     try {
-      await onSubmit(toInput(values), certificate);
+      await onSubmit(toInput(values), certificate, photo);
     } catch (err) {
       if (err instanceof ApiError && Object.keys(err.fields).length) {
         for (const [field, message] of Object.entries(err.fields)) {
@@ -85,6 +92,20 @@ export function JewelleryForm({ defaultValues = emptyValues, submitLabel, cancel
         <Field label="Description" error={errors.description?.message} hint="For example: 22K gold diamond ring with a 0.30 ct solitaire">
           <Textarea rows={3} maxLength={500} {...register("description")} />
         </Field>
+        <Field label="Colour" optional error={errors.colour?.message}>
+          <Select {...register("colour")}>
+            <option value="">Not specified</option>
+            {GOLD_COLOURS.map((c) => (
+              <option key={c} value={c}>
+                {c}
+              </option>
+            ))}
+          </Select>
+        </Field>
+        <Field label="Design details" optional error={errors.design_details?.message} hint="Motifs, finish, stones, clasp: what makes this piece recognisable">
+          <Textarea rows={3} maxLength={1000} {...register("design_details")} />
+        </Field>
+        <PhotoUpload file={photo} onChange={setPhoto} existing={existingPhoto} />
       </Section>
 
       <Section step={2} title="Gold information" description="Purity and weights as recorded at registration.">
@@ -136,6 +157,25 @@ export function JewelleryForm({ defaultValues = emptyValues, submitLabel, cancel
           <Field label="Tax" error={errors.tax?.message}>
             <Input {...moneyProps} {...register("tax")} />
           </Field>
+        </div>
+
+        <div className="space-y-3 rounded-md border border-line p-4">
+          <div>
+            <p className="text-[13px] font-medium text-ink">Making charges range for buyers</p>
+            <p className="mt-0.5 text-[13px] leading-relaxed text-muted">
+              With a live gold rate, buyers see the gold value at today's rate and making charges as this range of it. Tax is
+              recalculated at the store's GST rate. Leave blank to show the making charges above.
+            </p>
+          </div>
+          <div className="grid gap-5 sm:grid-cols-2">
+            <Field label="Minimum" error={errors.making_percent_min?.message}>
+              <Input inputMode="decimal" placeholder="e.g. 10" autoComplete="off" suffix={<span className="pr-2 text-sm text-muted">%</span>} {...register("making_percent_min")} />
+            </Field>
+            <Field label="Maximum" error={errors.making_percent_max?.message}>
+              <Input inputMode="decimal" placeholder="e.g. 14" autoComplete="off" suffix={<span className="pr-2 text-sm text-muted">%</span>} {...register("making_percent_max")} />
+            </Field>
+          </div>
+          {rangeExample && <p className="text-[13px] text-muted">On the gold value above, that is {rangeExample}.</p>}
         </div>
 
         <div className="rounded-md border border-line bg-chalk p-4">

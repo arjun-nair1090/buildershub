@@ -135,16 +135,16 @@ export function LandingPage() {
               <div>
                 <p className="text-[13px] font-semibold text-gold-deep">Jewellery details</p>
                 <p className="mt-1.5 font-display text-[26px] text-ink">Ring</p>
-                <p className="mt-1 text-[15px] text-ink/75">22K gold diamond ring</p>
+                <p className="mt-1 text-[15px] text-ink/75">Casting ring in 22K gold</p>
               </div>
               <HallmarkStamp purity="22K" percent="91.6" size="lg" />
             </div>
             <dl className="border-t border-line px-6 py-4 text-[15px] sm:px-8">
               {[
-                ["Jewellery ID", "JWL-26-A8F72K"],
+                ["Jewellery ID", "JWL-26-ABKUCR"],
                 ["Purity", "22K / 91.6%"],
-                ["Gross weight", "16.02 g"],
-                ["Net gold weight", "15.42 g"],
+                ["Gross weight", "4.88 g"],
+                ["Net gold weight", "4.88 g"],
                 ["Certificate ID", "CERT-XXXXXX"],
                 ["Verification status", "Verified"],
               ].map(([k, v]) => (

@@ -8,4 +8,9 @@ PURITY_PERCENT = {
     "14K": "58.5",
 }
 
+GOLD_COLOURS = ("Yellow gold", "Rose gold", "White gold", "Two-tone", "Multi-tone")
+
+# GST on gold jewellery in India, charged on gold value + making charges + other components.
+DEFAULT_GST_PERCENT = "3.00"
+
 RECORD_STATUSES = ("active", "inactive")

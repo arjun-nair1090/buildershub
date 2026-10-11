@@ -92,13 +92,20 @@ export function AddJewelleryPage() {
         key={formKey}
         submitLabel="Register jewellery"
         cancelTo="/admin/jewellery"
-        onSubmit={async (input, certificate) => {
+        onSubmit={async (input, certificate, photo) => {
           let item = await jewelleryService.create(input);
           if (certificate) {
             try {
               item = await jewelleryService.uploadCertificate(item.jewellery_id, certificate);
             } catch (err) {
               toast.error(`Record saved, but the certificate didn't upload: ${errorMessage(err)} Add it from Edit.`);
+            }
+          }
+          if (photo) {
+            try {
+              item = await jewelleryService.uploadPhoto(item.jewellery_id, photo);
+            } catch (err) {
+              toast.error(`Record saved, but the photo didn't upload: ${errorMessage(err)} Add it from Edit.`);
             }
           }
           toast.success("Jewellery registered successfully.");

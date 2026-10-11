@@ -43,6 +43,7 @@ def to_out(item: Jewellery) -> JewelleryOut:
             "verification_url": get_settings().verification_url(item.verification_token),
             "purity_percent": PURITY_PERCENT.get(item.purity, ""),
             "has_certificate_document": bool(item.certificate_document),
+            "has_photo": bool(item.photo),
             "verification_status": item.verification_status,
         }
     )
@@ -182,7 +183,7 @@ async def upload_certificate(
     item = get_or_404(db, jewellery_id)
     previous = item.certificate_document
     item.certificate_document = await files.save_certificate(db, file)
-    files.delete_certificate(db, previous)
+    files.delete_file(db, previous)
     db.commit()
     db.refresh(item)
     return to_out(item)
@@ -195,7 +196,7 @@ def download_certificate(jewellery_id: str, db: Session = Depends(get_db)) -> Re
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="No certificate document uploaded")
     suffix = Path(item.certificate_document).suffix
     return Response(
-        content=files.load_certificate(db, item.certificate_document),
+        content=files.load_file(db, item.certificate_document),
         media_type=files.MEDIA_TYPES[suffix],
         headers={"Content-Disposition": f'attachment; filename="{item.jewellery_id}-certificate{suffix}"'},
     )
@@ -204,8 +205,37 @@ def download_certificate(jewellery_id: str, db: Session = Depends(get_db)) -> Re
 @router.delete("/{jewellery_id}/certificate", response_model=JewelleryOut)
 def remove_certificate(jewellery_id: str, db: Session = Depends(get_db)) -> JewelleryOut:
     item = get_or_404(db, jewellery_id)
-    files.delete_certificate(db, item.certificate_document)
+    files.delete_file(db, item.certificate_document)
     item.certificate_document = None
+    db.commit()
+    db.refresh(item)
+    return to_out(item)
+
+
+@router.post("/{jewellery_id}/photo", response_model=JewelleryOut)
+async def upload_photo(jewellery_id: str, file: UploadFile = File(...), db: Session = Depends(get_db)) -> JewelleryOut:
+    item = get_or_404(db, jewellery_id)
+    previous = item.photo
+    item.photo = await files.save_photo(db, file)
+    files.delete_file(db, previous)
+    db.commit()
+    db.refresh(item)
+    return to_out(item)
+
+
+@router.get("/{jewellery_id}/photo")
+def get_photo(jewellery_id: str, db: Session = Depends(get_db)) -> Response:
+    item = get_or_404(db, jewellery_id)
+    if not item.photo:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="No photo uploaded")
+    return Response(content=files.load_file(db, item.photo), media_type=files.MEDIA_TYPES[Path(item.photo).suffix])
+
+
+@router.delete("/{jewellery_id}/photo", response_model=JewelleryOut)
+def remove_photo(jewellery_id: str, db: Session = Depends(get_db)) -> JewelleryOut:
+    item = get_or_404(db, jewellery_id)
+    files.delete_file(db, item.photo)
+    item.photo = None
     db.commit()
     db.refresh(item)
     return to_out(item)
