@@ -10,6 +10,7 @@ JewelleryType = Literal[JEWELLERY_TYPES]  # type: ignore[valid-type]
 Purity = Literal[tuple(PURITY_PERCENT)]  # type: ignore[valid-type]
 GoldColour = Literal[GOLD_COLOURS]  # type: ignore[valid-type]
 RecordStatus = Literal["active", "inactive"]
+DiscountType = Literal["percent", "flat"]
 
 Weight = Annotated[Decimal, Field(gt=0, le=100000, max_digits=10, decimal_places=3)]
 Money = Annotated[Decimal, Field(ge=0, le=999999999, max_digits=12, decimal_places=2)]
@@ -205,6 +206,39 @@ class StoreSettingsOut(StoreSettingsIn):
 
 
 # ---------- Public verification ----------
+
+class PriceDiscount(BaseModel):
+    type: DiscountType
+    value: Decimal
+    label: str  # "10% off" or "₹5,000 off"
+    amount_min: Decimal
+    amount_max: Decimal
+    ends_on: date | None
+
+
+class PiecePrice(BaseModel):
+    """A piece's price right now. Every line is in whole rupees and the lines add up exactly:
+    gold + making + other + tax = original; original - discount = final. min equals max when
+    making charges are a single amount."""
+
+    basis: Literal["live", "registered"]
+    as_of: datetime
+    rate_per_gram: Decimal | None  # for the piece's purity; None on the registered basis
+    gold: Decimal
+    making_min: Decimal
+    making_max: Decimal
+    making_percent_min: Decimal | None
+    making_percent_max: Decimal | None
+    other: Decimal
+    gst_percent: Decimal
+    tax_min: Decimal
+    tax_max: Decimal
+    original_min: Decimal
+    original_max: Decimal
+    discount: PriceDiscount | None
+    final_min: Decimal
+    final_max: Decimal
+
 
 class LivePrice(BaseModel):
     """Price at the current gold rate. Ranges come from the making charges range; when the item has
