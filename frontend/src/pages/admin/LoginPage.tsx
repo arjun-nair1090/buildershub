@@ -4,7 +4,7 @@ import { useEffect, useState, type CSSProperties } from "react";
 import { useForm } from "react-hook-form";
 import { Link, Navigate, useLocation, useNavigate } from "react-router-dom";
 import { toast } from "sonner";
-import { z } from "zod";
+import { z } from "@/lib/zod";
 import { BrandMark, GoldBar } from "@/components/layout/BrandMark";
 import { Button } from "@/components/ui/button";
 import { Field } from "@/components/ui/field";

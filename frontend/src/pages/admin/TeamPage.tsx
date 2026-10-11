@@ -3,7 +3,7 @@ import { KeyRound, Trash2, UserPlus } from "lucide-react";
 import { useCallback, useEffect, useState, type FormEvent } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
-import { z } from "zod";
+import { z } from "@/lib/zod";
 import { PageHeader } from "@/components/layout/AdminLayout";
 import { Button } from "@/components/ui/button";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";

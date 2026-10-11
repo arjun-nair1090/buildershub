@@ -2,7 +2,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
-import { z } from "zod";
+import { z } from "@/lib/zod";
 import { GoldRateTicker } from "@/components/verify/GoldRateTicker";
 import { PageHeader } from "@/components/layout/AdminLayout";
 import { Button } from "@/components/ui/button";

@@ -1,4 +1,4 @@
-import { z } from "zod";
+import { z } from "@/lib/zod";
 import { JEWELLERY_TYPES, PURITIES, type Design, type DesignInput } from "@/types";
 
 const weight = z

@@ -1,4 +1,4 @@
-import { z } from "zod";
+import { z } from "@/lib/zod";
 import type { Store, StoreInput } from "@/types";
 
 const phone = z
