@@ -1,5 +1,5 @@
 import { request, requestBlob } from "./api";
-import type { Jewellery, JewelleryInput, JewelleryQuery, JewelleryStats, Page } from "@/types";
+import type { Jewellery, JewelleryInput, JewelleryQuery, JewelleryStats, Page, PiecePrice, PricePreviewInput } from "@/types";
 
 const base = "/api/jewellery";
 const one = (id: string) => `${base}/${encodeURIComponent(id)}`;
@@ -13,6 +13,8 @@ export const jewelleryService = {
   update: (id: string, data: JewelleryInput) => request<Jewellery>(one(id), { method: "PUT", body: data }),
   deactivate: (id: string) => request<Jewellery>(one(id), { method: "DELETE" }),
   activate: (id: string) => request<Jewellery>(`${one(id)}/activate`, { method: "POST" }),
+  pricePreview: (data: PricePreviewInput, signal?: AbortSignal) =>
+    request<PiecePrice>(`${base}/price-preview`, { method: "POST", body: data, signal }),
 
   qrImage: (id: string) => requestBlob(`${one(id)}/qr`),
 
@@ -23,12 +25,4 @@ export const jewelleryService = {
   },
   downloadCertificate: (id: string) => requestBlob(`${one(id)}/certificate`),
   removeCertificate: (id: string) => request<Jewellery>(`${one(id)}/certificate`, { method: "DELETE" }),
-
-  uploadPhoto: (id: string, file: File) => {
-    const form = new FormData();
-    form.append("file", file);
-    return request<Jewellery>(`${one(id)}/photo`, { method: "POST", body: form });
-  },
-  photo: (id: string) => requestBlob(`${one(id)}/photo`),
-  removePhoto: (id: string) => request<Jewellery>(`${one(id)}/photo`, { method: "DELETE" }),
 };

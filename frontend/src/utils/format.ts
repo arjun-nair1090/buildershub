@@ -75,3 +75,10 @@ export function sumMoney(...values: (string | number | null | undefined)[]): num
   }, 0);
   return paise / 100;
 }
+
+/** 11 Oct 2026, 10:30 am */
+export function formatDateTime(iso: string): string {
+  const date = new Date(iso);
+  if (Number.isNaN(date.getTime())) return "—";
+  return date.toLocaleString("en-IN", { day: "numeric", month: "short", year: "numeric", hour: "numeric", minute: "2-digit" });
+}
