@@ -215,3 +215,14 @@ class GoldRate(Base):
     inr_per_gram_24k: Mapped[Decimal] = mapped_column(Numeric(12, 2))  # pure gold, per gram
     source: Mapped[str] = mapped_column(String(40))
     fetched_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow, index=True)
+
+
+class RateLimit(Base):
+    """A fixed-window counter shared by every server instance. `key` is a scope plus a keyed hash of the email
+    or IP address, never the raw value."""
+
+    __tablename__ = "rate_limits"
+
+    key: Mapped[str] = mapped_column(String(80), primary_key=True)
+    window_start: Mapped[datetime] = mapped_column(DateTime(timezone=True))
+    count: Mapped[int] = mapped_column(Integer, default=0)

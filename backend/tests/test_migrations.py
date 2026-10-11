@@ -138,3 +138,15 @@ def test_upgrade_keeps_legacy_photos_upright_and_white_and_survives_a_broken_one
         assert 4 not in rows
         # the unreadable file isn't deleted, so nothing is lost
         assert c.execute(text("SELECT count(*) FROM certificate_files WHERE name = 'p4.jpg'")).scalar() == 1
+
+
+def test_rate_limits_table_up_down_up(migrate):
+    from sqlalchemy import inspect
+
+    cfg, engine = migrate
+    command.upgrade(cfg, "head")
+    assert "rate_limits" in inspect(engine).get_table_names()
+    command.downgrade(cfg, "0005_marketplace_foundation")
+    assert "rate_limits" not in inspect(engine).get_table_names()
+    command.upgrade(cfg, "head")
+    assert "rate_limits" in inspect(engine).get_table_names()
