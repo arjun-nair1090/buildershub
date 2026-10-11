@@ -37,8 +37,9 @@ export function PrivacyPage() {
       </Section>
       <Section title="Saved pieces">
         <p>
-          When you tap the heart, the piece or design is saved in this browser's local storage on your device. We
-          never receive it. Clearing your browser's site data removes it.
+          When you tap the heart, the piece or design is saved in this browser's local storage on your device, and so
+          is the city you last picked on the browse page. We never receive either. Clearing your browser's site data
+          removes them.
         </p>
       </Section>
       <Section title="Protecting the site">
@@ -52,6 +53,13 @@ export function PrivacyPage() {
         <p>
           The site runs on Vercel, which keeps standard request logs (such as the address a request came from and the
           page requested) to operate and secure its service.
+        </p>
+      </Section>
+      <Section title="Fonts and maps">
+        <p>
+          Our pages load their fonts from Google Fonts, so Google receives your IP address when a page opens. Store
+          pages show a map from OpenStreetMap, which receives your IP address when the map loads. Neither receives
+          your location or anything you saved.
         </p>
       </Section>
       <Section title="Store team accounts">
