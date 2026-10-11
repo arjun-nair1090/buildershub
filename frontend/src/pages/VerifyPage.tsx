@@ -5,6 +5,7 @@ import { HallmarkStamp } from "@/components/jewellery/HallmarkStamp";
 import { PriceBreakdown } from "@/components/jewellery/PriceBreakdown";
 import { Gallery } from "@/components/public/Gallery";
 import { PieceTile } from "@/components/public/PieceTile";
+import { SaveButton } from "@/components/public/SaveButton";
 import { Skeleton } from "@/components/ui/skeleton";
 import { GoldRateTape, GoldRateTicker } from "@/components/verify/GoldRateTicker";
 import { RecordUnavailable } from "@/components/verify/RecordUnavailable";
@@ -120,7 +121,10 @@ function VerifiedRecord({ record, checkedAt }: { record: PublicVerification; che
         <section className="rise flex items-start justify-between gap-4 px-5 py-7 sm:px-8" style={delay(150)}>
           <div className="min-w-0">
             <p className="text-[13px] font-semibold text-gold-deep">Jewellery details</p>
-            <h2 className="mt-1.5 font-display text-[26px] leading-tight text-ink">{record.title}</h2>
+            <div className="mt-1.5 flex items-start gap-3">
+              <h2 className="min-w-0 font-display text-[26px] leading-tight text-ink">{record.title}</h2>
+              <SaveButton kind="piece" id={record.jewellery_id} title={record.title} variant="inline" />
+            </div>
             <p className="mt-2 text-[15px] leading-relaxed text-ink/80">
               {record.type} · {record.description}
             </p>

@@ -5,6 +5,7 @@ import { Toaster } from "sonner";
 import { PublicLayout } from "@/components/layout/PublicLayout";
 import { AuthProvider } from "@/hooks/useAuth";
 import { DesignPage } from "@/pages/DesignPage";
+import { FeedPage } from "@/pages/FeedPage";
 import { LandingPage } from "@/pages/LandingPage";
 import { NotFoundPage } from "@/pages/NotFoundPage";
 import { SearchPage } from "@/pages/SearchPage";
@@ -53,6 +54,7 @@ export default function App() {
               <Route path="stores/:slug" element={<StorePage />} />
               <Route path="designs/:id" element={<DesignPage />} />
               <Route path="search" element={<SearchPage />} />
+              <Route path="feed" element={<FeedPage />} />
               <Route path="*" element={<NotFoundPage />} />
             </Route>
 

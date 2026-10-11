@@ -2,6 +2,7 @@ import { ArrowRight, Info } from "lucide-react";
 import { useEffect, type ReactNode } from "react";
 import { Link, useParams } from "react-router-dom";
 import { Gallery } from "@/components/public/Gallery";
+import { SaveButton } from "@/components/public/SaveButton";
 import { Unavailable } from "@/components/public/Unavailable";
 import { Skeleton } from "@/components/ui/skeleton";
 import { usePublicRecord } from "@/hooks/usePublicRecord";
@@ -26,7 +27,10 @@ function DesignView({ design }: { design: PublicDesign }) {
 
       <div className="rise mt-8 lg:mt-0">
         <span className="inline-flex rounded-full bg-basalt px-2.5 py-0.5 text-xs font-semibold text-chalk">Made to order</span>
-        <h1 className="mt-3 break-words font-display text-[32px] leading-tight text-ink sm:text-[38px]">{design.title}</h1>
+        <div className="mt-3 flex items-start gap-3">
+          <h1 className="min-w-0 break-words font-display text-[32px] leading-tight text-ink sm:text-[38px]">{design.title}</h1>
+          <SaveButton kind="design" id={design.public_id} title={design.title} variant="inline" className="mt-1" />
+        </div>
         <p className="mt-1 text-[15px] text-muted">{design.category}</p>
 
         <p className="mt-6 text-[13px] text-muted">Approximate price</p>
