@@ -7,6 +7,7 @@ import { AuthProvider } from "@/hooks/useAuth";
 import { DesignPage } from "@/pages/DesignPage";
 import { LandingPage } from "@/pages/LandingPage";
 import { NotFoundPage } from "@/pages/NotFoundPage";
+import { SearchPage } from "@/pages/SearchPage";
 import { StorePage } from "@/pages/StorePage";
 import { VerifyLookupPage } from "@/pages/VerifyLookupPage";
 import { VerifyPage } from "@/pages/VerifyPage";
@@ -51,6 +52,7 @@ export default function App() {
               <Route path="verify/:token" element={<VerifyPage />} />
               <Route path="stores/:slug" element={<StorePage />} />
               <Route path="designs/:id" element={<DesignPage />} />
+              <Route path="search" element={<SearchPage />} />
               <Route path="*" element={<NotFoundPage />} />
             </Route>
 
