@@ -19,6 +19,25 @@ app.add_middleware(
     expose_headers=["Content-Disposition"],
 )
 
+API_HEADERS = {
+    "X-Content-Type-Options": "nosniff",
+    "Referrer-Policy": "no-referrer",
+    "X-Frame-Options": "DENY",
+    # JSON and images never need scripts, styles or frames.
+    "Content-Security-Policy": "default-src 'none'; frame-ancestors 'none'",
+}
+DOCS_PATHS = ("/docs", "/redoc", "/openapi.json")  # the interactive docs load scripts
+
+
+@app.middleware("http")
+async def security_headers(request: Request, call_next):
+    response = await call_next(request)
+    for name, value in API_HEADERS.items():
+        if name == "Content-Security-Policy" and request.url.path.startswith(DOCS_PATHS):
+            continue
+        response.headers.setdefault(name, value)
+    return response
+
 
 @app.exception_handler(RequestValidationError)
 async def validation_error_handler(_: Request, exc: RequestValidationError) -> JSONResponse:
