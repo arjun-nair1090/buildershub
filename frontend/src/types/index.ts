@@ -320,4 +320,66 @@ export interface PublicVerification {
   registered_on: string;
   gold_rate: GoldRate | null;
   price: PiecePrice;
+  similar: PieceCard[];
+}
+
+/** A piece's price on a card: the same numbers as its page, without the breakdown. */
+export interface CardPrice {
+  final_min: DecimalString;
+  final_max: DecimalString;
+  original_min: DecimalString;
+  original_max: DecimalString;
+  discount_label: string | null;
+}
+
+export interface PieceCard {
+  jewellery_id: string;
+  title: string;
+  type: JewelleryType;
+  purity: Purity;
+  net_weight: DecimalString;
+  stock_status: StockStatus;
+  cover: Photo | null;
+  price: CardPrice;
+}
+
+/** Never carries a Jewellery ID or verification level: a design is not a verified piece. */
+export interface DesignCard {
+  public_id: string;
+  title: string;
+  category: JewelleryType;
+  purity_options: Purity[];
+  weight_min: DecimalString;
+  weight_max: DecimalString;
+  price_min: DecimalString;
+  price_max: DecimalString;
+  cover: Photo | null;
+}
+
+export interface PublicStore extends StoreRef {
+  address: string;
+  latitude: DecimalString;
+  longitude: DecimalString;
+  phone: string | null;
+  whatsapp: string | null;
+  hours: string;
+  photos: Photo[];
+  pieces: PieceCard[];
+  designs: DesignCard[];
+}
+
+export interface PublicDesign {
+  public_id: string;
+  store: StoreRef;
+  title: string;
+  description: string | null;
+  category: JewelleryType;
+  purity_options: Purity[];
+  weight_min: DecimalString;
+  weight_max: DecimalString;
+  price_min: DecimalString;
+  price_max: DecimalString;
+  making_days_min: number;
+  making_days_max: number;
+  photos: Photo[];
 }

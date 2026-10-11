@@ -82,3 +82,13 @@ export function formatDateTime(iso: string): string {
   if (Number.isNaN(date.getTime())) return "—";
   return date.toLocaleString("en-IN", { day: "numeric", month: "short", year: "numeric", hour: "numeric", minute: "2-digit" });
 }
+
+/** 30.00 – 45.00 g, or one weight when both ends match. */
+export function formatWeightRange(min: string | number, max: string | number): string {
+  return Number(min) === Number(max) ? formatWeight(min) : `${formatWeight(min).slice(0, -2)} – ${formatWeight(max)}`;
+}
+
+/** 14–21 days, or "7 days" when both ends match. */
+export function formatDaysRange(min: number, max: number): string {
+  return min === max ? `${min} ${min === 1 ? "day" : "days"}` : `${min}–${max} days`;
+}
