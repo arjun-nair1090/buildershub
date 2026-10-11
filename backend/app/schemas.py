@@ -27,6 +27,8 @@ Money = Annotated[Decimal, Field(ge=0, le=999999999, max_digits=12, decimal_plac
 Percent = Annotated[Decimal, Field(ge=0, le=100, max_digits=5, decimal_places=2)]
 Slug = Annotated[str, Field(min_length=2, max_length=80, pattern=r"^[a-z0-9]+(?:-[a-z0-9]+)*$")]
 Phone = Annotated[str, Field(pattern=r"^\+?\d{8,15}$")]
+Price = Annotated[Decimal, Field(gt=0, le=999999999, max_digits=12, decimal_places=2)]
+Days = Annotated[int, Field(ge=1, le=365)]
 
 
 # ---------- Auth ----------
@@ -161,6 +163,67 @@ class StoreOut(StoreRef):
     status: str
     piece_count: int
     design_count: int
+    photos: list[PhotoOut]
+    created_at: datetime
+    updated_at: datetime
+
+
+# ---------- Designs ----------
+
+class DesignIn(BaseModel):
+    store: Slug
+    title: str = Field(min_length=2, max_length=120)
+    description: str | None = Field(default=None, max_length=1000)
+    category: JewelleryType
+    purity_options: list[Purity] = Field(min_length=1, max_length=4)
+    weight_min: Weight
+    weight_max: Weight
+    price_min: Price
+    price_max: Price
+    making_days_min: Days
+    making_days_max: Days
+    is_published: bool = False
+
+    @field_validator("store", "title", mode="before")
+    @classmethod
+    def strip(cls, v: object) -> object:
+        return v.strip() if isinstance(v, str) else v
+
+    @field_validator("description", mode="before")
+    @classmethod
+    def blank_to_none(cls, v: object) -> object:
+        if isinstance(v, str):
+            return v.strip() or None
+        return v
+
+    @field_validator("purity_options")
+    @classmethod
+    def in_karat_order(cls, purities: list[str]) -> list[str]:
+        return [p for p in PURITY_PERCENT if p in purities]  # also drops duplicates
+
+    @field_validator("weight_max", "price_max", "making_days_max")
+    @classmethod
+    def max_not_below_min(cls, value, info: ValidationInfo):
+        low = info.data.get(info.field_name.replace("_max", "_min"))
+        if low is not None and value < low:
+            raise ValueError("Can't be below the minimum")
+        return value
+
+
+class DesignOut(BaseModel):
+    public_id: str
+    store: StoreRef
+    title: str
+    description: str | None
+    category: str
+    purity_options: list[str]
+    weight_min: Decimal
+    weight_max: Decimal
+    price_min: Decimal
+    price_max: Decimal
+    making_days_min: int
+    making_days_max: int
+    is_published: bool
     photos: list[PhotoOut]
     created_at: datetime
     updated_at: datetime
