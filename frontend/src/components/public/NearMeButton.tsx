@@ -1,5 +1,5 @@
 import { LocateFixed } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useNearMe } from "@/hooks/useNearMe";
 import type { Point } from "@/lib/discovery/distance";
 import { cn } from "@/utils/cn";
@@ -15,6 +15,14 @@ interface NearMeButtonProps {
 export function NearMeButton({ onResult, tone = "light", className }: NearMeButtonProps) {
   const { here, status, request } = useNearMe();
   const [explaining, setExplaining] = useState(false);
+  // The answer can take seconds; if the buyer has moved on to another page by then, don't act on it.
+  const mounted = useRef(true);
+  useEffect(() => {
+    mounted.current = true;
+    return () => {
+      mounted.current = false;
+    };
+  }, []);
   const dark = tone === "dark";
 
   if (explaining) {
@@ -30,7 +38,8 @@ export function NearMeButton({ onResult, tone = "light", className }: NearMeButt
           className="font-semibold underline-offset-4 hover:underline"
           onClick={async () => {
             setExplaining(false);
-            onResult(await request());
+            const point = await request();
+            if (mounted.current) onResult(point);
           }}
         >
           Continue

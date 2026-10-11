@@ -32,15 +32,37 @@ export function SearchPage() {
   const [note, setNote] = useState<string | null>(routerState?.pickCity ? NO_LOCATION : null);
   const [sheetOpen, setSheetOpen] = useState(false);
   const cityRef = useRef<HTMLSelectElement>(null);
+  const filtersButton = useRef<HTMLButtonElement>(null);
+  const sheetRef = useRef<HTMLDivElement>(null);
+  const sheetClose = useRef<HTMLButtonElement>(null);
 
+  // Built from the address bar, not this render's `filters`: the router commits URL changes in a transition,
+  // and a Near me answer can arrive seconds after the click, so `filters` may be behind.
   const update = (patch: Partial<Filters>, push = false) =>
-    setParams(filtersToParams({ ...filters, ...patch }), { replace: !push });
+    setParams(filtersToParams({ ...filtersFromParams(new URLSearchParams(window.location.search)), ...patch }), {
+      replace: !push,
+    });
+
+  // The box keeps its own text so typing isn't routed through the URL (the caret would jump to the end).
+  // It follows the URL only when something else changed it: Clear filters, back and forward.
+  const [query, setQuery] = useState(filters.q);
+  const typed = useRef(filters.q);
+  useEffect(() => {
+    if (filters.q !== typed.current) {
+      typed.current = filters.q;
+      setQuery(filters.q);
+    }
+  }, [filters.q]);
 
   const catalog = state.kind === "found" ? state.data : null;
   const results = useMemo(() => (catalog ? searchCatalog(catalog, filters, here) : null), [catalog, filters, here]);
   const cities = useMemo(() => (catalog ? [...new Set(catalog.stores.map((s) => s.city))].sort() : []), [catalog]);
   const panelCount = activeFilterCount(filters);
   const shown = results ? results[filters.tab].length : 0;
+  const citiesRef = useRef(cities);
+  useEffect(() => {
+    citiesRef.current = cities;
+  }, [cities]);
 
   useEffect(() => {
     document.title = "Browse jewellery";
@@ -49,11 +71,57 @@ export function SearchPage() {
   useEffect(() => {
     if (routerState?.pickCity) cityRef.current?.focus();
   }, [routerState]);
+  // A location that arrives after we offered the city picker (the buyer was slow to tap Allow) still applies.
+  const hadHere = useRef(here !== null);
   useEffect(() => {
-    document.body.style.overflow = sheetOpen ? "hidden" : "";
+    if (here && !hadHere.current && note === NO_LOCATION) {
+      setNote(null);
+      update({ sort: "nearest" });
+    }
+    hadHere.current = here !== null;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [here]);
+
+  const closeSheet = () => {
+    setSheetOpen(false);
+    filtersButton.current?.focus();
+  };
+  // The sheet is a modal dialog: focus moves in, Tab stays inside, Escape closes it and focus returns to the
+  // Filters button. It also closes if the window grows past the width where the side panel shows instead.
+  useEffect(() => {
+    if (!sheetOpen) return;
+    const sheet = sheetRef.current;
+    sheetClose.current?.focus();
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        e.preventDefault();
+        closeSheet();
+      } else if (e.key === "Tab" && sheet) {
+        const items = [...sheet.querySelectorAll<HTMLElement>("button:not([disabled]), input, select")].filter(
+          (el) => el.tabIndex >= 0,
+        );
+        const first = items[0];
+        const last = items[items.length - 1];
+        if (e.shiftKey && document.activeElement === first) {
+          e.preventDefault();
+          last?.focus();
+        } else if (!e.shiftKey && document.activeElement === last) {
+          e.preventDefault();
+          first?.focus();
+        }
+      }
+    };
+    const wide = window.matchMedia("(min-width: 1024px)");
+    const onWide = () => wide.matches && setSheetOpen(false);
+    document.addEventListener("keydown", onKey);
+    wide.addEventListener("change", onWide);
+    document.body.style.overflow = "hidden";
     return () => {
+      document.removeEventListener("keydown", onKey);
+      wide.removeEventListener("change", onWide);
       document.body.style.overflow = "";
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [sheetOpen]);
 
   const onNearMe = (point: Point | null) => {
@@ -64,8 +132,10 @@ export function SearchPage() {
     }
     setNote(NO_LOCATION);
     const remembered = lastCity();
-    if (!filters.city && remembered && cities.includes(remembered)) update({ city: remembered });
-    cityRef.current?.focus();
+    const current = filtersFromParams(new URLSearchParams(window.location.search));
+    if (!current.city && remembered && citiesRef.current.includes(remembered)) update({ city: remembered });
+    // Don't pull the buyer out of the search box if they started typing while the browser was asking.
+    if (!(document.activeElement instanceof HTMLInputElement)) cityRef.current?.focus();
   };
 
   const clear = () => setParams(filtersToParams({ ...DEFAULT_FILTERS, tab: filters.tab, sort: filters.sort }), { replace: true });
@@ -80,8 +150,12 @@ export function SearchPage() {
           <Search className="pointer-events-none absolute left-3.5 top-1/2 size-4 -translate-y-1/2 text-muted" aria-hidden />
           <input
             type="search"
-            value={filters.q}
-            onChange={(e) => update({ q: e.target.value })}
+            value={query}
+            onChange={(e) => {
+              typed.current = e.target.value;
+              setQuery(e.target.value);
+              update({ q: e.target.value });
+            }}
             placeholder="Search rings, necklaces, store names, areas"
             className="h-12 w-full rounded-md border border-line-strong bg-white pl-10 pr-3 text-[15px] text-ink placeholder:text-muted focus:border-basalt focus:outline-none"
           />
@@ -124,6 +198,7 @@ export function SearchPage() {
           </select>
         </label>
         <button
+          ref={filtersButton}
           type="button"
           onClick={() => setSheetOpen(true)}
           className="inline-flex h-11 items-center gap-2 rounded-md border border-line-strong bg-white px-4 text-sm font-medium text-ink lg:hidden"
@@ -204,12 +279,12 @@ export function SearchPage() {
       </div>
 
       {sheetOpen && (
-        <div className="fixed inset-0 z-50 lg:hidden" role="dialog" aria-modal="true" aria-label="Filters">
-          <button type="button" aria-label="Close filters" className="absolute inset-0 bg-basalt/50" onClick={() => setSheetOpen(false)} />
+        <div ref={sheetRef} className="fixed inset-0 z-50 lg:hidden" role="dialog" aria-modal="true" aria-label="Filters">
+          <button type="button" tabIndex={-1} aria-label="Close filters" className="absolute inset-0 bg-basalt/50" onClick={closeSheet} />
           <div className="absolute inset-x-0 bottom-0 flex max-h-[85dvh] flex-col rounded-t-xl bg-chalk">
             <div className="flex items-center justify-between border-b border-line px-4 py-3">
               <p className="font-semibold text-ink">Filters</p>
-              <button type="button" onClick={() => setSheetOpen(false)} aria-label="Close filters" className="grid size-10 place-items-center rounded-full hover:bg-basalt-50">
+              <button ref={sheetClose} type="button" onClick={closeSheet} aria-label="Close filters" className="grid size-10 place-items-center rounded-full hover:bg-basalt-50">
                 <X className="size-5" aria-hidden />
               </button>
             </div>
@@ -220,7 +295,7 @@ export function SearchPage() {
               <button type="button" onClick={clear} className="h-12 flex-1 rounded-md border border-line-strong bg-white text-sm font-medium text-ink">
                 Clear
               </button>
-              <button type="button" onClick={() => setSheetOpen(false)} className="h-12 flex-[2] rounded-md bg-basalt text-sm font-medium text-chalk">
+              <button type="button" onClick={closeSheet} className="h-12 flex-[2] rounded-md bg-basalt text-sm font-medium text-chalk">
                 Show {shown} {shown === 1 ? "result" : "results"}
               </button>
             </div>

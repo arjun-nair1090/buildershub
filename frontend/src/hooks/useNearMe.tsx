@@ -28,18 +28,23 @@ export function NearMeProvider({ children }: { children: ReactNode }) {
         }
         setStatus("asking");
         let settled = false;
-        const finish = (point: Point | null, next: NearMeStatus) => {
+        const finish = (point: Point | null, failed?: NearMeStatus) => {
           if (settled) return;
           settled = true;
           window.clearTimeout(timer);
-          if (point) setHere(point);
-          setStatus(next);
+          if (failed) setStatus(failed);
           resolve(point);
         };
         // The browser's own timeout only starts after the buyer answers the prompt, so we keep our own.
         const timer = window.setTimeout(() => finish(null, "unavailable"), GIVE_UP_MS);
         navigator.geolocation.getCurrentPosition(
-          (pos) => finish({ lat: pos.coords.latitude, lng: pos.coords.longitude }, "granted"),
+          (pos) => {
+            // Kept even when it arrives after we gave up: the buyer did say yes, just slowly.
+            const point = { lat: pos.coords.latitude, lng: pos.coords.longitude };
+            setHere(point);
+            setStatus("granted");
+            finish(point);
+          },
           (err) => finish(null, err.code === err.PERMISSION_DENIED ? "denied" : "unavailable"),
           { timeout: GIVE_UP_MS, maximumAge: 5 * 60_000 },
         );
