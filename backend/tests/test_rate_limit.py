@@ -4,6 +4,7 @@ from sqlalchemy import func, select
 
 from app.models import RateLimit
 from app.services import rate_limit
+from tests.conftest import ADMIN_EMAIL, ADMIN_PASSWORD
 
 T0 = datetime(2026, 10, 11, 12, 0, tzinfo=timezone.utc)
 MIN = timedelta(minutes=1)
@@ -72,3 +73,44 @@ def test_client_ip_prefers_the_forwarded_address():
     assert rate_limit.client_ip(Req({"x-forwarded-for": "203.0.113.7, 10.0.0.1"}, "10.0.0.2")) == "203.0.113.7"
     assert rate_limit.client_ip(Req({}, "10.0.0.2")) == "10.0.0.2"
     assert rate_limit.client_ip(Req({}, None)) == "unknown"
+
+
+def login(client, email=ADMIN_EMAIL, password="wrong-password", ip="198.51.100.1"):
+    return client.post("/api/auth/login", json={"email": email, "password": password}, headers={"X-Forwarded-For": ip})
+
+
+def test_login_locks_an_email_after_five_failures(client):
+    for _ in range(5):
+        assert login(client).status_code == 401
+    res = login(client, password=ADMIN_PASSWORD)  # even the right password waits
+    assert res.status_code == 429
+    assert res.json()["detail"] == "Too many attempts. Try again in 15 minutes."
+    assert 0 < int(res.headers["retry-after"]) <= 900
+    assert login(client, email=ADMIN_EMAIL.upper(), password=ADMIN_PASSWORD).status_code == 429  # same email
+
+
+def test_login_limits_failures_per_ip_across_emails(client):
+    for i in range(20):
+        assert login(client, email=f"user{i}@test.demo").status_code == 401
+    assert login(client, password=ADMIN_PASSWORD).status_code == 429
+    assert login(client, password=ADMIN_PASSWORD, ip="198.51.100.2").status_code == 200
+
+
+def test_a_successful_login_clears_the_email_count(client):
+    for _ in range(4):
+        login(client)
+    assert login(client, password=ADMIN_PASSWORD).status_code == 200
+    for _ in range(4):
+        assert login(client).status_code == 401  # would be failures 5 to 8 without the reset
+    assert login(client, password=ADMIN_PASSWORD).status_code == 200
+
+
+def test_verify_limits_lookups_per_ip(client, publish):
+    token = publish()["verification_token"]
+    for _ in range(60):
+        assert client.get(f"/api/verify/{token}", headers={"X-Forwarded-For": "198.51.100.9"}).status_code == 200
+    res = client.get(f"/api/verify/{token}", headers={"X-Forwarded-For": "198.51.100.9"})
+    assert res.status_code == 429
+    assert res.json()["detail"] == "Too many lookups. Try again in a minute."
+    assert 1 <= int(res.headers["retry-after"]) <= 60
+    assert client.get(f"/api/verify/{token}", headers={"X-Forwarded-For": "198.51.100.10"}).status_code == 200

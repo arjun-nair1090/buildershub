@@ -1,4 +1,7 @@
-from fastapi import APIRouter, Depends, HTTPException, Response, status
+import math
+from datetime import timedelta
+
+from fastapi import APIRouter, Depends, HTTPException, Request, Response, status
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
@@ -7,15 +10,40 @@ from app.deps import get_current_user, require_admin
 from app.models import User
 from app.schemas import AdminCreate, AdminOut, LoginRequest, PasswordReset, TokenResponse, UserOut
 from app.security import create_access_token, hash_password, verify_password
+from app.services import rate_limit
 
 router = APIRouter(prefix="/api/auth", tags=["auth"])
 
 
+LOGIN_WINDOW = timedelta(minutes=15)
+LOGIN_LIMITS = (("login-email", 5), ("login-ip", 20))  # failed attempts per window
+
+
+def too_many_attempts(verdict: rate_limit.Verdict) -> HTTPException:
+    minutes = math.ceil(verdict.retry_after / 60)
+    return HTTPException(
+        status_code=status.HTTP_429_TOO_MANY_REQUESTS,
+        detail=f"Too many attempts. Try again in {minutes} minute{'' if minutes == 1 else 's'}.",
+        headers={"Retry-After": str(verdict.retry_after)},
+    )
+
+
 @router.post("/login", response_model=TokenResponse)
-def login(body: LoginRequest, db: Session = Depends(get_db)) -> TokenResponse:
+def login(body: LoginRequest, request: Request, db: Session = Depends(get_db)) -> TokenResponse:
+    ip = rate_limit.client_ip(request)
+    keys = {"login-email": body.email, "login-ip": ip}
+    rate_limit.purge(db)
+    for scope, limit in LOGIN_LIMITS:
+        verdict = rate_limit.peek(db, scope, keys[scope], limit, LOGIN_WINDOW)
+        if not verdict.allowed:
+            raise too_many_attempts(verdict)
+
     user = db.scalar(select(User).where(User.email == body.email))
     if not verify_password(body.password, user.password_hash if user else None) or user.status != "active":
+        for scope, limit in LOGIN_LIMITS:
+            rate_limit.hit(db, scope, keys[scope], limit, LOGIN_WINDOW)
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Incorrect email or password")
+    rate_limit.clear(db, "login-email", body.email)
     token, expires_in = create_access_token(user.id, user.token_version, remember=body.remember)
     return TokenResponse(access_token=token, expires_in=expires_in, user=UserOut.model_validate(user))
 

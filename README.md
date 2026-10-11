@@ -249,3 +249,9 @@ npm run build
 - All `/api/jewellery/*` routes require an active admin. The public endpoint exposes buyer fields only.
 - Uploads are checked by extension, MIME type **and** file signature, size-limited, stored under random names outside the web root, and served only to admins.
 - Secrets come from environment variables. `.env` is git-ignored.
+- **Rate limits:** login allows 5 failed attempts per email and 20 per IP address in 15 minutes; the verify
+  endpoint allows 60 lookups per IP per minute. Counts live in the `rate_limits` table (shared by every server
+  instance), keyed by an HMAC of the email or IP so neither is stored, and are deleted after a day. If the table
+  is unavailable, requests are allowed.
+- **Headers:** API responses send `nosniff`, `no-referrer`, `X-Frame-Options: DENY` and a CSP that allows
+  nothing; pages get a CSP, HSTS and a permissions policy from `vercel.json`.

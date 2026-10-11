@@ -1,4 +1,6 @@
-from fastapi import APIRouter, Depends, HTTPException, Path, status
+from datetime import timedelta
+
+from fastapi import APIRouter, Depends, HTTPException, Path, Request, status
 from sqlalchemy import or_, select
 from sqlalchemy.orm import Session
 
@@ -7,6 +9,7 @@ from app.database import get_db
 from app.models import Jewellery
 from app.schemas import PublicVerification, StoreRef
 from app.services.cards import price_now
+from app.services import rate_limit
 from app.services.photos import photo_out
 from app.services.pricing import gold_rate_out, pricing_context
 from app.services.similar import similar_pieces
@@ -14,6 +17,8 @@ from app.services.similar import similar_pieces
 router = APIRouter(prefix="/api/verify", tags=["public verification"])
 
 Code = Path(min_length=4, max_length=32, pattern=r"^[A-Za-z0-9\-]+$")
+VERIFY_WINDOW = timedelta(minutes=1)
+VERIFY_LIMIT = 60  # lookups per IP per minute; an open piece page polls once a minute
 
 
 def visible_piece(db: Session, token: str) -> Jewellery:
@@ -34,10 +39,21 @@ def visible_piece(db: Session, token: str) -> Jewellery:
 @router.get(
     "/{token}",
     response_model=PublicVerification,
-    responses={404: {"description": "No such record"}, 410: {"description": "Record inactive"}},
+    responses={
+        404: {"description": "No such record"},
+        410: {"description": "Record inactive"},
+        429: {"description": "Too many lookups"},
+    },
 )
-def verify(token: str = Code, db: Session = Depends(get_db)) -> PublicVerification:
+def verify(request: Request, token: str = Code, db: Session = Depends(get_db)) -> PublicVerification:
     """Public endpoint opened from the QR code."""
+    verdict = rate_limit.hit(db, "verify-ip", rate_limit.client_ip(request), VERIFY_LIMIT, VERIFY_WINDOW)
+    if not verdict.allowed:
+        raise HTTPException(
+            status_code=status.HTTP_429_TOO_MANY_REQUESTS,
+            detail="Too many lookups. Try again in a minute.",
+            headers={"Retry-After": str(verdict.retry_after)},
+        )
     item = visible_piece(db, token)
     ctx = pricing_context(db)
     lab = item.verification_level == "lab"
