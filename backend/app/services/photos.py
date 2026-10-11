@@ -44,7 +44,7 @@ def _jpeg(img: Image.Image) -> bytes:
 def process_image(data: bytes) -> ProcessedImage:
     try:
         img = Image.open(BytesIO(data))
-        if img.format not in ("JPEG", "PNG"):
+        if img.format not in ("JPEG", "MPO", "PNG"):  # MPO: phone JPEGs carrying a second (HDR/depth) image
             raise _reject("Photos must be JPG or PNG")
         if img.width * img.height > MAX_PIXELS:
             raise _reject("That image is too large. Use a photo under 60 megapixels")

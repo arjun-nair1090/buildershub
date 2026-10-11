@@ -67,3 +67,13 @@ def test_rejects_huge_pixel_counts(monkeypatch):
     with pytest.raises(HTTPException) as err:
         process_image(make_image(size=(200, 200)))
     assert err.value.status_code == 422 and "too large" in err.value.detail
+
+
+def test_accepts_phone_jpegs_with_an_embedded_second_image():
+    """Ultra HDR and portrait phone photos are JPEGs that Pillow reads as MPO."""
+    buf = BytesIO()
+    Image.new("RGB", (800, 600), (200, 160, 60)).save(buf, "MPO", save_all=True,
+                                                      append_images=[Image.new("RGB", (400, 300))])
+    assert opened(buf.getvalue()).format == "MPO"
+    out = process_image(buf.getvalue())
+    assert (out.width, out.height) == (800, 600)

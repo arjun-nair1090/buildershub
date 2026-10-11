@@ -291,13 +291,15 @@ export function JewelleryForm({ defaultValues = emptyValues, submitLabel, cancel
         </Field>
         <div className="space-y-1.5">
           <label className="flex items-start gap-3">
-            <input type="checkbox" className="mt-0.5 size-4 accent-basalt" disabled={!canPublish} {...register("is_published")} />
+            <input type="checkbox" className="mt-0.5 size-4 accent-basalt" disabled={!canPublish && !values.is_published} {...register("is_published")} />
             <span>
               <span className="block text-[13px] font-medium text-ink">Published</span>
               <span className="block text-[13px] text-muted">
                 {canPublish
                   ? "Buyers can see this piece and its QR code opens its page."
-                  : "Add a photo on the piece's page first. Until it's published, its QR code says the record wasn't found."}
+                  : values.is_published
+                    ? "Live without a photo. Add one on the piece's page; if you unpublish it, you'll need a photo to publish it again."
+                    : "Add a photo on the piece's page first. Until it's published, its QR code says the record wasn't found."}
               </span>
             </span>
           </label>

@@ -66,14 +66,15 @@ def get_or_404(db: Session, jewellery_id: str) -> Jewellery:
     return item
 
 
-def check_rules(item: Jewellery) -> None:
-    """Rules that depend on what's already stored: the certificate file and the photos."""
+def check_rules(item: Jewellery, was_published: bool = False) -> None:
+    """Rules that depend on what's already stored: the certificate file and the photos. The photo rule applies
+    when a piece is published, so a piece that was already live without photos can still be edited."""
     if item.verification_level == "lab" and not item.certificate_document:
         raise field_error(
             "verification_level",
             "Upload the certificate file first: save the piece, attach the file, then choose Lab verified",
         )
-    if item.is_published and not item.photos:
+    if item.is_published and not was_published and not item.photos:
         raise field_error("is_published", "Add at least one photo before publishing")
 
 
@@ -81,11 +82,12 @@ def apply_fields(db: Session, item: Jewellery, body: JewelleryIn) -> None:
     store = db.scalar(select(Store).where(Store.slug == body.store))
     if store is None:
         raise field_error("store", "Choose one of the stores")
+    was_published = bool(item.is_published)
     for key, value in body.model_dump(exclude={"store", "total_price", "status"}).items():
         setattr(item, key, value)
     item.store = store
     item.total_price = body.total_price if body.total_price is not None else body.calculated_total
-    check_rules(item)
+    check_rules(item, was_published)
 
 
 @router.get("", response_model=JewelleryPage)

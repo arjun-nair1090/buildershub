@@ -12,7 +12,7 @@ from io import BytesIO
 
 import sqlalchemy as sa
 from alembic import op
-from PIL import Image
+from PIL import Image, ImageOps
 
 revision = "0005_marketplace_foundation"
 down_revision = "0004_store_and_live_pricing"
@@ -41,7 +41,13 @@ def _slug(name: str) -> str:
 
 def _jpeg(data: bytes, px: int) -> tuple[bytes, int, int]:
     """Same output as app.services.photos, inlined so the migration doesn't depend on app code."""
-    img = Image.open(BytesIO(data)).convert("RGB")
+    img = ImageOps.exif_transpose(Image.open(BytesIO(data)))  # browsers honoured EXIF rotation on the old photos
+    if img.mode in ("RGBA", "LA") or "transparency" in img.info:
+        rgba = img.convert("RGBA")
+        img = Image.new("RGB", rgba.size, "white")
+        img.paste(rgba, mask=rgba.getchannel("A"))
+    else:
+        img = img.convert("RGB")
     img.thumbnail((px, px), Image.Resampling.LANCZOS)
     buf = BytesIO()
     img.save(buf, "JPEG", quality=82, optimize=True, progressive=True)
@@ -159,19 +165,21 @@ def upgrade() -> None:
                 data = conn.execute(
                     sa.text("SELECT data FROM certificate_files WHERE name = :n"), {"n": piece.photo}
                 ).scalar()
-                if data:
+                try:
                     image, width, height = _jpeg(data, 1600)
                     thumbnail, _, _ = _jpeg(data, 600)
-                    conn.execute(
-                        sa.text(
-                            "INSERT INTO photos (public_id, piece_id, position, alt_text, image, thumbnail, width,"
-                            " height, created_at) VALUES (:pid, :piece, 0, '', :image, :thumbnail, :width, :height,"
-                            " :now)"
-                        ),
-                        {"pid": secrets.token_hex(16), "piece": piece.id, "image": image, "thumbnail": thumbnail,
-                         "width": width, "height": height, "now": now},
-                    )
-                    conn.execute(sa.text("DELETE FROM certificate_files WHERE name = :n"), {"n": piece.photo})
+                except Exception:  # missing or unreadable legacy file: keep its bytes, add no photo
+                    continue
+                conn.execute(
+                    sa.text(
+                        "INSERT INTO photos (public_id, piece_id, position, alt_text, image, thumbnail, width,"
+                        " height, created_at) VALUES (:pid, :piece, 0, '', :image, :thumbnail, :width, :height,"
+                        " :now)"
+                    ),
+                    {"pid": secrets.token_hex(16), "piece": piece.id, "image": image, "thumbnail": thumbnail,
+                     "width": width, "height": height, "now": now},
+                )
+                conn.execute(sa.text("DELETE FROM certificate_files WHERE name = :n"), {"n": piece.photo})
 
     with op.batch_alter_table("jewellery") as batch:
         batch.alter_column("store_id", existing_type=sa.Integer(), nullable=False)

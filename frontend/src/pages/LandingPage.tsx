@@ -23,13 +23,13 @@ const EXAMPLE_PRICE: PiecePrice = {
   making_percent_max: null,
   other: "4000",
   gst_percent: "3",
-  tax_min: "10500",
-  tax_max: "10500",
-  original_min: "125000",
-  original_max: "125000",
-  discount: { type: "percent", value: "5", label: "5% off", amount_min: "6250", amount_max: "6250", ends_on: null },
-  final_min: "118750",
-  final_max: "118750",
+  tax_min: "3435",
+  tax_max: "3435",
+  original_min: "117935",
+  original_max: "117935",
+  discount: { type: "percent", value: "5", label: "5% off", amount_min: "5897", amount_max: "5897", ends_on: null },
+  final_min: "112038",
+  final_max: "112038",
 };
 
 function SectionHeading({ title, children }: { title: string; children?: ReactNode }) {

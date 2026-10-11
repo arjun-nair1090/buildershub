@@ -94,3 +94,47 @@ def test_downgrade_restores_the_photo_and_store_name(migrate):
             text("SELECT count(*) FROM certificate_files WHERE name = :n"), {"n": name}).scalar() == 1
 
     command.upgrade(cfg, "head")  # and back up cleanly
+
+
+def jpeg_rotated() -> bytes:
+    exif = Image.Exif()
+    exif[0x0112] = 6  # orientation: rotate 90 degrees clockwise to display
+    buf = BytesIO()
+    Image.new("RGB", (400, 200), (180, 140, 60)).save(buf, "JPEG", exif=exif.tobytes())
+    return buf.getvalue()
+
+
+def png_transparent() -> bytes:
+    buf = BytesIO()
+    Image.new("RGBA", (50, 50), (0, 0, 0, 0)).save(buf, "PNG")
+    return buf.getvalue()
+
+
+def test_upgrade_keeps_legacy_photos_upright_and_white_and_survives_a_broken_one(migrate):
+    cfg, engine = migrate
+    command.upgrade(cfg, BEFORE)
+    seed_before(engine)
+    with engine.begin() as c:
+        files = {"p2.jpg": jpeg_rotated(), "p3.png": png_transparent(), "p4.jpg": b"not an image"}
+        for name, data in files.items():
+            c.execute(text("INSERT INTO certificate_files (name, data) VALUES (:n, :d)"), {"n": name, "d": data})
+        c.execute(text("UPDATE jewellery SET photo = 'p2.jpg' WHERE id = 2"))
+        for pk, name in ((3, "p3.png"), (4, "p4.jpg")):
+            c.execute(
+                text(
+                    "INSERT INTO jewellery (id, jewellery_id, verification_token, type, description, purity,"
+                    " gross_weight, net_weight, gold_value, making_charges, other_component_value, tax,"
+                    " total_price, status, created_at, updated_at, photo) VALUES (:id, :jid, :tok, 'Ring', 'Band',"
+                    " '22K', 10, 10, 1, 1, 0, 1, 3, 'active', '2026-10-01', '2026-10-01', :photo)"
+                ),
+                {"id": pk, "jid": f"JWL-26-AAAAA{pk}", "tok": f"TOKEN{pk:07d}", "photo": name},
+            )
+    command.upgrade(cfg, "head")
+
+    with engine.connect() as c:
+        rows = {r.piece_id: r for r in c.execute(text("SELECT piece_id, width, height, image FROM photos"))}
+        assert (rows[2].width, rows[2].height) == (200, 400)  # turned upright, as browsers showed it
+        assert min(Image.open(BytesIO(rows[3].image)).getpixel((25, 25))) > 240  # transparent -> white
+        assert 4 not in rows
+        # the unreadable file isn't deleted, so nothing is lost
+        assert c.execute(text("SELECT count(*) FROM certificate_files WHERE name = 'p4.jpg'")).scalar() == 1

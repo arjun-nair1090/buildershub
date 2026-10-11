@@ -391,6 +391,23 @@ def test_publishing_needs_a_photo(client, auth, payload, add_photo):
     assert res.status_code == 200 and res.json()["is_published"] is True
 
 
+
+def test_published_piece_without_photos_can_still_be_edited(client, auth, payload, db):
+    """Migrated pieces were published photo or not; the photo rule applies only when a piece is next published."""
+    from app.models import Jewellery
+
+    jid = client.post("/api/jewellery", json=payload, headers=auth).json()["jewellery_id"]
+    db.scalar(select(Jewellery).where(Jewellery.jewellery_id == jid)).is_published = True
+    db.commit()
+
+    res = client.put(f"/api/jewellery/{jid}", json={**payload, "is_published": True, "stock_status": "sold"},
+                     headers=auth)
+    assert res.status_code == 200, res.text
+    res = client.put(f"/api/jewellery/{jid}", json={**payload, "is_published": False}, headers=auth)
+    assert res.status_code == 200 and res.json()["is_published"] is False
+    res = client.put(f"/api/jewellery/{jid}", json={**payload, "is_published": True}, headers=auth)
+    assert res.status_code == 422 and "is_published" in res.json()["fields"]
+
 @pytest.mark.parametrize("discount, field", [
     ({"discount_type": "percent", "discount_value": "0.5"}, "discount_value"),
     ({"discount_type": "percent", "discount_value": "95"}, "discount_value"),
