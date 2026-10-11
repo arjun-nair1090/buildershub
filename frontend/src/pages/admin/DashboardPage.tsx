@@ -97,7 +97,7 @@ export function DashboardPage() {
           <JewelleryTable
             items={recent.data?.items ?? []}
             loading={recent.loading && !recent.data}
-            columns={["id", "title", "store", "listing", "price", "created"]}
+            columns={["id", "title", "listing", "price", "created"]}
             onDeactivate={deactivate}
           />
         )}

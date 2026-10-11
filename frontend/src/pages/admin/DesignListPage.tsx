@@ -57,14 +57,16 @@ export function DesignListPage() {
       <PageHeader title="Designs" description="Pieces a store can make to order. Buyers see them as approximate, never as verified." actions={addButton} />
       <Panel>
         <div className="border-b border-line p-4 sm:p-5">
-          <Select aria-label="Filter by store" value={store} onChange={(e) => setStore(e.target.value)} className="sm:w-64">
-            <option value="">All stores</option>
-            {stores?.map((s) => (
-              <option key={s.slug} value={s.slug}>
-                {s.name}
-              </option>
-            ))}
-          </Select>
+          <div className="sm:w-64">
+            <Select aria-label="Filter by store" value={store} onChange={(e) => setStore(e.target.value)}>
+              <option value="">All stores</option>
+              {stores?.map((s) => (
+                <option key={s.slug} value={s.slug}>
+                  {s.name}
+                </option>
+              ))}
+            </Select>
+          </div>
         </div>
         {error ? (
           <div className="px-6 py-12 text-center">
@@ -82,7 +84,7 @@ export function DesignListPage() {
         ) : designs.length === 0 ? (
           <EmptyState icon={Palette} title="No designs yet" description="Add the designs a store can make, with an approximate price and making time." action={addButton} />
         ) : (
-          <div className="overflow-x-auto">
+          <div className="relative overflow-x-auto">
             <table className="w-full min-w-[720px] text-left text-[15px]">
               <thead className="border-b border-line text-[13px] text-muted">
                 <tr>

@@ -30,7 +30,16 @@ const COLUMNS: Record<ColumnKey, Column> = {
       </Link>
     ),
   },
-  title: { key: "title", label: "Title", render: (j) => j.title },
+  title: {
+    key: "title",
+    label: "Title",
+    render: (j) => (
+      <>
+        {j.title}
+        <span className="block text-[13px] text-muted">{j.store.name}</span>
+      </>
+    ),
+  },
   store: { key: "store", label: "Store", render: (j) => j.store.name },
   type: { key: "type", label: "Category", sort: "type", render: (j) => j.type },
   purity: { key: "purity", label: "Purity", render: (j) => j.purity },
@@ -94,7 +103,7 @@ export function JewelleryTable({ items, columns, loading, skeletonRows = 5, sort
   return (
     <>
       {/* Desktop and tablet: table */}
-      <div className="hidden overflow-x-auto md:block">
+      <div className="relative hidden overflow-x-auto md:block">
         <table className="w-full text-left text-sm">
           <thead>
             <tr className="border-b border-line text-[13px] text-muted">

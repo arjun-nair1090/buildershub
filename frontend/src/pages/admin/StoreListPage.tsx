@@ -73,7 +73,7 @@ export function StoreListPage() {
         ) : stores.length === 0 ? (
           <EmptyState icon={StoreIcon} title="No stores yet" description="Add a store, then add its pieces and designs." action={addButton} />
         ) : (
-          <div className="overflow-x-auto">
+          <div className="relative overflow-x-auto">
             <table className="w-full min-w-[640px] text-left text-[15px]">
               <thead className="border-b border-line text-[13px] text-muted">
                 <tr>

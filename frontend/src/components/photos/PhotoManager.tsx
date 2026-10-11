@@ -65,7 +65,7 @@ export function PhotoManager({ owner, ownerKey, photos, onChange, hint }: PhotoM
       {hint && <p className="text-[13px] leading-relaxed text-muted">{hint}</p>}
 
       {photos.length > 0 && (
-        <ol className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        <ol className="grid grid-cols-[repeat(auto-fill,minmax(200px,1fr))] gap-4">
           {photos.map((photo, i) => (
             <li key={photo.public_id} className="space-y-2 rounded-md border border-line p-3">
               <Thumb photo={photo} />
@@ -91,9 +91,12 @@ export function PhotoManager({ owner, ownerKey, photos, onChange, hint }: PhotoM
                   />
                 </div>
               </div>
+              <label className="block text-xs text-muted" htmlFor={`alt-${photo.public_id}`}>
+                Alt text, for screen readers
+              </label>
               <Input
-                aria-label={`Alt text for photo ${i + 1}`}
-                placeholder={`Alt text (default: ${photo.alt})`}
+                id={`alt-${photo.public_id}`}
+                placeholder={photo.alt}
                 defaultValue={photo.alt_text}
                 maxLength={200}
                 onBlur={(e) => {

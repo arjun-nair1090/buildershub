@@ -133,7 +133,7 @@ export function JewelleryListPage() {
               ))}
             </Select>
             <Select aria-label="Filter by listing" value={query.published} onChange={(e) => update({ published: e.target.value })}>
-              <option value="">Published or draft</option>
+              <option value="">Any listing</option>
               <option value="true">Published</option>
               <option value="false">Draft</option>
             </Select>
@@ -195,7 +195,7 @@ export function JewelleryListPage() {
               items={data?.items ?? []}
               loading={loading && !data}
               skeletonRows={8}
-              columns={["id", "title", "store", "purity", "weight", "level", "listing", "price", "status"]}
+              columns={["id", "title", "level", "listing", "price", "status"]}
               sort={query.sort}
               order={query.order}
               onSort={onSort}
