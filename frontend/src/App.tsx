@@ -4,6 +4,7 @@ import { BrowserRouter, Route, Routes } from "react-router-dom";
 import { Toaster } from "sonner";
 import { PublicLayout } from "@/components/layout/PublicLayout";
 import { AuthProvider } from "@/hooks/useAuth";
+import { DesignPage } from "@/pages/DesignPage";
 import { LandingPage } from "@/pages/LandingPage";
 import { NotFoundPage } from "@/pages/NotFoundPage";
 import { StorePage } from "@/pages/StorePage";
@@ -49,6 +50,7 @@ export default function App() {
               <Route path="verify" element={<VerifyLookupPage />} />
               <Route path="verify/:token" element={<VerifyPage />} />
               <Route path="stores/:slug" element={<StorePage />} />
+              <Route path="designs/:id" element={<DesignPage />} />
               <Route path="*" element={<NotFoundPage />} />
             </Route>
 
