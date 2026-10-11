@@ -108,151 +108,155 @@ function VerifiedRecord({ record, checkedAt }: { record: PublicVerification; che
   const hasDesign = Boolean(record.colour || record.design_details);
   return (
     // overflow-x-clip: the moving gold rate tape otherwise made phones zoom out slightly to fit it.
-    <div className="mx-auto max-w-5xl overflow-x-clip sm:px-6 sm:py-10 lg:grid lg:grid-cols-[1fr_380px] lg:items-start lg:gap-8">
-      <article className="bg-white sm:rounded-lg sm:border sm:border-line sm:shadow-[0_30px_60px_-40px_rgba(21,25,27,0.45)]">
-        <ResultBanner record={record} checkedAt={checkedAt} />
+    <div className="mx-auto max-w-5xl overflow-x-clip sm:px-6 sm:py-10">
+      {/* The record and its side column get their own grid, so the sticky column stops at the end of the record
+          instead of sliding over the tape and similar pieces below. */}
+      <div className="lg:grid lg:grid-cols-[1fr_380px] lg:items-start lg:gap-8">
+        <article className="bg-white sm:rounded-lg sm:border sm:border-line sm:shadow-[0_30px_60px_-40px_rgba(21,25,27,0.45)]">
+          <ResultBanner record={record} checkedAt={checkedAt} />
 
-        {record.photos.length > 0 && (
-          <div className="rise px-5 pt-7 sm:px-8" style={delay(120)}>
-            <Gallery photos={record.photos} sizes="(min-width: 1024px) 520px, (min-width: 640px) 560px, 100vw" />
-          </div>
-        )}
-
-        <section className="rise flex items-start justify-between gap-4 px-5 py-7 sm:px-8" style={delay(150)}>
-          <div className="min-w-0">
-            <p className="text-[13px] font-semibold text-gold-deep">Jewellery details</p>
-            <div className="mt-1.5 flex items-start gap-3">
-              <h2 className="min-w-0 font-display text-[26px] leading-tight text-ink">{record.title}</h2>
-              <SaveButton kind="piece" id={record.jewellery_id} title={record.title} variant="inline" />
+          {record.photos.length > 0 && (
+            <div className="rise px-5 pt-7 sm:px-8" style={delay(120)}>
+              <Gallery photos={record.photos} sizes="(min-width: 1024px) 520px, (min-width: 640px) 560px, 100vw" />
             </div>
-            <p className="mt-2 text-[15px] leading-relaxed text-ink/80">
-              {record.type} · {record.description}
-            </p>
-            {record.stock_status !== "in_stock" && (
-              <span className="mt-3 inline-flex rounded-full border border-line-strong bg-chalk px-2.5 py-0.5 text-xs font-semibold text-ink">
-                {STOCK_LABEL[record.stock_status]}
-              </span>
-            )}
-          </div>
-          <div className="flex shrink-0 flex-col items-center gap-3">
-            <HallmarkStamp purity={record.purity} percent={record.purity_percent} size="lg" className="mt-1 animate-[strike_650ms_450ms_cubic-bezier(.22,1,.36,1)_both]" />
-          </div>
-        </section>
+          )}
 
-        <Section title="Gold information" at={250}>
-          <dl>
-            <Row label="Purity" value={formatPurity(record.purity, record.purity_percent)} />
-            <Row label="Gross weight" value={formatWeight(record.gross_weight)} />
-            <Row label="Net gold weight" value={formatWeight(record.net_weight)} />
-          </dl>
-        </Section>
-
-        {hasDesign && (
-          <Section title="Design" at={290}>
-            <dl>
-              {record.colour && <Row label="Colour" value={record.colour} />}
-              {record.design_details && (
-                <div className="py-2">
-                  <dt className="text-sm text-muted">Design details</dt>
-                  <dd className="mt-1 text-[15px] leading-relaxed text-ink">{record.design_details}</dd>
-                </div>
+          <section className="rise flex items-start justify-between gap-4 px-5 py-7 sm:px-8" style={delay(150)}>
+            <div className="min-w-0">
+              <p className="text-[13px] font-semibold text-gold-deep">Jewellery details</p>
+              <div className="mt-1.5 flex items-start gap-3">
+                <h2 className="min-w-0 font-display text-[26px] leading-tight text-ink">{record.title}</h2>
+                <SaveButton kind="piece" id={record.jewellery_id} title={record.title} variant="inline" />
+              </div>
+              <p className="mt-2 text-[15px] leading-relaxed text-ink/80">
+                {record.type} · {record.description}
+              </p>
+              {record.stock_status !== "in_stock" && (
+                <span className="mt-3 inline-flex rounded-full border border-line-strong bg-chalk px-2.5 py-0.5 text-xs font-semibold text-ink">
+                  {STOCK_LABEL[record.stock_status]}
+                </span>
               )}
+            </div>
+            <div className="flex shrink-0 flex-col items-center gap-3">
+              <HallmarkStamp purity={record.purity} percent={record.purity_percent} size="lg" className="mt-1 animate-[strike_650ms_450ms_cubic-bezier(.22,1,.36,1)_both]" />
+            </div>
+          </section>
+
+          <Section title="Gold information" at={250}>
+            <dl>
+              <Row label="Purity" value={formatPurity(record.purity, record.purity_percent)} />
+              <Row label="Gross weight" value={formatWeight(record.gross_weight)} />
+              <Row label="Net gold weight" value={formatWeight(record.net_weight)} />
             </dl>
           </Section>
-        )}
 
-        <Section title="Verification" at={330}>
-          <dl>
-            <Row
-              label="Level"
-              value={
-                <span className="inline-flex items-center gap-1.5">
-                  <LevelIcon level={record.verification_level} className="size-4 text-gold-deep" />
-                  {VERIFICATION_LABEL[record.verification_level]}
-                </span>
-              }
-            />
-            {record.huid && <Row label="Hallmark HUID" value={<span className="tracking-[0.15em]">{record.huid}</span>} />}
-            {record.certificate_id && (
-              <>
-                <Row label="Certificate ID" value={<span className="tracking-wide">{record.certificate_id}</span>} />
-                <Row label="Issuing authority" value={record.issuing_authority ?? "Not recorded"} />
-                <Row label="Certificate date" value={formatDate(record.certificate_date)} />
-              </>
-            )}
-          </dl>
-          {record.verification_level === "declared" && (
-            <p className="mt-2 text-[13px] leading-relaxed text-muted">Ask the store to show you the hallmark when you visit.</p>
-          )}
-        </Section>
-
-        {/* On phones the rate and price sit in the reading flow; on desktop they move to the side column. */}
-        <div className="lg:hidden">
-          {record.gold_rate && (
-            <Section title="Live gold rate" at={370}>
-              <GoldRateTicker rate={record.gold_rate} highlight={record.purity} />
+          {hasDesign && (
+            <Section title="Design" at={290}>
+              <dl>
+                {record.colour && <Row label="Colour" value={record.colour} />}
+                {record.design_details && (
+                  <div className="py-2">
+                    <dt className="text-sm text-muted">Design details</dt>
+                    <dd className="mt-1 text-[15px] leading-relaxed text-ink">{record.design_details}</dd>
+                  </div>
+                )}
+              </dl>
             </Section>
           )}
-          <Section title="Price transparency" at={410}>
-            <PriceBreakdown price={record.price} emphasis stagger={500} />
-            <p className="mt-4 text-[13px] leading-relaxed text-muted">
-              <PriceNote record={record} />
-            </p>
+
+          <Section title="Verification" at={330}>
+            <dl>
+              <Row
+                label="Level"
+                value={
+                  <span className="inline-flex items-center gap-1.5">
+                    <LevelIcon level={record.verification_level} className="size-4 text-gold-deep" />
+                    {VERIFICATION_LABEL[record.verification_level]}
+                  </span>
+                }
+              />
+              {record.huid && <Row label="Hallmark HUID" value={<span className="tracking-[0.15em]">{record.huid}</span>} />}
+              {record.certificate_id && (
+                <>
+                  <Row label="Certificate ID" value={<span className="tracking-wide">{record.certificate_id}</span>} />
+                  <Row label="Issuing authority" value={record.issuing_authority ?? "Not recorded"} />
+                  <Row label="Certificate date" value={formatDate(record.certificate_date)} />
+                </>
+              )}
+            </dl>
+            {record.verification_level === "declared" && (
+              <p className="mt-2 text-[13px] leading-relaxed text-muted">Ask the store to show you the hallmark when you visit.</p>
+            )}
           </Section>
-        </div>
 
-        <Section title="Verification status" at={490}>
-          <dl>
-            <Row
-              label="Verification level"
-              strong
-              value={
-                <span className="inline-flex items-center gap-1.5 text-verified">
-                  <LevelIcon level={record.verification_level} className="size-4" />
-                  {VERIFICATION_LABEL[record.verification_level]}
-                </span>
-              }
-            />
-            <Row label="Record status" strong value="Active" />
-            <Row label="Registered on" value={formatDate(record.registered_on)} />
-          </dl>
-        </Section>
-
-        <div className="rise flex gap-3 border-t border-line bg-chalk/60 px-5 py-5 text-[13px] leading-relaxed text-muted sm:rounded-b-lg sm:px-8" style={delay(570)}>
-          <Info className="mt-0.5 size-4 shrink-0 text-gold-deep" strokeWidth={1.75} />
-          <p>
-            This page verifies the information associated with the registered digital record. It does not independently
-            perform physical testing of the jewellery.
-          </p>
-        </div>
-      </article>
-
-      <aside className="rise hidden space-y-5 lg:sticky lg:top-8 lg:block" style={delay(300)}>
-        {record.gold_rate && (
-          <div className="rounded-lg border border-line bg-white p-7 shadow-[0_30px_60px_-40px_rgba(21,25,27,0.45)]">
-            <h2 className="mb-4 text-[13px] font-semibold text-gold-deep">Live gold rate</h2>
-            <GoldRateTicker rate={record.gold_rate} highlight={record.purity} />
+          {/* On phones the rate and price sit in the reading flow; on desktop they move to the side column. */}
+          <div className="lg:hidden">
+            {record.gold_rate && (
+              <Section title="Live gold rate" at={370}>
+                <GoldRateTicker rate={record.gold_rate} highlight={record.purity} />
+              </Section>
+            )}
+            <Section title="Price transparency" at={410}>
+              <PriceBreakdown price={record.price} emphasis stagger={500} />
+              <p className="mt-4 text-[13px] leading-relaxed text-muted">
+                <PriceNote record={record} />
+              </p>
+            </Section>
           </div>
-        )}
-        <div className="rounded-lg border border-line bg-white p-7 shadow-[0_30px_60px_-40px_rgba(21,25,27,0.45)]">
-          <h2 className="text-[13px] font-semibold text-gold-deep">Price transparency</h2>
-          <p className="mb-6 mt-1 text-sm text-muted">How the price is made up.</p>
-          <PriceBreakdown price={record.price} emphasis stagger={450} />
-        </div>
-        <p className="px-1 text-[13px] leading-relaxed text-muted">
-          <PriceNote record={record} />
-        </p>
-      </aside>
+
+          <Section title="Verification status" at={490}>
+            <dl>
+              <Row
+                label="Verification level"
+                strong
+                value={
+                  <span className="inline-flex items-center gap-1.5 text-verified">
+                    <LevelIcon level={record.verification_level} className="size-4" />
+                    {VERIFICATION_LABEL[record.verification_level]}
+                  </span>
+                }
+              />
+              <Row label="Record status" strong value="Active" />
+              <Row label="Registered on" value={formatDate(record.registered_on)} />
+            </dl>
+          </Section>
+
+          <div className="rise flex gap-3 border-t border-line bg-chalk/60 px-5 py-5 text-[13px] leading-relaxed text-muted sm:rounded-b-lg sm:px-8" style={delay(570)}>
+            <Info className="mt-0.5 size-4 shrink-0 text-gold-deep" strokeWidth={1.75} />
+            <p>
+              This page verifies the information associated with the registered digital record. It does not independently
+              perform physical testing of the jewellery.
+            </p>
+          </div>
+        </article>
+
+        <aside className="rise hidden space-y-5 lg:sticky lg:top-8 lg:block" style={delay(300)}>
+          {record.gold_rate && (
+            <div className="rounded-lg border border-line bg-white p-7 shadow-[0_30px_60px_-40px_rgba(21,25,27,0.45)]">
+              <h2 className="mb-4 text-[13px] font-semibold text-gold-deep">Live gold rate</h2>
+              <GoldRateTicker rate={record.gold_rate} highlight={record.purity} />
+            </div>
+          )}
+          <div className="rounded-lg border border-line bg-white p-7 shadow-[0_30px_60px_-40px_rgba(21,25,27,0.45)]">
+            <h2 className="text-[13px] font-semibold text-gold-deep">Price transparency</h2>
+            <p className="mb-6 mt-1 text-sm text-muted">How the price is made up.</p>
+            <PriceBreakdown price={record.price} emphasis stagger={450} />
+          </div>
+          <p className="px-1 text-[13px] leading-relaxed text-muted">
+            <PriceNote record={record} />
+          </p>
+        </aside>
+      </div>
 
       {record.gold_rate && (
-        <div className="rise mt-6 lg:col-span-2 lg:mt-0" style={delay(620)}>
+        <div className="rise mt-6 lg:mt-8" style={delay(620)}>
           <GoldRateTape rate={record.gold_rate} />
         </div>
       )}
 
       <SimilarPieces record={record} />
 
-      <p className="px-5 py-8 text-center text-sm lg:col-span-2">
+      <p className="px-5 py-8 text-center text-sm">
         <Link to="/verify" className="font-medium text-basalt underline-offset-4 hover:underline">
           Verify another item
         </Link>
@@ -265,7 +269,7 @@ function VerifiedRecord({ record, checkedAt }: { record: PublicVerification; che
 function SimilarPieces({ record }: { record: PublicVerification }) {
   if (record.similar.length === 0) return null;
   return (
-    <section className="rise mt-10 lg:col-span-2" style={delay(660)} aria-labelledby="similar-heading">
+    <section className="rise mt-10" style={delay(660)} aria-labelledby="similar-heading">
       <div className="px-5 sm:px-0">
         <h2 id="similar-heading" className="font-display text-[24px] leading-tight text-ink">Similar pieces</h2>
         <p className="mt-1 text-sm text-muted">More from {record.store.name}</p>
@@ -283,7 +287,7 @@ function SimilarPieces({ record }: { record: PublicVerification }) {
 
 function VerifySkeleton() {
   return (
-    <div className="mx-auto max-w-5xl sm:px-6 sm:py-10" role="status" aria-label="Checking the record">
+    <div className="mx-auto min-h-dvh max-w-5xl sm:px-6 sm:py-10" role="status" aria-label="Checking the record">
       <div className="bg-white sm:rounded-lg sm:border sm:border-line lg:max-w-[calc(100%-412px)]">
         <div className="space-y-4 bg-basalt px-5 py-8 sm:rounded-t-lg sm:px-8">
           <Skeleton className="h-8 w-56 bg-white/15" />

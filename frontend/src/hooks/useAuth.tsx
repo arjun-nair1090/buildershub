@@ -26,6 +26,26 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setState("anonymous");
   }, []);
 
+  // A page restored from the back/forward cache after signing out, or a tab whose session was ended in another
+  // tab, would otherwise keep showing admin data with no token behind it.
+  useEffect(() => {
+    const dropIfSignedOut = () => {
+      if (!tokenStore.get()) {
+        setUser(null);
+        setState("anonymous");
+      }
+    };
+    const onPageShow = (e: PageTransitionEvent) => {
+      if (e.persisted) dropIfSignedOut();
+    };
+    window.addEventListener("pageshow", onPageShow);
+    window.addEventListener("storage", dropIfSignedOut);
+    return () => {
+      window.removeEventListener("pageshow", onPageShow);
+      window.removeEventListener("storage", dropIfSignedOut);
+    };
+  }, []);
+
   // Restore an existing session on page load.
   useEffect(() => {
     if (!tokenStore.get()) return;

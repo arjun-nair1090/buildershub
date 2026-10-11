@@ -7,8 +7,9 @@ services:
       POSTGRES_USER: jewellery
       POSTGRES_PASSWORD: jewellery
       POSTGRES_DB: jewellery
+    # Published on this machine only: the demo database and admin login use well-known credentials.
     ports:
-      - "${DB_PORT:-5433}:5432"
+      - "127.0.0.1:${DB_PORT:-5433}:5432"
     volumes:
       - pgdata:/var/lib/postgresql/data
     healthcheck:
@@ -33,7 +34,7 @@ services:
   frontend:
     build: ./frontend
     ports:
-      - "8080:80"
+      - "127.0.0.1:8080:80"
     depends_on:
       - backend
 

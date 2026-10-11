@@ -1,3 +1,5 @@
+import json
+
 from fastapi import FastAPI, Request, status
 from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
@@ -27,6 +29,35 @@ API_HEADERS = {
     "Content-Security-Policy": "default-src 'none'; frame-ancestors 'none'",
 }
 DOCS_PATHS = ("/docs", "/redoc", "/openapi.json")  # the interactive docs load scripts
+NUL_ERROR = {"detail": "Text can't contain NUL characters.", "fields": {}}
+
+
+def _has_nul(value: object) -> bool:
+    if isinstance(value, str):
+        return "\x00" in value
+    if isinstance(value, dict):
+        return any(_has_nul(k) or _has_nul(v) for k, v in value.items())
+    if isinstance(value, list):
+        return any(_has_nul(v) for v in value)
+    return False
+
+
+# Registered before security_headers, so it runs inside it and its 422s carry the same headers.
+@app.middleware("http")
+async def refuse_nul(request: Request, call_next):
+    """Postgres can't store NUL in text: refuse it up front rather than fail with a 500 at the database."""
+    if "\x00" in request.url.path or any(_has_nul(k) or _has_nul(v) for k, v in request.query_params.multi_items()):
+        return JSONResponse(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, content=NUL_ERROR)
+    if request.headers.get("content-type", "").startswith("application/json"):
+        body = await request.body()  # Starlette replays the cached body to the route
+        if b"\\u0000" in body:
+            try:
+                found = _has_nul(json.loads(body))
+            except ValueError:
+                found = False  # malformed JSON: the route's own validation reports it
+            if found:
+                return JSONResponse(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, content=NUL_ERROR)
+    return await call_next(request)
 
 
 @app.middleware("http")

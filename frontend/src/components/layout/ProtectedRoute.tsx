@@ -15,7 +15,8 @@ export function ProtectedRoute() {
     );
   }
   if (state === "anonymous") {
-    return <Navigate to="/admin/login" replace state={{ from: location.pathname }} />;
+    // Keep the query too, so a filtered list link comes back filtered after signing in.
+    return <Navigate to="/admin/login" replace state={{ from: location.pathname + location.search + location.hash }} />;
   }
   return <Outlet />;
 }

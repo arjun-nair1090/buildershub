@@ -1,5 +1,5 @@
 import { zodResolver } from "@hookform/resolvers/zod";
-import { ArrowLeft, ExternalLink } from "lucide-react";
+import { ArrowLeft, ExternalLink, SearchX } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useForm, useWatch } from "react-hook-form";
 import { Link, useNavigate, useParams } from "react-router-dom";
@@ -7,7 +7,8 @@ import { toast } from "sonner";
 import { PageHeader } from "@/components/layout/AdminLayout";
 import { PhotoManager } from "@/components/photos/PhotoManager";
 import { emptyStore, storeSchema, storeToForm, storeToInput, type StoreFormValues } from "@/components/stores/storeSchema";
-import { Button } from "@/components/ui/button";
+import { Button, buttonVariants } from "@/components/ui/button";
+import { EmptyState } from "@/components/ui/empty-state";
 import { Field } from "@/components/ui/field";
 import { Input, Textarea } from "@/components/ui/input";
 import { Panel, PanelHeader } from "@/components/ui/panel";
@@ -73,7 +74,18 @@ export function StoreFormPage() {
     return (
       <>
         {back}
-        <Panel className="p-8 text-center text-sm text-danger">{loadError}</Panel>
+        <Panel>
+          <EmptyState
+            icon={SearchX}
+            titleAs="h1"
+            title={loadError}
+            action={
+              <Link to="/admin/stores" className={buttonVariants({ variant: "secondary" })}>
+                Go to stores
+              </Link>
+            }
+          />
+        </Panel>
       </>
     );
   }

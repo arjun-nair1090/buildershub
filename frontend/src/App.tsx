@@ -1,6 +1,6 @@
 import { Loader2 } from "lucide-react";
-import { lazy, Suspense, type ComponentType } from "react";
-import { BrowserRouter, Route, Routes } from "react-router-dom";
+import { lazy, Suspense, useLayoutEffect, type ComponentType } from "react";
+import { BrowserRouter, Route, Routes, useLocation, useNavigationType } from "react-router-dom";
 import { Toaster } from "sonner";
 import { PublicLayout } from "@/components/layout/PublicLayout";
 import { AuthProvider } from "@/hooks/useAuth";
@@ -42,9 +42,21 @@ function PageLoader() {
   );
 }
 
+/** A new page opens at the top. Back and Forward leave the position to the browser, and so do filter changes, which keep the path. */
+function ScrollToTop() {
+  const { pathname } = useLocation();
+  const navigation = useNavigationType();
+  useLayoutEffect(() => {
+    if (navigation !== "POP") window.scrollTo(0, 0);
+    // Only a new path scrolls: reading the navigation type mustn't make a same-page change scroll too.
+  }, [pathname]);
+  return null;
+}
+
 export default function App() {
   return (
     <BrowserRouter>
+      <ScrollToTop />
       <AuthProvider>
         <Suspense fallback={<PageLoader />}>
           <Routes>

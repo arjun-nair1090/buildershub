@@ -1,5 +1,5 @@
 import { zodResolver } from "@hookform/resolvers/zod";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, SearchX } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { Link, useNavigate, useParams } from "react-router-dom";
@@ -7,7 +7,8 @@ import { toast } from "sonner";
 import { designSchema, designToForm, designToInput, emptyDesign, type DesignFormValues } from "@/components/designs/designSchema";
 import { PageHeader } from "@/components/layout/AdminLayout";
 import { PhotoManager } from "@/components/photos/PhotoManager";
-import { Button } from "@/components/ui/button";
+import { Button, buttonVariants } from "@/components/ui/button";
+import { EmptyState } from "@/components/ui/empty-state";
 import { Field } from "@/components/ui/field";
 import { Input, Select, Textarea } from "@/components/ui/input";
 import { Panel, PanelHeader } from "@/components/ui/panel";
@@ -79,7 +80,18 @@ export function DesignFormPage() {
     return (
       <>
         {back}
-        <Panel className="p-8 text-center text-sm text-danger">{loadError}</Panel>
+        <Panel>
+          <EmptyState
+            icon={SearchX}
+            titleAs="h1"
+            title={loadError}
+            action={
+              <Link to="/admin/designs" className={buttonVariants({ variant: "secondary" })}>
+                Go to designs
+              </Link>
+            }
+          />
+        </Panel>
       </>
     );
   }

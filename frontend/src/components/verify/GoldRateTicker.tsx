@@ -82,7 +82,10 @@ export function GoldRateTape({ rate }: { rate: GoldRate }) {
   );
   return (
     <div className="grain overflow-hidden py-3 text-[13px] text-chalk sm:rounded-lg" aria-hidden>
-      <div className="flex w-max animate-[ticker_28s_linear_infinite] hover:[animation-play-state:paused]">
+      {/* Each half holds two copies, so a half is wider than the widest strip and the loop never shows a gap. */}
+      <div className="flex w-max animate-[ticker_56s_linear_infinite] hover:[animation-play-state:paused]">
+        {items}
+        {items}
         {items}
         {items}
       </div>

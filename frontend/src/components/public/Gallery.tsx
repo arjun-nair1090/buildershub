@@ -89,7 +89,7 @@ export function Gallery({ photos, sizes = "(min-width: 1024px) 560px, 100vw", cl
               </button>
             );
           })}
-          <div className="mt-3 flex justify-center gap-1.5">
+          <div className="mt-1.5 flex justify-center">
             {photos.map((photo, i) => (
               <button
                 key={photo.public_id}
@@ -97,8 +97,11 @@ export function Gallery({ photos, sizes = "(min-width: 1024px) 560px, 100vw", cl
                 onClick={() => go(i)}
                 aria-label={`Show photo ${i + 1}`}
                 aria-current={i === index}
-                className={cn("h-1.5 rounded-full transition-all", i === index ? "w-5 bg-gold-deep" : "w-1.5 bg-line-strong")}
-              />
+                className="grid h-6 min-w-6 place-items-center px-0.5"
+              >
+                {/* the visible dot is small; the button around it is a full 24 px target */}
+                <span className={cn("h-1.5 rounded-full transition-all", i === index ? "w-5 bg-gold-deep" : "w-1.5 bg-line-strong")} />
+              </button>
             ))}
           </div>
           <p className="sr-only" aria-live="polite">

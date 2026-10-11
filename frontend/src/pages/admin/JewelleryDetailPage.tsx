@@ -33,6 +33,7 @@ export function RecordMissing({ id, message, onRetry }: { id: string; message?: 
       <Panel>
         <EmptyState
           icon={SearchX}
+          titleAs="h1"
           title={message ? "The record could not be loaded" : `No record with ID ${id}`}
           description={message ?? "Check the Jewellery ID, or find the piece in the list."}
           action={

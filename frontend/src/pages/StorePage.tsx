@@ -130,7 +130,7 @@ function StoreView({ store }: { store: PublicStore }) {
 
 function StoreSkeleton() {
   return (
-    <div className="mx-auto max-w-6xl space-y-4 px-4 py-8 sm:px-6 sm:py-12" role="status" aria-label="Loading the store">
+    <div className="mx-auto min-h-dvh max-w-6xl space-y-4 px-4 py-8 sm:px-6 sm:py-12" role="status" aria-label="Loading the store">
       <Skeleton className="h-4 w-28" />
       <Skeleton className="h-10 w-72" />
       <Skeleton className="h-4 w-40" />
