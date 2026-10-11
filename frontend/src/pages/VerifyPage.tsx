@@ -7,10 +7,10 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { GoldRateTape, GoldRateTicker } from "@/components/verify/GoldRateTicker";
 import { RecordUnavailable } from "@/components/verify/RecordUnavailable";
 import { ApiError, errorMessage } from "@/services/api";
+import { photoService } from "@/services/photos";
 import { verifyService } from "@/services/verify";
-import type { PublicVerification } from "@/types";
-import { cn } from "@/utils/cn";
-import { formatDate, formatINR, formatPurity, formatWeight } from "@/utils/format";
+import { STOCK_LABEL, VERIFICATION_LABEL, type PublicVerification, type VerificationLevel } from "@/types";
+import { formatDate, formatPurity, formatWeight } from "@/utils/format";
 
 /** How often an open page re-checks the record, so the live price follows the gold rate. */
 const REFRESH_MS = 60_000;
@@ -45,21 +45,34 @@ function Row({ label, value, strong }: { label: string; value: ReactNode; strong
   );
 }
 
+function LevelIcon({ level, className }: { level: VerificationLevel; className?: string }) {
+  const Icon = level === "declared" ? ShieldCheck : BadgeCheck;
+  return <Icon className={className} strokeWidth={1.5} aria-hidden />;
+}
+
+/** One line on what the level means, so "Declared by store" can't be mistaken for verified. */
+function levelSummary(record: PublicVerification): string {
+  switch (record.verification_level) {
+    case "lab":
+      return "Backed by a lab certificate, shown below.";
+    case "hallmark":
+      return `Linked to BIS hallmark HUID ${record.huid}.`;
+    case "declared":
+      return "These details are as declared by the store. No hallmark or certificate is linked to this record.";
+  }
+}
+
 function ResultBanner({ record, checkedAt }: { record: PublicVerification; checkedAt: Date }) {
-  const verified = record.verification_status === "VERIFIED";
   return (
-    <div className={cn("grain rise relative px-5 pt-8 text-chalk sm:rounded-t-lg sm:px-8", record.store_name ? "pb-16" : "pb-7")}>
+    <div className="grain rise relative px-5 pb-16 pt-8 text-chalk sm:rounded-t-lg sm:px-8">
       <div className="flex items-center gap-3">
         <span className="grid size-12 shrink-0 animate-[strike_650ms_250ms_cubic-bezier(.22,1,.36,1)_both] place-items-center rounded-full border border-gold-bright/70 bg-gold-bright/10 text-gold-bright">
-          {verified ? <BadgeCheck className="size-6" strokeWidth={1.5} /> : <ShieldCheck className="size-6" strokeWidth={1.5} />}
+          <LevelIcon level={record.verification_level} className="size-6" />
         </span>
-        <h1 className="font-display text-[30px] leading-none sm:text-[36px]">
-          {verified ? "Verified record" : "Registered record"}
-        </h1>
+        <h1 className="font-display text-[30px] leading-none sm:text-[36px]">{VERIFICATION_LABEL[record.verification_level]}</h1>
       </div>
       <p className="mt-4 max-w-md text-[15px] leading-relaxed text-chalk/85">
-        This jewellery item is registered with Jewlerify{record.store_name ? ` by ${record.store_name}` : ""}.
-        {!verified && " No certificate reference has been registered for it."}
+        Listed on Jewlerify by {record.store.name}, {record.store.area}. {levelSummary(record)}
       </p>
       <div className="mt-6 flex flex-wrap items-end justify-between gap-x-6 gap-y-2 border-t border-white/15 pt-4">
         <div>
@@ -70,25 +83,31 @@ function ResultBanner({ record, checkedAt }: { record: PublicVerification; check
           Checked {checkedAt.toLocaleString("en-IN", { day: "numeric", month: "short", hour: "numeric", minute: "2-digit" })}
         </p>
       </div>
-      {record.store_name && (
-        // A tab of the white card reaching up into the banner: whose piece this is.
-        <p className="absolute bottom-0 left-3 max-w-[calc(100%-1.5rem)] truncate rounded-t-lg bg-white px-4 pb-1 pt-3 font-display text-[24px] leading-tight text-ink sm:left-6">
-          <span className="sr-only">Store: </span>
-          {record.store_name}
-        </p>
-      )}
+      {/* A tab of the white card reaching up into the banner: whose piece this is. */}
+      <p className="absolute bottom-0 left-3 max-w-[calc(100%-1.5rem)] truncate rounded-t-lg bg-white px-4 pb-1 pt-3 font-display text-[24px] leading-tight text-ink sm:left-6">
+        <span className="sr-only">Store: </span>
+        {record.store.name}
+      </p>
     </div>
   );
 }
 
 function ProductPhoto({ record }: { record: PublicVerification }) {
-  if (!record.photo_version) return null;
-  const src = verifyService.photoUrl(record.jewellery_id, record.photo_version);
+  const cover = record.photos[0];
+  if (!cover) return null;
   return (
-    <a href={src} target="_blank" rel="noreferrer" className="block overflow-hidden rounded-md border border-gold/50 p-1" aria-label="Open the product photo">
+    <a
+      href={photoService.url(cover.public_id, "full")}
+      target="_blank"
+      rel="noreferrer"
+      className="block overflow-hidden rounded-md border border-gold/50 p-1"
+      aria-label="Open the product photo"
+    >
       <img
-        src={src}
-        alt={`${record.type}: ${record.description}`}
+        src={photoService.url(cover.public_id, "thumb")}
+        alt={cover.alt}
+        width={cover.width}
+        height={cover.height}
         className="aspect-[3/4] w-28 rounded-[3px] object-cover sm:w-36"
         loading="eager"
         decoding="async"
@@ -98,18 +117,14 @@ function ProductPhoto({ record }: { record: PublicVerification }) {
 }
 
 function PriceNote({ record }: { record: PublicVerification }) {
-  return record.live_price ? (
-    <>
-      Gold value at today's market rate; making charges and tax as the range this jeweller charges. Price as registered on{" "}
-      {formatDate(record.registered_on)}: <span className="tabular">{formatINR(record.total_price)}</span>.
-    </>
+  return record.price.basis === "live" ? (
+    <>Gold value at today's market rate; making charges and tax as the range this store charges.</>
   ) : (
-    <>Amounts are as registered by the jeweller for this item, in Indian rupees.</>
+    <>The live gold rate isn't available right now, so this is the price as registered by the store.</>
   );
 }
 
 function VerifiedRecord({ record, checkedAt }: { record: PublicVerification; checkedAt: Date }) {
-  const verified = record.verification_status === "VERIFIED";
   const hasDesign = Boolean(record.colour || record.design_details);
   return (
     // overflow-x-clip: the moving gold rate tape otherwise made phones zoom out slightly to fit it.
@@ -120,8 +135,15 @@ function VerifiedRecord({ record, checkedAt }: { record: PublicVerification; che
         <section className="rise flex items-start justify-between gap-4 px-5 py-7 sm:px-8" style={delay(150)}>
           <div className="min-w-0">
             <p className="text-[13px] font-semibold text-gold-deep">Jewellery details</p>
-            <h2 className="mt-1.5 font-display text-[26px] leading-tight text-ink">{record.type}</h2>
-            <p className="mt-2 text-[15px] leading-relaxed text-ink/80">{record.description}</p>
+            <h2 className="mt-1.5 font-display text-[26px] leading-tight text-ink">{record.title}</h2>
+            <p className="mt-2 text-[15px] leading-relaxed text-ink/80">
+              {record.type} · {record.description}
+            </p>
+            {record.stock_status !== "in_stock" && (
+              <span className="mt-3 inline-flex rounded-full border border-line-strong bg-chalk px-2.5 py-0.5 text-xs font-semibold text-ink">
+                {STOCK_LABEL[record.stock_status]}
+              </span>
+            )}
           </div>
           <div className="flex shrink-0 flex-col items-center gap-3">
             <HallmarkStamp purity={record.purity} percent={record.purity_percent} size="lg" className="mt-1 animate-[strike_650ms_450ms_cubic-bezier(.22,1,.36,1)_both]" />
@@ -151,15 +173,28 @@ function VerifiedRecord({ record, checkedAt }: { record: PublicVerification; che
           </Section>
         )}
 
-        <Section title="Certification" at={330}>
-          {record.certificate_id ? (
-            <dl>
-              <Row label="Certificate ID" value={<span className="tracking-wide">{record.certificate_id}</span>} />
-              <Row label="Issuing authority" value={record.issuing_authority ?? "Not recorded"} />
-              <Row label="Certificate date" value={formatDate(record.certificate_date)} />
-            </dl>
-          ) : (
-            <p className="text-[15px] text-muted">No certificate reference was registered for this item.</p>
+        <Section title="Verification" at={330}>
+          <dl>
+            <Row
+              label="Level"
+              value={
+                <span className="inline-flex items-center gap-1.5">
+                  <LevelIcon level={record.verification_level} className="size-4 text-gold-deep" />
+                  {VERIFICATION_LABEL[record.verification_level]}
+                </span>
+              }
+            />
+            {record.huid && <Row label="Hallmark HUID" value={<span className="tracking-[0.15em]">{record.huid}</span>} />}
+            {record.certificate_id && (
+              <>
+                <Row label="Certificate ID" value={<span className="tracking-wide">{record.certificate_id}</span>} />
+                <Row label="Issuing authority" value={record.issuing_authority ?? "Not recorded"} />
+                <Row label="Certificate date" value={formatDate(record.certificate_date)} />
+              </>
+            )}
+          </dl>
+          {record.verification_level === "declared" && (
+            <p className="mt-2 text-[13px] leading-relaxed text-muted">Ask the store to show you the hallmark when you visit.</p>
           )}
         </Section>
 
@@ -171,7 +206,7 @@ function VerifiedRecord({ record, checkedAt }: { record: PublicVerification; che
             </Section>
           )}
           <Section title="Price transparency" at={410}>
-            <PriceBreakdown {...record} live={record.live_price} emphasis stagger={500} />
+            <PriceBreakdown price={record.price} emphasis stagger={500} />
             <p className="mt-4 text-[13px] leading-relaxed text-muted">
               <PriceNote record={record} />
             </p>
@@ -181,12 +216,12 @@ function VerifiedRecord({ record, checkedAt }: { record: PublicVerification; che
         <Section title="Verification status" at={490}>
           <dl>
             <Row
-              label="Verification status"
+              label="Verification level"
               strong
               value={
                 <span className="inline-flex items-center gap-1.5 text-verified">
-                  {verified ? <BadgeCheck className="size-4" /> : <ShieldCheck className="size-4" />}
-                  {verified ? "Verified" : "Registered"}
+                  <LevelIcon level={record.verification_level} className="size-4" />
+                  {VERIFICATION_LABEL[record.verification_level]}
                 </span>
               }
             />
@@ -213,8 +248,8 @@ function VerifiedRecord({ record, checkedAt }: { record: PublicVerification; che
         )}
         <div className="rounded-lg border border-line bg-white p-7 shadow-[0_30px_60px_-40px_rgba(21,25,27,0.45)]">
           <h2 className="text-[13px] font-semibold text-gold-deep">Price transparency</h2>
-          <p className="mb-6 mt-1 text-sm text-muted">How the {record.live_price ? "price" : "total price"} is made up.</p>
-          <PriceBreakdown {...record} live={record.live_price} emphasis stagger={450} />
+          <p className="mb-6 mt-1 text-sm text-muted">How the price is made up.</p>
+          <PriceBreakdown price={record.price} emphasis stagger={450} />
         </div>
         <p className="px-1 text-[13px] leading-relaxed text-muted">
           <PriceNote record={record} />
@@ -305,7 +340,7 @@ export function VerifyPage() {
   useEffect(() => {
     document.title =
       state.kind === "found"
-        ? `${state.record.jewellery_id}, ${state.record.verification_status === "VERIFIED" ? "verified" : "registered"} record`
+        ? `${state.record.jewellery_id}, ${VERIFICATION_LABEL[state.record.verification_level].toLowerCase()}`
         : "Jewellery verification";
   }, [state]);
 

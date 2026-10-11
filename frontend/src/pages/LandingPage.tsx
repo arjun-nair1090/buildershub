@@ -6,9 +6,31 @@ import { PriceBreakdown } from "@/components/jewellery/PriceBreakdown";
 import { HeroVisual } from "@/components/landing/HeroVisual";
 import { buttonVariants } from "@/components/ui/button";
 import { CodeEntryForm } from "@/components/verify/CodeEntryForm";
+import type { PiecePrice } from "@/types";
 import { cn } from "@/utils/cn";
 
 const delay = (ms: number) => ({ "--d": `${ms}ms` }) as CSSProperties;
+
+/** The landing page's worked example: the same breakdown a buyer sees, with a 5% offer. */
+const EXAMPLE_PRICE: PiecePrice = {
+  basis: "live",
+  as_of: "2026-10-11T05:00:00Z",
+  rate_per_gram: "13688",
+  gold: "98500",
+  making_min: "12000",
+  making_max: "12000",
+  making_percent_min: null,
+  making_percent_max: null,
+  other: "4000",
+  gst_percent: "3",
+  tax_min: "10500",
+  tax_max: "10500",
+  original_min: "125000",
+  original_max: "125000",
+  discount: { type: "percent", value: "5", label: "5% off", amount_min: "6250", amount_max: "6250", ends_on: null },
+  final_min: "118750",
+  final_max: "118750",
+};
 
 function SectionHeading({ title, children }: { title: string; children?: ReactNode }) {
   return (
@@ -173,7 +195,7 @@ export function LandingPage() {
           </div>
           <div className="reveal rounded-[14px] border border-line bg-chalk p-6 sm:p-8">
             <p className="mb-6 text-[13px] text-muted">Example breakdown</p>
-            <PriceBreakdown gold_value={98500} making_charges={12000} other_component_value={4000} tax={10500} total_price={125000} emphasis />
+            <PriceBreakdown price={EXAMPLE_PRICE} emphasis />
           </div>
         </div>
       </section>
