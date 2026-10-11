@@ -23,6 +23,8 @@ const JewelleryDetailPage = named(() => import("@/pages/admin/JewelleryDetailPag
 const EditJewelleryPage = named(() => import("@/pages/admin/EditJewelleryPage"), "EditJewelleryPage");
 const TeamPage = named(() => import("@/pages/admin/TeamPage"), "TeamPage");
 const SettingsPage = named(() => import("@/pages/admin/SettingsPage"), "SettingsPage");
+const StoreListPage = named(() => import("@/pages/admin/StoreListPage"), "StoreListPage");
+const StoreFormPage = named(() => import("@/pages/admin/StoreFormPage"), "StoreFormPage");
 
 function PageLoader() {
   return (
@@ -54,6 +56,9 @@ export default function App() {
                 <Route path="jewellery/new" element={<AddJewelleryPage />} />
                 <Route path="jewellery/:id" element={<JewelleryDetailPage />} />
                 <Route path="jewellery/:id/edit" element={<EditJewelleryPage />} />
+                <Route path="stores" element={<StoreListPage />} />
+                <Route path="stores/new" element={<StoreFormPage />} />
+                <Route path="stores/:slug/edit" element={<StoreFormPage />} />
                 <Route path="team" element={<TeamPage />} />
                 <Route path="settings" element={<SettingsPage />} />
               </Route>
