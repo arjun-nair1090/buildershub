@@ -1,11 +1,12 @@
 import { ImageOff } from "lucide-react";
 import { Link } from "react-router-dom";
+import { formatKm } from "@/lib/discovery/distance";
 import { photoService } from "@/services/photos";
 import { STOCK_LABEL, type PieceCard } from "@/types";
 import { formatINRRange, formatWeight } from "@/utils/format";
 
 /** A piece in a list. Links by Jewellery ID, so the QR token never appears in a list. */
-export function PieceTile({ piece }: { piece: PieceCard }) {
+export function PieceTile({ piece, distanceKm }: { piece: PieceCard; distanceKm?: number | null }) {
   const { cover, price } = piece;
   return (
     <Link to={`/verify/${piece.jewellery_id}`} className="group block min-w-0">
@@ -35,6 +36,7 @@ export function PieceTile({ piece }: { piece: PieceCard }) {
       <p className="text-[13px] text-muted">
         {piece.purity} · {formatWeight(piece.net_weight)}
       </p>
+      {distanceKm != null && <p className="text-[13px] text-muted">{formatKm(distanceKm)} away</p>}
       <p className="tabular mt-1 text-[15px] font-semibold text-ink">{formatINRRange(price.final_min, price.final_max)}</p>
       {price.discount_label && (
         <p className="mt-0.5 flex flex-wrap items-center gap-x-2 text-[13px]">
