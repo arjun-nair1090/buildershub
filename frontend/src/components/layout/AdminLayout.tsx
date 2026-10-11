@@ -1,5 +1,6 @@
 import * as Dialog from "@radix-ui/react-dialog";
-import { Gem, LayoutDashboard, LogOut, Menu, Palette, Plus, Settings, Store, Users, X } from "lucide-react";
+import { LayoutDashboard, LogOut, Menu, Palette, Plus, Settings, Store, Users, X } from "lucide-react";
+import { GoldBarIcon } from "./GoldBarIcon";
 import { useState, type ReactNode } from "react";
 import { NavLink, Outlet, useLocation, useNavigate } from "react-router-dom";
 import { toast } from "sonner";
@@ -10,7 +11,7 @@ import { BrandMark } from "./BrandMark";
 const NAV = [
   { to: "/admin", label: "Dashboard", icon: LayoutDashboard, end: true },
   { to: "/admin/stores", label: "Stores", icon: Store, end: false },
-  { to: "/admin/jewellery", label: "Pieces", icon: Gem, end: true },
+  { to: "/admin/jewellery", label: "Pieces", icon: GoldBarIcon, end: true },
   { to: "/admin/jewellery/new", label: "Add piece", icon: Plus, end: true },
   { to: "/admin/designs", label: "Designs", icon: Palette, end: false },
   { to: "/admin/team", label: "Team", icon: Users, end: true },

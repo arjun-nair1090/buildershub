@@ -2,34 +2,29 @@ import { useId } from "react";
 import { Link } from "react-router-dom";
 import { cn } from "@/utils/cn";
 
-const GEM = "M6 1.5h12l5 6-11 11-11-11Z";
+const FRONT = "M1 18.5h22l-4-9.5H5Z";
+const TOP = "M5 9l2.4-6h9.2L19 9Z";
 
-/** A brilliant-cut gem in gold: the "jewel" in Jewlerify, and the dot on its i. */
-export function Gem({ className }: { className?: string }) {
-  const gradient = useId();
+/** A gold bar, seen from the front: the "gold" in Jewlerify, and the dot on its i. */
+export function GoldBar({ className }: { className?: string }) {
+  const id = useId();
   return (
     <svg viewBox="0 0 24 20" aria-hidden className={className}>
       <defs>
-        <linearGradient id={gradient} x1="0" y1="0" x2="1" y2="1">
+        <linearGradient id={`${id}-front`} x1="0" y1="0" x2="1" y2="1">
           <stop offset="0" stopColor="#F3DDA6" />
           <stop offset="0.5" stopColor="#D4AE6A" />
           <stop offset="1" stopColor="#9C7637" />
         </linearGradient>
-        <clipPath id={`${gradient}-clip`}>
-          <path d={GEM} />
-        </clipPath>
+        <linearGradient id={`${id}-top`} x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0" stopColor="#FBF0D2" />
+          <stop offset="1" stopColor="#E6C88F" />
+        </linearGradient>
       </defs>
-      <path d={GEM} fill={`url(#${gradient})`} />
-      {/* Facet lines clipped to the stone so their stroke never spills past its edge. */}
-      <path
-        clipPath={`url(#${gradient}-clip)`}
-        d="M1 7.5h22M6 1.5l3.5 6L12 1.5l2.5 6 3.5-6M9.5 7.5 12 18.5l2.5-11"
-        fill="none"
-        stroke="#fff"
-        strokeOpacity=".5"
-        strokeWidth=".7"
-        strokeLinejoin="round"
-      />
+      <path d={TOP} fill={`url(#${id}-top)`} />
+      <path d={FRONT} fill={`url(#${id}-front)`} />
+      {/* The bright edge where the top meets the front. */}
+      <path d="M5.2 9h13.6" stroke="#fff" strokeOpacity=".55" strokeWidth=".7" strokeLinecap="round" />
     </svg>
   );
 }
@@ -40,7 +35,7 @@ interface BrandMarkProps {
   className?: string;
 }
 
-/** Wordmark: "Jewlerify" with a gold gem in place of the dot on the i. */
+/** Wordmark: "Jewlerify" with a gold bar in place of the dot on the i. */
 export function BrandMark({ to = "/", tone = "dark", className }: BrandMarkProps) {
   return (
     <Link to={to} className={cn("group inline-flex", className)} aria-label="Jewlerify, home">
@@ -48,7 +43,7 @@ export function BrandMark({ to = "/", tone = "dark", className }: BrandMarkProps
         Jewler
         <span className="relative">
           ı
-          <Gem className="absolute bottom-[0.74em] left-1/2 w-[0.42em] -translate-x-1/2 transition-transform duration-500 ease-out-soft group-hover:-translate-y-[0.1em] group-hover:rotate-12" />
+          <GoldBar className="absolute bottom-[0.74em] left-1/2 w-[0.42em] -translate-x-1/2 transition-transform duration-500 ease-out-soft group-hover:-translate-y-[0.1em] group-hover:rotate-12" />
         </span>
         fy
       </span>
