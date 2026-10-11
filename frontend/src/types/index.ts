@@ -383,3 +383,33 @@ export interface PublicDesign {
   making_days_max: number;
   photos: Photo[];
 }
+
+export interface CatalogStore extends StoreRef {
+  latitude: DecimalString;
+  longitude: DecimalString;
+  cover: Photo | null;
+  piece_count: number;
+  design_count: number;
+}
+
+export interface CatalogPiece extends PieceCard {
+  /** Store slug. */
+  store: string;
+  photos: Photo[];
+  created_at: string;
+}
+
+export interface CatalogDesign extends DesignCard {
+  /** Store slug. */
+  store: string;
+  photos: Photo[];
+  created_at: string;
+}
+
+/** Everything buyers can browse; the browser searches and filters it. */
+export interface Catalog {
+  gold_rate: GoldRate | null;
+  stores: CatalogStore[];
+  pieces: CatalogPiece[];
+  designs: CatalogDesign[];
+}
