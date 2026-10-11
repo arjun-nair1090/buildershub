@@ -1,5 +1,5 @@
 import { Plus, Search, SearchX, X } from "lucide-react";
-import { GoldBarIcon } from "@/components/layout/GoldBarIcon";
+import { GoldBarsIcon } from "@/components/layout/GoldBarsIcon";
 import { useEffect, useMemo, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import { toast } from "sonner";
@@ -180,7 +180,7 @@ export function JewelleryListPage() {
             />
           ) : (
             <EmptyState
-              icon={GoldBarIcon}
+              icon={GoldBarsIcon}
               title="No pieces registered yet"
               description="Register your first piece to create its digital record and QR code."
               action={

@@ -1,5 +1,5 @@
 import { Plus } from "lucide-react";
-import { GoldBarIcon } from "@/components/layout/GoldBarIcon";
+import { GoldBarsIcon } from "@/components/layout/GoldBarsIcon";
 import { useCallback, useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { toast } from "sonner";
@@ -89,7 +89,7 @@ export function DashboardPage() {
           <p className="px-6 py-10 text-center text-sm text-danger">{recent.error}</p>
         ) : !recent.loading && recent.data?.items.length === 0 ? (
           <EmptyState
-            icon={GoldBarIcon}
+            icon={GoldBarsIcon}
             title="No pieces registered yet"
             description="Register your first piece to create its digital record and QR code."
             action={addButton}

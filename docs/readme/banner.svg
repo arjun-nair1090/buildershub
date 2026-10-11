@@ -4,15 +4,27 @@
       <stop offset="0" stop-color="#D4AE6A" stop-opacity=".22"/>
       <stop offset=".6" stop-color="#D4AE6A" stop-opacity="0"/>
     </radialGradient>
-    <linearGradient id="barFront" x1="0" y1="0" x2="1" y2="1">
-      <stop offset="0" stop-color="#F3DDA6"/>
-      <stop offset=".5" stop-color="#D4AE6A"/>
-      <stop offset="1" stop-color="#9C7637"/>
+    <linearGradient id="ingotTop" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#FFF4D6"/>
+      <stop offset="1" stop-color="#EBCB8C"/>
     </linearGradient>
-    <linearGradient id="barTop" x1="0" y1="0" x2="0" y2="1">
-      <stop offset="0" stop-color="#FBF0D2"/>
-      <stop offset="1" stop-color="#E6C88F"/>
+    <linearGradient id="ingotSide" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#B98C45"/>
+      <stop offset="1" stop-color="#7E5D27"/>
     </linearGradient>
+    <linearGradient id="ingotFront" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#EBC781"/>
+      <stop offset=".55" stop-color="#D4AE6A"/>
+      <stop offset="1" stop-color="#A97F3C"/>
+    </linearGradient>
+    <!-- one ingot in a 3/4 view, in a 64 x 48 box; the logo stacks three of them -->
+    <g id="ingot">
+      <path d="M12 21h32l8-11H20Z" fill="url(#ingotTop)"/>
+      <path d="M44 21l8-11 6 19-8 11Z" fill="url(#ingotSide)"/>
+      <path d="M5 40h45l-6-19H12Z" fill="url(#ingotFront)"/>
+      <path d="M17.5 18.6h22.8l4.7-6.3H22.4Z" fill="none" stroke="#B48A44" stroke-opacity=".7" stroke-width=".9"/>
+      <path d="M12 21h32l8-11" fill="none" stroke="#FFF8E6" stroke-opacity=".85" stroke-width="1" stroke-linejoin="round"/>
+    </g>
     <linearGradient id="shine" x1="0" y1="0" x2="1" y2="0">
       <stop offset="0" stop-color="#fff" stop-opacity="0"/>
       <stop offset=".5" stop-color="#fff" stop-opacity=".75"/>
@@ -25,11 +37,15 @@
       <stop offset=".58" stop-color="#F3F1EA"/>
       <stop offset="1" stop-color="#F3F1EA"/>
     </linearGradient>
-    <clipPath id="barClip"><path d="M8 148h176l-32-76H40Z M40 72l19-48h74l19 48Z"/></clipPath>
+    <clipPath id="barClip">
+      <path transform="scale(3.4) translate(-2 9) scale(.56)" d="M5 40h45l8-11-6-19H20l-8 11Z"/>
+      <path transform="scale(3.4) translate(30 9) scale(.56)" d="M5 40h45l8-11-6-19H20l-8 11Z"/>
+      <path transform="scale(3.4) translate(14 -5) scale(.56)" d="M5 40h45l8-11-6-19H20l-8 11Z"/>
+    </clipPath>
     <clipPath id="typeClip"><rect class="type" x="300" y="226" width="560" height="44"/></clipPath>
     <clipPath id="screen"><rect x="934" y="92" width="168" height="236" rx="14"/></clipPath>
     <style>
-      .bob { animation: bob 4s ease-in-out infinite; transform-origin: 96px 90px; }
+      .bob { animation: bob 4s ease-in-out infinite; transform-origin: 107px 55px; }
       .sweep { animation: sweep 3.2s ease-in-out infinite; }
       .word { animation: shimmer 5s linear infinite; }
       .type { transform-box: fill-box; transform-origin: left; animation: type 2.4s steps(32) .6s both; }
@@ -77,16 +93,18 @@
     <circle class="spark" cx="710" cy="420" r="2.4" style="animation-delay:3.8s"/>
   </g>
 
-  <!-- the gold bar -->
-  <g transform="translate(76 104)">
+  <!-- the logo: three stacked gold bars -->
+  <g transform="translate(64 136)">
     <g class="bob">
-      <ellipse cx="96" cy="166" rx="86" ry="10" fill="#000" opacity=".35"/>
-      <path d="M40 72l19-48h74l19 48Z" fill="url(#barTop)"/>
-      <path d="M8 148h176l-32-76H40Z" fill="url(#barFront)"/>
-      <path d="M42 72h108" stroke="#fff" stroke-opacity=".6" stroke-width="3" stroke-linecap="round"/>
-      <text x="96" y="122" text-anchor="middle" font-family="Georgia, 'Times New Roman', serif" font-size="22" fill="#7A5A24" fill-opacity=".55" letter-spacing="3">999.9</text>
+      <ellipse cx="107" cy="118" rx="104" ry="10" fill="#000" opacity=".35"/>
+      <g transform="scale(3.4)">
+      <use href="#ingot" transform="translate(-2 9) scale(.56)"/>
+      <use href="#ingot" transform="translate(30 9) scale(.56)"/>
+      <use href="#ingot" transform="translate(14 -5) scale(.56)"/>
+      </g>
+      <text x="100" y="51" text-anchor="middle" font-family="Georgia, 'Times New Roman', serif" font-size="15" fill="#7A5A24" fill-opacity=".6" letter-spacing="2">999.9</text>
       <g clip-path="url(#barClip)">
-        <rect class="sweep" x="-40" y="0" width="70" height="170" fill="url(#shine)" transform="skewX(-20)"/>
+        <rect class="sweep" x="-40" y="-20" width="70" height="150" fill="url(#shine)" transform="skewX(-20)"/>
       </g>
     </g>
   </g>

@@ -5,7 +5,7 @@ import { useForm } from "react-hook-form";
 import { Link, Navigate, useLocation, useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import { z } from "@/lib/zod";
-import { BrandMark, GoldBar } from "@/components/layout/BrandMark";
+import { BrandMark, GoldBars } from "@/components/layout/BrandMark";
 import { Button } from "@/components/ui/button";
 import { Field } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
@@ -68,7 +68,7 @@ export function LoginPage() {
           </p>
         </div>
         <p className="text-[13px] text-chalk/50">Jeweller and administrator access only.</p>
-        <GoldBar className="pointer-events-none absolute -bottom-16 -right-20 w-96 rotate-12 opacity-[0.07]" />
+        <GoldBars className="pointer-events-none absolute -bottom-10 -right-24 w-[30rem] rotate-12 opacity-[0.07]" />
       </aside>
 
       <main className="flex flex-col justify-center px-4 py-12 sm:px-10">

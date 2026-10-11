@@ -5,6 +5,27 @@
       <stop offset=".5" stop-color="#D4AE6A"/>
       <stop offset="1" stop-color="#9C7637"/>
     </linearGradient>
+    <linearGradient id="ingotTop" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#FFF4D6"/>
+      <stop offset="1" stop-color="#EBCB8C"/>
+    </linearGradient>
+    <linearGradient id="ingotSide" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#B98C45"/>
+      <stop offset="1" stop-color="#7E5D27"/>
+    </linearGradient>
+    <linearGradient id="ingotFront" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#EBC781"/>
+      <stop offset=".55" stop-color="#D4AE6A"/>
+      <stop offset="1" stop-color="#A97F3C"/>
+    </linearGradient>
+    <!-- one ingot in a 3/4 view, in a 64 x 48 box; the logo stacks three of them -->
+    <g id="ingot">
+      <path d="M12 21h32l8-11H20Z" fill="url(#ingotTop)"/>
+      <path d="M44 21l8-11 6 19-8 11Z" fill="url(#ingotSide)"/>
+      <path d="M5 40h45l-6-19H12Z" fill="url(#ingotFront)"/>
+      <path d="M17.5 18.6h22.8l4.7-6.3H22.4Z" fill="none" stroke="#B48A44" stroke-opacity=".7" stroke-width=".9"/>
+      <path d="M12 21h32l8-11" fill="none" stroke="#FFF8E6" stroke-opacity=".85" stroke-width="1" stroke-linejoin="round"/>
+    </g>
     <style>
       text { font-family: 'Segoe UI', Helvetica, Arial, sans-serif; }
       .title { font-family: Georgia, 'Times New Roman', serif; font-size: 26px; fill: #F3F1EA; }
@@ -31,16 +52,22 @@
   <path class="track" d="M150 120H1050" stroke="#E2C38A" stroke-opacity=".55" stroke-width="3" fill="none"/>
   <g class="runner"><circle cx="150" cy="120" r="7" fill="#F3DDA6"/><circle cx="150" cy="120" r="14" fill="#F3DDA6" opacity=".18"/></g>
 
-  <!-- 1 register: a tagged gold bar -->
+  <!-- 1 register: tagged gold bars -->
   <g transform="translate(150 120)">
     <circle class="ring" r="52" fill="none" stroke="#E2C38A" stroke-width="3"/>
     <circle r="52" fill="#15191B" stroke="#E2C38A" stroke-opacity=".6" stroke-width="2"/>
-    <g class="float" transform="translate(-30 -18)">
-      <path d="M12 12l5-11h26l5 11Z" fill="#FBF0D2"/>
-      <path d="M2 34h56l-10-22H12Z" fill="url(#gold)"/>
-      <rect x="40" y="22" width="20" height="16" rx="2" fill="#F3F1EA" transform="rotate(12 50 30)"/>
-      <path d="M44 27h4v4h-4zM51 26h4v4h-4zM46 33h3v3h-3z" fill="#1F2427" transform="rotate(12 50 30)"/>
-    </g>
+    <!-- the offset sits on a wrapper: the float animation replaces the transform of the group it runs on -->
+    <g transform="translate(-40 -24)"><g class="float">
+      <g transform="scale(1.25)">
+      <use href="#ingot" transform="translate(-2 9) scale(.56)"/>
+      <use href="#ingot" transform="translate(30 9) scale(.56)"/>
+      <use href="#ingot" transform="translate(14 -5) scale(.56)"/>
+      </g>
+      <g transform="translate(16 12)">
+        <rect x="40" y="22" width="20" height="16" rx="2" fill="#F3F1EA" transform="rotate(12 50 30)"/>
+        <path d="M44 27h4v4h-4zM51 26h4v4h-4zM46 33h3v3h-3z" fill="#1F2427" transform="rotate(12 50 30)"/>
+      </g>
+    </g></g>
   </g>
   <text class="num" x="150" y="210" text-anchor="middle">01</text>
   <text class="title" x="150" y="244" text-anchor="middle">Register</text>
