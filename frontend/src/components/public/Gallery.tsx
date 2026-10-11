@@ -62,7 +62,7 @@ export function Gallery({ photos, sizes = "(min-width: 1024px) 560px, 100vw", cl
               loading={i === 0 ? "eager" : "lazy"}
               decoding="async"
               draggable={false}
-              className="aspect-[4/5] w-full object-cover"
+              className="aspect-[4/5] w-full object-contain"
             />
           </div>
         ))}
