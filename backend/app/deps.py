@@ -34,3 +34,17 @@ def require_admin(user: User = Depends(get_current_user)) -> User:
     if user.role != "admin":
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Admin access required")
     return user
+
+
+def optional_admin(
+    credentials: HTTPAuthorizationCredentials | None = Depends(bearer),
+    db: Session = Depends(get_db),
+) -> User | None:
+    """The signed-in admin, or None. For public routes that show admins a little more."""
+    if credentials is None:
+        return None
+    try:
+        user = get_current_user(credentials, db)
+    except HTTPException:
+        return None
+    return user if user.role == "admin" else None
