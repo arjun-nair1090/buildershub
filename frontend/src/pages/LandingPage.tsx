@@ -1,9 +1,11 @@
-import { Camera, ListOrdered, ScanLine, ShieldOff } from "lucide-react";
+import { Camera, ListOrdered, ScanLine, Search, ShieldOff } from "lucide-react";
 import { useEffect, type CSSProperties, type ReactNode } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { HallmarkStamp } from "@/components/jewellery/HallmarkStamp";
 import { PriceBreakdown } from "@/components/jewellery/PriceBreakdown";
-import { HeroVisual } from "@/components/landing/HeroVisual";
+import { CatalogRows } from "@/components/landing/CatalogRows";
+import { GoldRateStrip } from "@/components/public/GoldRateStrip";
+import { NearMeButton } from "@/components/public/NearMeButton";
 import { buttonVariants } from "@/components/ui/button";
 import { CodeEntryForm } from "@/components/verify/CodeEntryForm";
 import type { PiecePrice } from "@/types";
@@ -81,40 +83,77 @@ const REASONS = [
 
 export function LandingPage() {
   useEffect(() => {
-    document.title = "Jewlerify: every jewel, verified";
+    document.title = "Jewlerify: verified gold jewellery near you";
   }, []);
 
+  const navigate = useNavigate();
   return (
     <>
-      {/* Hero */}
-      <section className="relative overflow-hidden bg-basalt text-chalk">
-        <div className="mx-auto grid max-w-6xl items-center gap-14 px-4 pb-20 pt-10 sm:px-6 sm:pt-16 lg:grid-cols-[1fr_minmax(0,540px)] lg:gap-12 lg:pb-28">
+      {/* Hero: the store's own photo; the gradient keeps the text readable over it. */}
+      <section className="relative isolate overflow-hidden bg-basalt text-chalk">
+        <img
+          src="/hero/rani-haar.jpg"
+          alt=""
+          width={586}
+          height={783}
+          fetchPriority="high"
+          className="absolute inset-0 -z-10 h-full w-full object-cover object-[50%_30%] lg:left-1/2 lg:w-1/2"
+        />
+        <div
+          aria-hidden
+          className="absolute inset-0 -z-10 bg-gradient-to-t from-basalt via-basalt/85 to-basalt/40 lg:bg-gradient-to-r lg:from-basalt lg:from-45% lg:via-basalt/70 lg:via-60% lg:to-transparent"
+        />
+        <div className="mx-auto max-w-6xl px-4 pb-16 pt-28 sm:px-6 sm:pt-36 lg:pb-28 lg:pt-24">
           <div className="max-w-xl">
-            <h1 className="rise font-display text-[52px] leading-[0.98] sm:text-[76px] lg:text-[88px]">
-              Every jewel, verified.
+            <h1 className="rise font-display text-[46px] leading-[0.98] sm:text-[68px] lg:text-[80px]">
+              Find verified gold jewellery near you.
             </h1>
-            <p className="rise mt-7 max-w-md text-lg leading-relaxed text-chalk/75" style={delay(140)}>
-              Scan the tag on any piece to see its registered purity, weight, certificate and an itemised price,
-              before you pay.
+            <p className="rise mt-6 max-w-md text-lg leading-relaxed text-chalk/80" style={delay(140)}>
+              Browse pieces from local stores, check how each one is verified, and choose where to visit.
             </p>
-            <div className="rise mt-10 flex flex-col gap-3 sm:flex-row" style={delay(260)}>
-              <Link to="/verify" className={cn(buttonVariants({ size: "lg", variant: "gold" }))}>
-                Verify jewellery
-              </Link>
-              <Link
-                to="/admin/login"
-                className={cn(
-                  buttonVariants({ size: "lg", variant: "ghost" }),
-                  "border border-white/20 text-chalk hover:border-white/40 hover:bg-white/5",
-                )}
-              >
-                I'm a jeweller
+            <form
+              role="search"
+              className="rise mt-8 flex gap-2"
+              style={delay(220)}
+              onSubmit={(e) => {
+                e.preventDefault();
+                const q = new FormData(e.currentTarget).get("q")?.toString().trim();
+                navigate(q ? `/search?q=${encodeURIComponent(q)}` : "/search");
+              }}
+            >
+              <label className="relative min-w-0 flex-1">
+                <span className="sr-only">Search jewellery</span>
+                <Search className="pointer-events-none absolute left-3.5 top-1/2 size-4 -translate-y-1/2 text-muted" aria-hidden />
+                <input
+                  name="q"
+                  type="search"
+                  placeholder="Rings, necklaces, a store or area"
+                  className="h-12 w-full rounded-md border-0 bg-white pl-10 pr-3 text-[15px] text-ink placeholder:text-muted focus:outline-2 focus:outline-gold-bright"
+                />
+              </label>
+              <button type="submit" className={cn(buttonVariants({ size: "lg", variant: "gold" }))}>
+                Search
+              </button>
+            </form>
+            <div className="rise mt-3 flex flex-wrap items-center gap-x-5 gap-y-3" style={delay(300)}>
+              <NearMeButton
+                tone="dark"
+                onResult={(here) =>
+                  here
+                    ? navigate("/search?tab=stores&sort=nearest")
+                    : navigate("/search?tab=stores", { state: { pickCity: true } })
+                }
+              />
+              <Link to="/verify" className="text-sm font-medium text-chalk/85 underline-offset-4 hover:text-gold-bright hover:underline">
+                Verify a tag
               </Link>
             </div>
           </div>
-          <HeroVisual />
         </div>
       </section>
+
+      <GoldRateStrip />
+      <CatalogRows />
 
       {/* How it works */}
       <section className="bg-white">
