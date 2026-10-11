@@ -8,7 +8,7 @@ import math
 from dataclasses import dataclass
 from datetime import datetime, timedelta, timezone
 
-from sqlalchemy import case, delete
+from sqlalchemy import case, delete, update
 from sqlalchemy.dialects.postgresql import insert as pg_insert
 from sqlalchemy.dialects.sqlite import insert as sqlite_insert
 from sqlalchemy.orm import Session
@@ -96,6 +96,20 @@ def clear(db: Session, scope: str, value: str) -> None:
         log.exception("Rate limit counter unavailable; nothing cleared")
 
 
+def refund(db: Session, scope: str, value: str) -> None:
+    """Gives back one counted request, e.g. a login that turned out to be correct."""
+    try:
+        db.execute(
+            update(RateLimit)
+            .where(RateLimit.key == _key(scope, value))
+            .values(count=case((RateLimit.count > 0, RateLimit.count - 1), else_=0))
+        )
+        db.commit()
+    except Exception:
+        db.rollback()
+        log.exception("Rate limit counter unavailable; nothing refunded")
+
+
 def purge(db: Session, now: datetime | None = None) -> None:
     """Forget counters whose window started more than a day ago."""
     now = now or datetime.now(timezone.utc)
@@ -108,7 +122,12 @@ def purge(db: Session, now: datetime | None = None) -> None:
 
 
 def client_ip(request) -> str:
-    """Vercel puts the caller's address first in X-Forwarded-For; locally it's the socket's peer."""
+    """The caller's address as our own proxy saw it. X-Real-IP is set (overwriting anything the client sent) by
+    Vercel and by the nginx in front of the Docker build; the first X-Forwarded-For entry is only a fallback,
+    because nginx appends to whatever the client supplied there."""
+    real = request.headers.get("x-real-ip", "").strip()
+    if real:
+        return real
     first = request.headers.get("x-forwarded-for", "").split(",")[0].strip()
     if first:
         return first

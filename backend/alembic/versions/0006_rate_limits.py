@@ -20,7 +20,9 @@ def upgrade() -> None:
         sa.Column("window_start", sa.DateTime(timezone=True), nullable=False),
         sa.Column("count", sa.Integer(), nullable=False, server_default="0"),
     )
+    op.create_index("ix_rate_limits_window_start", "rate_limits", ["window_start"])
 
 
 def downgrade() -> None:
+    op.drop_index("ix_rate_limits_window_start", table_name="rate_limits")
     op.drop_table("rate_limits")

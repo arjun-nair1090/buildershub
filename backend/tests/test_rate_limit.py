@@ -114,3 +114,48 @@ def test_verify_limits_lookups_per_ip(client, publish):
     assert res.json()["detail"] == "Too many lookups. Try again in a minute."
     assert 1 <= int(res.headers["retry-after"]) <= 60
     assert client.get(f"/api/verify/{token}", headers={"X-Forwarded-For": "198.51.100.10"}).status_code == 200
+
+
+# ---------- Fixes from review ----------
+
+def test_login_counts_the_attempt_before_checking_the_password(client, db, monkeypatch):
+    """A burst of parallel guesses must not all pass a read-only check before any failure is recorded."""
+    from app.routers import auth as auth_router
+
+    seen = []
+    real = auth_router.verify_password
+
+    def watching(password, hashed):
+        db.expire_all()
+        seen.append(db.scalar(select(RateLimit.count).where(RateLimit.key.like("login-email:%"))))
+        return real(password, hashed)
+
+    monkeypatch.setattr(auth_router, "verify_password", watching)
+    login(client)
+    assert seen == [1]  # already counted while the password was being checked
+
+
+def test_successful_logins_dont_use_up_the_ip_allowance(client):
+    for _ in range(25):
+        assert login(client, password=ADMIN_PASSWORD).status_code == 200
+    assert login(client).status_code == 401  # a plain failure, not "too many attempts"
+
+
+def test_verify_also_forgets_day_old_counts(client, db, publish, monkeypatch):
+    from app.routers import verify as verify_router
+
+    token = publish()["verification_token"]
+    rate_limit.hit(db, "verify-ip", "192.0.2.1", 60, MIN, datetime.now(timezone.utc) - timedelta(days=2))
+    monkeypatch.setattr(verify_router.secrets, "randbelow", lambda n: 0)  # this lookup is the one that cleans up
+    assert client.get(f"/api/verify/{token}").status_code == 200
+    db.expire_all()
+    day_ago = datetime.now(timezone.utc) - timedelta(days=1)
+    assert db.scalar(select(func.count()).select_from(RateLimit).where(RateLimit.window_start < day_ago)) == 0
+
+
+def test_client_ip_prefers_the_address_the_proxy_sets():
+    class Req:
+        headers = {"x-real-ip": "203.0.113.7", "x-forwarded-for": "1.1.1.1, 203.0.113.7"}
+        client = None
+
+    assert rate_limit.client_ip(Req()) == "203.0.113.7"  # a client-supplied first X-Forwarded-For entry is ignored

@@ -1,3 +1,4 @@
+import secrets
 from datetime import timedelta
 
 from fastapi import APIRouter, Depends, HTTPException, Path, Request, status
@@ -54,6 +55,8 @@ def verify(request: Request, token: str = Code, db: Session = Depends(get_db)) -
             detail="Too many lookups. Try again in a minute.",
             headers={"Retry-After": str(verdict.retry_after)},
         )
+    if secrets.randbelow(100) == 0:  # about one lookup in a hundred also forgets day-old counts
+        rate_limit.purge(db)
     item = visible_piece(db, token)
     ctx = pricing_context(db)
     lab = item.verification_level == "lab"

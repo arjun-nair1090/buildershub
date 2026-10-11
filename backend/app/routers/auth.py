@@ -33,17 +33,18 @@ def login(body: LoginRequest, request: Request, db: Session = Depends(get_db)) -
     ip = rate_limit.client_ip(request)
     keys = {"login-email": body.email, "login-ip": ip}
     rate_limit.purge(db)
+    # Counted before the (slow) password check, in one atomic step, so a burst of parallel guesses can't all get
+    # past the limit before the first failure lands. A correct login gives its count back below.
     for scope, limit in LOGIN_LIMITS:
-        verdict = rate_limit.peek(db, scope, keys[scope], limit, LOGIN_WINDOW)
+        verdict = rate_limit.hit(db, scope, keys[scope], limit, LOGIN_WINDOW)
         if not verdict.allowed:
             raise too_many_attempts(verdict)
 
     user = db.scalar(select(User).where(User.email == body.email))
     if not verify_password(body.password, user.password_hash if user else None) or user.status != "active":
-        for scope, limit in LOGIN_LIMITS:
-            rate_limit.hit(db, scope, keys[scope], limit, LOGIN_WINDOW)
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Incorrect email or password")
     rate_limit.clear(db, "login-email", body.email)
+    rate_limit.refund(db, "login-ip", ip)  # only failures count against an address
     token, expires_in = create_access_token(user.id, user.token_version, remember=body.remember)
     return TokenResponse(access_token=token, expires_in=expires_in, user=UserOut.model_validate(user))
 

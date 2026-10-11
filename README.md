@@ -251,7 +251,9 @@ npm run build
 - Secrets come from environment variables. `.env` is git-ignored.
 - **Rate limits:** login allows 5 failed attempts per email and 20 per IP address in 15 minutes; the verify
   endpoint allows 60 lookups per IP per minute. Counts live in the `rate_limits` table (shared by every server
-  instance), keyed by an HMAC of the email or IP so neither is stored, and are deleted after a day. If the table
-  is unavailable, requests are allowed.
+  instance), keyed by an HMAC of the email or IP so neither is stored, and are deleted after a day (on login, and on
+  about one verify lookup in a hundred). Login attempts are counted before the password is checked, so parallel
+  guesses can't slip through; a correct login gives its count back. If the table is unavailable, requests are
+  allowed. The client address comes from `X-Real-IP`, which Vercel and the bundled nginx set.
 - **Headers:** API responses send `nosniff`, `no-referrer`, `X-Frame-Options: DENY` and a CSP that allows
   nothing; pages get a CSP, HSTS and a permissions policy from `vercel.json`.

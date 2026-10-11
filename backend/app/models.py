@@ -224,5 +224,5 @@ class RateLimit(Base):
     __tablename__ = "rate_limits"
 
     key: Mapped[str] = mapped_column(String(80), primary_key=True)
-    window_start: Mapped[datetime] = mapped_column(DateTime(timezone=True))
+    window_start: Mapped[datetime] = mapped_column(DateTime(timezone=True), index=True)  # for the daily purge
     count: Mapped[int] = mapped_column(Integer, default=0)
