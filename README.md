@@ -183,6 +183,8 @@ Interactive docs: http://localhost:8010/docs
 | GET | `/api/verify/{token}` | public | Buyer view: store, photos, verification level, live gold rate, price and up to 8 similar pieces from the same store. `404` not found or unpublished, `410` inactive (no details returned) |
 | GET | `/api/public/stores/{slug}` | public | Store page: details, photos, its pieces (sold last) and designs as cards. `404` unknown, `410` inactive |
 | GET | `/api/public/designs/{public_id}` | public | Design page. `404` unknown or unpublished, `410` store inactive |
+| GET | `/api/public/catalog` | public | Everything buyers can browse (stores, pieces in stock or reserved, designs, gold rate); the browser filters it. Cached 60 s at the CDN |
+| GET | `/api/public/gold-rate` | public | The saved gold rate per karat with its time, or `null` before the first fetch |
 
 Validation errors return `422` as `{"detail": "...", "fields": {"field": "message"}}`.
 

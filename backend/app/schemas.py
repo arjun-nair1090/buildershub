@@ -536,6 +536,36 @@ class PublicDesign(BaseModel):
     photos: list[PhotoOut]
 
 
+class CatalogStore(StoreRef):
+    latitude: Decimal
+    longitude: Decimal
+    cover: PhotoOut | None  # the store's first photo, else its newest piece's cover
+    piece_count: int
+    design_count: int
+
+
+class CatalogPiece(PieceCard):
+    store: str  # slug
+    photos: list[PhotoOut]
+    created_at: datetime
+
+
+class CatalogDesign(DesignCard):
+    store: str  # slug
+    photos: list[PhotoOut]
+    created_at: datetime
+
+
+class Catalog(BaseModel):
+    """Everything buyers can browse. The browser searches, filters and sorts it, so a buyer's location never
+    has to reach the server."""
+
+    gold_rate: GoldRateOut | None
+    stores: list[CatalogStore]
+    pieces: list[CatalogPiece]
+    designs: list[CatalogDesign]
+
+
 class PublicVerification(BaseModel):
     """Everything a buyer sees. No internal ids, no document paths, no admin data."""
 
