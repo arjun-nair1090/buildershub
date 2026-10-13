@@ -355,6 +355,17 @@ def test_metals_dev_prefers_ibja_rate(monkeypatch):
         gold_rate.fetch_inr_per_gram_24k("metals.dev", "bad")
 
 
+def test_keyless_feed_converts_troy_ounce_to_gram(monkeypatch):
+    from app.config import get_settings
+    from app.services import gold_rate
+
+    monkeypatch.setattr(gold_rate, "_get_json", lambda r: {"price": 311034.768, "currency": "INR"})
+    assert gold_rate.fetch_inr_per_gram_24k("gold-api.com", "") == (Decimal("10000.00"), "gold-api.com spot")
+
+    monkeypatch.setattr(get_settings(), "gold_rate_keyless_feed", True)
+    assert gold_rate.configured_feed(get_settings()) == ("gold-api.com", "")
+
+
 # ---------- Pieces on the marketplace model ----------
 
 def test_piece_needs_a_known_store(client, auth, payload):

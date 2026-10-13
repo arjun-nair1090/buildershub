@@ -1,4 +1,4 @@
-"""Market gold rate from metals.dev or GoldAPI.io, cached in the database.
+"""Market gold rate from metals.dev, GoldAPI.io or the keyless gold-api.com, cached in the database.
 
 Every page view reads the cached rate; the API is only called when the cache is older than
 GOLD_RATE_TTL_MINUTES, so the request count stays fixed however many buyers scan a QR code.
@@ -22,6 +22,8 @@ log = logging.getLogger(__name__)
 
 METALS_DEV_URL = "https://api.metals.dev/v1/latest"
 GOLDAPI_URL = "https://www.goldapi.io/api/XAU/INR"
+GOLD_API_COM_URL = "https://api.gold-api.com/price/XAU/INR"
+GRAMS_PER_TROY_OUNCE = Decimal("31.1034768")
 # After a failed fetch, wait this long before trying again.
 RETRY_AFTER = timedelta(minutes=5)
 
@@ -45,6 +47,8 @@ def configured_feed(settings: Settings) -> tuple[str, str] | None:
         return "metals.dev", settings.metals_dev_api_key
     if settings.goldapi_key:
         return "goldapi", settings.goldapi_key
+    if settings.gold_rate_keyless_feed:
+        return "gold-api.com", ""
     return None
 
 
@@ -66,6 +70,9 @@ def fetch_inr_per_gram_24k(provider: str, api_key: str) -> tuple[Decimal, str]:
             value, source = metals["ibja_gold"], "IBJA via metals.dev"
         else:
             value, source = metals["gold"], "metals.dev"
+    elif provider == "gold-api.com":
+        data = _get_json(urllib.request.Request(GOLD_API_COM_URL, headers={"Accept": "application/json"}))
+        value, source = Decimal(str(data["price"])) / GRAMS_PER_TROY_OUNCE, "gold-api.com spot"
     else:
         data = _get_json(urllib.request.Request(GOLDAPI_URL, headers={"x-access-token": api_key, "Accept": "application/json"}))
         value, source = data["price_gram_24k"], "GoldAPI.io"

@@ -6,6 +6,7 @@ os.environ["JWT_SECRET"] = "test-secret-" + "x" * 40
 os.environ["PUBLIC_BASE_URL"] = "https://verify.example.com"
 os.environ["GOLDAPI_KEY"] = ""  # tests that need a rate enable it explicitly
 os.environ["METALS_DEV_API_KEY"] = ""
+os.environ["GOLD_RATE_KEYLESS_FEED"] = "false"  # no network calls from tests
 
 import secrets
 from decimal import Decimal

@@ -27,11 +27,14 @@ class Settings(BaseSettings):
     max_upload_mb: int = 4
 
     # Live gold rate from metals.dev (https://metals.dev) or GoldAPI.io (https://www.goldapi.io); metals.dev is
-    # used when both are set. Without a key, buyers see the registered prices.
+    # used when both are set. Without a key, the keyless gold-api.com spot feed is used (international spot, so
+    # it sits below Indian shop rates, which include import duty); turn that off and buyers see registered prices.
     metals_dev_api_key: str = ""
     goldapi_key: str = ""
-    # How long a fetched rate is reused. 480 (8 h) is about 90 requests a month, inside the free plans' 100.
-    gold_rate_ttl_minutes: int = 480
+    gold_rate_keyless_feed: bool = True
+    # How long a fetched rate is reused. 30 suits gold-api.com (no request limit); the keyed providers' free
+    # plans allow 100 requests a month, which needs 480 (8 h).
+    gold_rate_ttl_minutes: int = 30
 
     seed_admin_name: str = "Store Administrator"
     seed_admin_email: str = "admin@jewelverify.demo"
