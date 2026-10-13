@@ -109,9 +109,12 @@ def current_rate(db: Session) -> RateSnapshot | None:
 
     if not latest:
         return None
+    # Feeds price gold differently (IBJA includes import duty, spot doesn't), so a change across a switch of
+    # feed isn't a market move and isn't shown.
+    comparable = len(latest) > 1 and latest[1].source == latest[0].source
     return RateSnapshot(
         inr_per_gram_24k=latest[0].inr_per_gram_24k,
-        previous=latest[1].inr_per_gram_24k if len(latest) > 1 else None,
+        previous=latest[1].inr_per_gram_24k if comparable else None,
         fetched_at=_aware(latest[0].fetched_at),
         source=latest[0].source,
     )

@@ -334,6 +334,25 @@ def test_gold_rate_falls_back_to_last_known(client, publish, monkeypatch):
     assert Decimal(rate["change_percent"]) == Decimal("2.04")
 
 
+def test_no_change_shown_across_a_switch_of_feed(client, publish):
+    from datetime import datetime, timedelta, timezone
+
+    from app.database import get_db
+    from app.main import app
+    from app.models import GoldRate
+
+    db = next(app.dependency_overrides[get_db]())
+    now = datetime.now(timezone.utc)
+    db.add_all([GoldRate(inr_per_gram_24k=Decimal("14791"), source="IBJA via metals.dev", fetched_at=now - timedelta(hours=3)),
+                GoldRate(inr_per_gram_24k=Decimal("13039"), source="gold-api.com spot", fetched_at=now)])
+    db.commit()
+
+    token = publish()["verification_token"]
+    rate = client.get(f"/api/verify/{token}").json()["gold_rate"]
+    assert Decimal(rate["per_gram"]["24K"]) == Decimal("13025.96")  # the spot rate, at 999 fineness
+    assert rate["change_percent"] is None
+
+
 def test_metals_dev_prefers_ibja_rate(monkeypatch):
     from app.services import gold_rate
 
