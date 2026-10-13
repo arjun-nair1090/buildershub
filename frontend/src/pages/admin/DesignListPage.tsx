@@ -15,7 +15,7 @@ import { designService } from "@/services/designs";
 import type { Design } from "@/types";
 import { formatINRRange } from "@/utils/format";
 
-const iconLink = "inline-flex size-8 items-center justify-center rounded-md text-muted hover:bg-basalt-50 hover:text-basalt";
+const iconLink = "inline-flex size-8 items-center justify-center rounded-md text-muted hover:bg-basalt-50 hover:text-ink";
 
 export function DesignListPage() {
   const { stores } = useStores();
@@ -102,7 +102,7 @@ export function DesignListPage() {
                 {designs.map((d) => (
                   <tr key={d.public_id}>
                     <td className="px-5 py-3">
-                      <Link to={`/admin/designs/${d.public_id}/edit`} className="font-medium text-basalt hover:underline">
+                      <Link to={`/admin/designs/${d.public_id}/edit`} className="font-medium text-ink hover:underline">
                         {d.title}
                       </Link>
                       <p className="text-[13px] text-muted">

@@ -61,7 +61,7 @@ export function GoldRateTicker({ rate, highlight }: { rate: GoldRate; highlight?
 }
 
 /**
- * Scrolling tape of the current rates, for the foot of the buyer page. Decorative: the same figures are in
+ * Scrolling tape of the current rates, for the top of the buyer page. Decorative: the same figures are in
  * GoldRateTicker, so it's hidden from screen readers.
  */
 export function GoldRateTape({ rate }: { rate: GoldRate }) {

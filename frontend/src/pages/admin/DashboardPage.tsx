@@ -66,7 +66,7 @@ export function DashboardPage() {
           <div key={key} className="bg-white px-5 py-5 sm:px-6">
             <p className="text-[13px] text-muted">{label}</p>
             {stats ? (
-              <p className="tabular mt-2 text-[32px] font-medium leading-none text-basalt">{stats[key]}</p>
+              <p className="tabular mt-2 text-[32px] font-medium leading-none text-ink">{stats[key]}</p>
             ) : (
               <Skeleton className="mt-2 h-[34px] w-12" />
             )}
@@ -80,7 +80,7 @@ export function DashboardPage() {
           title="Recent pieces"
           description="The latest registered pieces."
           action={
-            <Link to="/admin/jewellery" className="text-sm font-medium text-basalt underline-offset-4 hover:underline">
+            <Link to="/admin/jewellery" className="text-sm font-medium text-ink underline-offset-4 hover:underline">
               View all
             </Link>
           }

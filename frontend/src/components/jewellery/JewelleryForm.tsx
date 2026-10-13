@@ -236,13 +236,13 @@ export function JewelleryForm({ defaultValues = emptyValues, submitLabel, cancel
           {rangeExample && <p className="text-[13px] text-muted">On the gold value above, that is {rangeExample}.</p>}
         </div>
 
-        <div className="rounded-md border border-line bg-chalk p-4">
+        <div className="rounded-md border border-line bg-canvas p-4">
           <div className="flex flex-wrap items-baseline justify-between gap-3">
             <span className="flex items-center gap-2 text-[13px] text-muted">
               <Calculator className="size-4 text-gold" strokeWidth={1.5} />
               Calculated total
             </span>
-            <span className={manual ? "tabular text-lg text-muted line-through" : "tabular text-xl font-semibold text-basalt"}>
+            <span className={manual ? "tabular text-lg text-muted line-through" : "tabular text-xl font-semibold text-ink"}>
               {formatINR(calculated)}
             </span>
           </div>
@@ -334,7 +334,7 @@ export function JewelleryForm({ defaultValues = emptyValues, submitLabel, cancel
         <DiscountPreview input={toPreviewInput(values)} />
       </Section>
 
-      <div className="sticky bottom-0 z-10 -mx-4 flex flex-col-reverse gap-2 border-t border-line bg-chalk/95 px-4 py-4 backdrop-blur sm:mx-0 sm:flex-row sm:justify-end sm:rounded-lg sm:border sm:bg-white sm:px-6">
+      <div className="sticky bottom-0 z-10 -mx-4 flex flex-col-reverse gap-2 border-t border-line bg-canvas/95 px-4 py-4 backdrop-blur sm:mx-0 sm:flex-row sm:justify-end sm:rounded-lg sm:border sm:bg-white sm:px-6">
         <Link to={cancelTo} className="inline-flex h-11 items-center justify-center rounded-md px-4 text-sm font-medium text-ink hover:bg-basalt-50">
           Cancel
         </Link>

@@ -13,7 +13,7 @@ function Row({ title, link, children }: { title: string; link: { to: string; lab
     <section className="mx-auto max-w-6xl px-4 py-10 sm:px-6" aria-label={title}>
       <div className="flex items-end justify-between gap-4">
         <h2 className="font-display text-[28px] leading-tight text-ink sm:text-[34px]">{title}</h2>
-        <Link to={link.to} className="inline-flex shrink-0 items-center gap-1 text-sm font-medium text-basalt underline-offset-4 hover:underline">
+        <Link to={link.to} className="inline-flex shrink-0 items-center gap-1 text-sm font-medium text-ink underline-offset-4 hover:underline">
           {link.label} <ArrowRight className="size-4" aria-hidden />
         </Link>
       </div>
@@ -54,7 +54,7 @@ export function CatalogRows() {
     return (
       <p className="mx-auto max-w-6xl px-4 py-10 text-sm text-muted sm:px-6">
         Couldn't load the catalogue.{" "}
-        <button type="button" onClick={retry} className="font-medium text-basalt underline-offset-4 hover:underline">
+        <button type="button" onClick={retry} className="font-medium text-ink underline-offset-4 hover:underline">
           Try again
         </button>
       </p>

@@ -23,7 +23,7 @@ export function SaveButton({ kind, id, title, variant = "overlay", className }: 
       aria-label={on ? `Remove ${title} from saved` : `Save ${title}`}
       className={cn(
         "grid size-10 shrink-0 place-items-center rounded-full transition-colors active:scale-95",
-        variant === "overlay" ? "bg-white/90 text-ink shadow-md hover:bg-white" : "border border-line-strong bg-white text-ink hover:border-basalt/40",
+        variant === "overlay" ? "bg-white/90 text-ink shadow-md hover:bg-white" : "border border-line-strong bg-white text-ink hover:border-gold/40",
         className,
       )}
     >

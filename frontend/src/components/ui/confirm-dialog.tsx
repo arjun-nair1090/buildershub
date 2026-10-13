@@ -29,7 +29,7 @@ export function ConfirmDialog({ trigger, title, description, confirmLabel, tone 
     <AlertDialog.Root open={open} onOpenChange={(o) => !busy && setOpen(o)}>
       <AlertDialog.Trigger asChild>{trigger}</AlertDialog.Trigger>
       <AlertDialog.Portal>
-        <AlertDialog.Overlay className="fixed inset-0 z-50 bg-ink/40 data-[state=open]:animate-[settle_150ms_ease-out]" />
+        <AlertDialog.Overlay className="fixed inset-0 z-50 bg-black/40 data-[state=open]:animate-[settle_150ms_ease-out]" />
         <AlertDialog.Content className="fixed left-1/2 top-1/2 z-50 w-[calc(100%-2rem)] max-w-md -translate-x-1/2 -translate-y-1/2 rounded-lg border border-line bg-white p-6 shadow-[0_20px_50px_-20px_rgba(36,49,46,0.35)] focus:outline-none">
           <AlertDialog.Title className="text-lg font-semibold text-ink">{title}</AlertDialog.Title>
           <AlertDialog.Description className="mt-2 text-[15px] leading-relaxed text-muted">

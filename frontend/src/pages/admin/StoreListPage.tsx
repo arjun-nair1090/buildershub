@@ -14,7 +14,7 @@ import { errorMessage } from "@/services/api";
 import { storeService } from "@/services/stores";
 import type { Store } from "@/types";
 
-const iconLink = "inline-flex size-8 items-center justify-center rounded-md text-muted hover:bg-basalt-50 hover:text-basalt";
+const iconLink = "inline-flex size-8 items-center justify-center rounded-md text-muted hover:bg-basalt-50 hover:text-ink";
 
 export function StoreListPage() {
   const { stores, setStores, error, reload } = useStores();
@@ -90,7 +90,7 @@ export function StoreListPage() {
                 {stores.map((store) => (
                   <tr key={store.slug}>
                     <td className="px-5 py-3">
-                      <Link to={`/admin/stores/${store.slug}/edit`} className="font-medium text-basalt hover:underline">
+                      <Link to={`/admin/stores/${store.slug}/edit`} className="font-medium text-ink hover:underline">
                         {store.name}
                       </Link>
                       <p className="text-[13px] text-muted">

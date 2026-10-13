@@ -8,13 +8,13 @@ export const buttonVariants = cva(
   {
     variants: {
       variant: {
-        primary: "bg-basalt text-chalk shadow-[0_8px_20px_-12px_rgba(21,25,27,0.9)] hover:bg-basalt-700",
-        secondary: "border border-line-strong bg-white text-ink hover:border-basalt/40 hover:bg-basalt-50",
+        primary: "bg-gold-bright text-basalt shadow-[0_8px_20px_-12px_rgba(212,174,106,0.6)] hover:bg-[#e2c084]",
+        secondary: "border border-line-strong bg-white text-ink hover:border-gold/40 hover:bg-basalt-50",
         ghost: "text-ink hover:bg-basalt-50",
         gold: "bg-gold-bright text-basalt shadow-[0_10px_24px_-12px_rgba(212,174,106,0.8)] hover:bg-[#e2c084]",
-        danger: "bg-danger text-white hover:bg-[#8a2f24]",
+        danger: "bg-danger text-basalt hover:bg-[#ec9888]",
         "danger-outline": "border border-danger/30 bg-white text-danger hover:bg-danger-50",
-        link: "h-auto px-0 text-basalt underline-offset-4 hover:underline",
+        link: "h-auto px-0 text-ink underline-offset-4 hover:underline",
       },
       size: {
         sm: "h-8 px-3 text-[13px]",

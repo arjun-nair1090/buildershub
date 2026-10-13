@@ -57,7 +57,7 @@ export function LoginPage() {
   }
 
   return (
-    <div className="grid min-h-dvh bg-chalk lg:grid-cols-[minmax(0,1fr)_minmax(0,1.1fr)]">
+    <div className="grid min-h-dvh bg-canvas lg:grid-cols-[minmax(0,1fr)_minmax(0,1.1fr)]">
       <aside className="grain relative hidden flex-col justify-between overflow-hidden p-12 text-chalk lg:flex">
         <BrandMark tone="light" />
         <div className="max-w-sm">
@@ -74,7 +74,7 @@ export function LoginPage() {
       <main className="flex flex-col justify-center px-4 py-12 sm:px-10">
         <div className="rise mx-auto w-full max-w-sm">
           <BrandMark className="mb-12 lg:hidden" />
-          <h1 className="font-display text-[38px] leading-tight text-basalt">Jeweller login</h1>
+          <h1 className="font-display text-[38px] leading-tight text-ink">Jeweller login</h1>
           <p className="mt-2 text-[15px] text-muted">Sign in to manage registered jewellery.</p>
 
           {formError && (
@@ -115,11 +115,6 @@ export function LoginPage() {
             </Button>
           </form>
 
-          {import.meta.env.DEV && (
-            <p className="mt-8 rounded-md border border-dashed border-line-strong px-3.5 py-3 text-[13px] text-muted">
-              Demo account: admin@jewelverify.demo / Admin@12345
-            </p>
-          )}
 
           <p className="mt-10 text-sm">
             <Link to="/" className="text-muted underline-offset-4 hover:text-ink hover:underline">

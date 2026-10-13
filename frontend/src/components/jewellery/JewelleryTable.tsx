@@ -25,7 +25,7 @@ const COLUMNS: Record<ColumnKey, Column> = {
     label: "Jewellery ID",
     sort: "jewellery_id",
     render: (j) => (
-      <Link to={`/admin/jewellery/${j.jewellery_id}`} className="tabular font-medium tracking-wide text-basalt hover:underline">
+      <Link to={`/admin/jewellery/${j.jewellery_id}`} className="tabular font-medium tracking-wide text-ink hover:underline">
         {j.jewellery_id}
       </Link>
     ),
@@ -69,7 +69,7 @@ interface JewelleryTableProps {
 }
 
 function RowActions({ item, onDeactivate }: { item: Jewellery; onDeactivate: (item: Jewellery) => Promise<void> }) {
-  const link = "inline-flex size-8 items-center justify-center rounded-md text-muted hover:bg-basalt-50 hover:text-basalt";
+  const link = "inline-flex size-8 items-center justify-center rounded-md text-muted hover:bg-basalt-50 hover:text-ink";
   return (
     <div className="flex items-center justify-end gap-0.5">
       <Link to={`/admin/jewellery/${item.jewellery_id}`} className={link} title="View" aria-label={`View ${item.jewellery_id}`}>
@@ -145,7 +145,7 @@ export function JewelleryTable({ items, columns, loading, skeletonRows = 5, sort
                   </tr>
                 ))
               : items.map((j) => (
-                  <tr key={j.jewellery_id} className={cn("transition-colors hover:bg-chalk/70", j.status === "inactive" && "text-muted")}>
+                  <tr key={j.jewellery_id} className={cn("transition-colors hover:bg-canvas/70", j.status === "inactive" && "text-muted")}>
                     {cols.map((c) => (
                       <td key={c.key} className={cn("whitespace-nowrap px-4 py-3.5 first:pl-6", c.align === "right" && "tabular text-right")}>
                         {c.render(j)}

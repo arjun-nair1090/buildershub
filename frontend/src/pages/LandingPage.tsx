@@ -37,7 +37,7 @@ const EXAMPLE_PRICE: PiecePrice = {
 function SectionHeading({ title, children }: { title: string; children?: ReactNode }) {
   return (
     <div className="max-w-xl">
-      <h2 className="font-display text-[32px] leading-[1.08] text-basalt sm:text-[44px]">{title}</h2>
+      <h2 className="font-display text-[32px] leading-[1.08] text-ink sm:text-[44px]">{title}</h2>
       {children && <p className="mt-4 text-[17px] leading-relaxed text-ink/75">{children}</p>}
     </div>
   );
@@ -232,7 +232,7 @@ export function LandingPage() {
               the total price.
             </p>
           </div>
-          <div className="reveal rounded-[14px] border border-line bg-chalk p-6 sm:p-8">
+          <div className="reveal rounded-[14px] border border-line bg-canvas p-6 sm:p-8">
             <p className="mb-6 text-[13px] text-muted">Example breakdown</p>
             <PriceBreakdown price={EXAMPLE_PRICE} emphasis />
           </div>

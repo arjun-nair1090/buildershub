@@ -133,7 +133,7 @@ export function StoreFormPage() {
               <p className="text-[13px] text-muted">
                 In Google Maps, right-click the shop and click the coordinates to copy them.{" "}
                 {mapUrl && (
-                  <a href={mapUrl} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 font-medium text-basalt hover:underline">
+                  <a href={mapUrl} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 font-medium text-ink hover:underline">
                     Check on map <ExternalLink className="size-3.5" />
                   </a>
                 )}

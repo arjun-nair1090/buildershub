@@ -9,11 +9,11 @@ export function StatusBadge({ status, className }: { status: RecordStatus; class
     <span
       className={cn(
         base,
-        active ? "border-basalt/20 bg-basalt-50 text-basalt" : "border-line-strong bg-chalk text-muted",
+        active ? "border-gold/20 bg-basalt-50 text-ink" : "border-line-strong bg-canvas text-muted",
         className,
       )}
     >
-      <span className={cn("size-1.5 rounded-full", active ? "bg-basalt" : "bg-muted/60")} aria-hidden />
+      <span className={cn("size-1.5 rounded-full", active ? "bg-verified" : "bg-muted/60")} aria-hidden />
       {active ? "Active" : "Inactive"}
     </span>
   );
@@ -25,8 +25,8 @@ export function LevelBadge({ level, className }: { level: VerificationLevel; cla
     <span
       className={cn(
         base,
-        level === "lab" && "border-gold/40 bg-gold-soft text-[#7a5f35]",
-        level === "hallmark" && "border-basalt/20 bg-basalt-50 text-basalt",
+        level === "lab" && "border-gold/40 bg-gold-soft text-gold-bright",
+        level === "hallmark" && "border-gold/20 bg-basalt-50 text-ink",
         level === "declared" && "border-line-strong bg-white text-ink",
         className,
       )}
@@ -40,7 +40,7 @@ export function LevelBadge({ level, className }: { level: VerificationLevel; cla
 export function ListingBadge({ published, stock, className }: { published: boolean; stock: StockStatus; className?: string }) {
   if (!published) return <span className={cn(base, "border-dashed border-line-strong bg-white text-muted", className)}>Draft</span>;
   return (
-    <span className={cn(base, stock === "in_stock" ? "border-verified/30 bg-white text-verified" : "border-line-strong bg-chalk text-muted", className)}>
+    <span className={cn(base, stock === "in_stock" ? "border-verified/30 bg-white text-verified" : "border-line-strong bg-canvas text-muted", className)}>
       {STOCK_LABEL[stock]}
     </span>
   );

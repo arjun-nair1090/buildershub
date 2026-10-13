@@ -9,7 +9,7 @@ export function VerifyLookupPage() {
 
   return (
     <div className="mx-auto max-w-xl px-4 py-14 sm:py-20">
-      <h1 className="rise font-display text-[40px] leading-[1.05] text-basalt sm:text-[52px]">Verify jewellery</h1>
+      <h1 className="rise font-display text-[40px] leading-[1.05] text-ink sm:text-[52px]">Verify jewellery</h1>
       <p className="mt-3 text-[17px] leading-relaxed text-ink/75">
         Check a piece against its registered digital record.
       </p>

@@ -25,7 +25,7 @@ function Tile({ tile }: { tile: FeedTile }) {
           height={tile.photo.height}
           loading="lazy"
           decoding="async"
-          className="h-auto w-full rounded-md border border-line bg-chalk"
+          className="h-auto w-full rounded-md border border-line bg-canvas"
         />
         <p className="mt-1.5 truncate text-[14px] font-medium text-ink group-hover:underline">{tile.title}</p>
         <p className="tabular truncate text-[13px] text-muted">{tile.price}</p>
@@ -58,7 +58,7 @@ function SavedView({ catalog }: { catalog: Catalog }) {
         return (
           <div key={key} className="flex aspect-[3/4] flex-col items-center justify-center gap-3 rounded-md border border-dashed border-line-strong bg-white p-4 text-center">
             <p className="text-sm text-muted">No longer available</p>
-            <button type="button" onClick={() => remove(key)} className="text-sm font-medium text-basalt underline-offset-4 hover:underline">
+            <button type="button" onClick={() => remove(key)} className="text-sm font-medium text-ink underline-offset-4 hover:underline">
               Remove
             </button>
           </div>
@@ -92,7 +92,7 @@ export function FeedPage() {
               role="tab"
               aria-selected={view === v}
               onClick={() => setParams(v === "saved" ? { view: "saved" } : {}, { replace: true })}
-              className={cn("rounded px-4 py-2 text-sm transition-colors", view === v ? "bg-basalt text-chalk" : "text-ink hover:bg-basalt-50")}
+              className={cn("rounded px-4 py-2 text-sm transition-colors", view === v ? "bg-gold-bright text-basalt" : "text-ink hover:bg-basalt-50")}
             >
               {v === "all" ? "All" : `Saved (${saved.length})`}
             </button>
@@ -125,7 +125,7 @@ export function FeedPage() {
             )}
             {count < tiles.length && (
               <div className="mt-6 text-center">
-                <button type="button" onClick={() => setCount((n) => n + PAGE)} className="h-11 rounded-md border border-line-strong bg-white px-6 text-sm font-medium text-ink hover:border-basalt/40">
+                <button type="button" onClick={() => setCount((n) => n + PAGE)} className="h-11 rounded-md border border-line-strong bg-white px-6 text-sm font-medium text-ink hover:border-gold/40">
                   Show more
                 </button>
               </div>

@@ -155,7 +155,7 @@ export function JewelleryListPage() {
         </div>
 
         {filtered && (
-          <div className="flex items-center justify-between border-b border-line bg-chalk/60 px-5 py-2 text-[13px] text-muted">
+          <div className="flex items-center justify-between border-b border-line bg-canvas/60 px-5 py-2 text-[13px] text-muted">
             Filters applied
             <Button variant="ghost" size="sm" onClick={clearFilters}>
               <X /> Clear filters

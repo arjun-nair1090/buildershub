@@ -30,7 +30,7 @@ export function NearMeButton({ onResult, tone = "light", className }: NearMeButt
       <div
         role="group"
         aria-label="Use your location"
-        className={cn("flex flex-wrap items-center gap-x-3 gap-y-2 rounded-md border px-3 py-2 text-sm", dark ? "border-white/25 text-chalk" : "border-line-strong bg-white text-ink", className)}
+        className={cn("flex flex-wrap items-center gap-x-3 gap-y-2 rounded-md border px-3 py-2 text-sm", dark ? "border-chalk/25 text-chalk" : "border-line-strong bg-white text-ink", className)}
       >
         <p className="min-w-0 flex-1 basis-56">Your location stays on this device and is only used to sort by distance.</p>
         <button
@@ -58,7 +58,7 @@ export function NearMeButton({ onResult, tone = "light", className }: NearMeButt
       disabled={status === "asking"}
       className={cn(
         "inline-flex h-11 items-center justify-center gap-2 rounded-md border px-4 text-sm font-medium transition-colors disabled:opacity-60",
-        dark ? "border-white/30 text-chalk hover:border-gold-bright hover:text-gold-bright" : "border-line-strong bg-white text-ink hover:border-basalt/40",
+        dark ? "border-chalk/30 text-chalk hover:border-gold-bright hover:text-gold-bright" : "border-line-strong bg-white text-ink hover:border-gold/40",
         className,
       )}
     >

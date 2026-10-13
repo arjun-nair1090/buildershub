@@ -191,7 +191,7 @@ export function JewelleryDetailPage() {
               <DataRow
                 label="Store"
                 value={
-                  <Link to={`/admin/stores/${item.store.slug}/edit`} className="text-basalt hover:underline">
+                  <Link to={`/admin/stores/${item.store.slug}/edit`} className="text-ink hover:underline">
                     {item.store.name}
                   </Link>
                 }
@@ -233,7 +233,7 @@ export function JewelleryDetailPage() {
                     label="Document"
                     value={
                       item.has_certificate_document ? (
-                        <button type="button" onClick={downloadCertificate} className="inline-flex items-center gap-1.5 text-basalt hover:underline">
+                        <button type="button" onClick={downloadCertificate} className="inline-flex items-center gap-1.5 text-ink hover:underline">
                           <FileText className="size-4" /> Download
                         </button>
                       ) : (

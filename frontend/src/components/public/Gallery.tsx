@@ -42,7 +42,7 @@ export function Gallery({ photos, sizes = "(min-width: 1024px) 560px, 100vw", cl
         onScroll={onScroll}
         onKeyDown={many ? onKeyDown : undefined}
         tabIndex={many ? 0 : undefined}
-        className="flex snap-x snap-mandatory overflow-x-auto overscroll-x-contain rounded-md border border-line bg-chalk [scrollbar-width:none] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gold [&::-webkit-scrollbar]:hidden"
+        className="flex snap-x snap-mandatory overflow-x-auto overscroll-x-contain rounded-md border border-line bg-canvas [scrollbar-width:none] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gold [&::-webkit-scrollbar]:hidden"
       >
         {photos.map((photo, i) => (
           <div

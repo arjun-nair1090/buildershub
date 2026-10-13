@@ -8,24 +8,28 @@
   --font-display: "Gilda Display", "Times New Roman", serif;
   --font-sans: "Instrument Sans", ui-sans-serif, system-ui, sans-serif;
 
-  --color-basalt: #1f2427;
-  --color-basalt-900: #15191b;
-  --color-basalt-700: #2d3438;
-  --color-basalt-50: #e6eae7;
-  --color-ink: #1b1f22;
-  /* gold: strokes, icons and text on basalt. gold-deep: small gold text on light surfaces (AA). */
-  --color-gold: #b38b46;
+  /* Black and gold. basalt: dark bands (header, hero). canvas: the page. white: cards and inputs, so every
+     `bg-white` surface reads as a raised black panel. ink: body text. chalk: light text on basalt. */
+  --color-basalt: #0d0c0a;
+  --color-basalt-900: #050505;
+  --color-basalt-700: #24201a;
+  --color-basalt-50: #211d16;
+  --color-canvas: #0a0908;
+  --color-white: #15130f;
+  --color-ink: #f3ede1;
+  /* gold: strokes, icons and text on black. gold-deep: small gold text (AA on cards). */
+  --color-gold: #c39a52;
   --color-gold-bright: #d4ae6a;
-  --color-gold-deep: #86652c;
-  --color-gold-soft: #f1ebdd;
-  --color-chalk: #eef0ec;
-  --color-line: #dadfda;
-  --color-line-strong: #c4cac4;
-  --color-muted: #5d6662;
-  --color-verified: #2e6a4f;
-  --color-danger: #a1392c;
-  --color-danger-50: #f8ecea;
-  --color-warn: #8a6a2f;
+  --color-gold-deep: #d0a85f;
+  --color-gold-soft: #2a2114;
+  --color-chalk: #f3ede1;
+  --color-line: #2b2720;
+  --color-line-strong: #3f382d;
+  --color-muted: #a59d8d;
+  --color-verified: #6cc199;
+  --color-danger: #e5806f;
+  --color-danger-50: #2d1612;
+  --color-warn: #d6ae63;
 
   --radius-sm: 3px;
   --radius-md: 6px;
@@ -37,9 +41,10 @@
 @layer base {
   html {
     -webkit-text-size-adjust: 100%;
+    color-scheme: dark;
   }
   body {
-    @apply bg-chalk font-sans text-ink antialiased;
+    @apply bg-canvas font-sans text-ink antialiased;
   }
   /* Gilda Display ships one weight; never let the browser fake a bold. */
   .font-display {
@@ -47,6 +52,7 @@
   }
   ::selection {
     background: #e4d3ae;
+    color: #0d0c0a;
   }
   :focus-visible {
     outline: 2px solid var(--color-gold);
@@ -71,7 +77,7 @@
 @utility grain {
   background-image:
     url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 0 0 0 .07 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E"),
-    radial-gradient(120% 90% at 70% 10%, #2b3236 0%, var(--color-basalt) 55%, var(--color-basalt-900) 100%);
+    radial-gradient(120% 90% at 70% 10%, #1f1a12 0%, var(--color-basalt) 55%, var(--color-basalt-900) 100%);
 }
 
 /* Elements opt in to the entrance with `rise`, staggered via --d (delay). */

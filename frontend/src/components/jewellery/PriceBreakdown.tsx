@@ -68,7 +68,7 @@ export function PriceBreakdown({ price, className, emphasis, stagger }: PriceBre
           <span className="text-[15px] font-semibold text-ink">{discount ? "Final price" : "Price"}</span>
           <span
             className={cn(
-              "tabular ml-auto text-right font-semibold text-basalt",
+              "tabular ml-auto text-right font-semibold text-ink",
               emphasis ? (rangedFinal ? "text-[24px] leading-tight tracking-tight sm:text-[26px]" : "text-[30px] leading-none tracking-tight sm:text-[34px]") : "text-xl",
             )}
           >

@@ -10,7 +10,7 @@ export function DesignTile({ design, distanceKm }: { design: DesignCard; distanc
   const { cover } = design;
   return (
     <Link to={`/designs/${design.public_id}`} className="group block min-w-0">
-      <div className="relative overflow-hidden rounded-md border border-line bg-chalk">
+      <div className="relative overflow-hidden rounded-md border border-line bg-canvas">
         {cover ? (
           <img
             src={photoService.url(cover.public_id, "thumb")}

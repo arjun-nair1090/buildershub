@@ -37,7 +37,7 @@ export function RecordUnavailable({ kind, message, onRetry }: RecordUnavailableP
   return (
     <div className="rise mx-auto max-w-xl px-4 py-12 sm:py-20">
       <div className="rounded-lg border border-line bg-white px-6 py-10 text-center sm:px-10">
-        <span className="mx-auto mb-5 grid size-14 place-items-center rounded-full border border-line-strong bg-chalk text-muted">
+        <span className="mx-auto mb-5 grid size-14 place-items-center rounded-full border border-line-strong bg-canvas text-muted">
           <Icon className="size-6" strokeWidth={1.5} />
         </span>
         <p className="text-[13px] font-medium text-muted">Not verified</p>
@@ -45,7 +45,7 @@ export function RecordUnavailable({ kind, message, onRetry }: RecordUnavailableP
         <p className="mx-auto mt-3 max-w-sm text-[15px] leading-relaxed text-ink/80">{message ?? copy.body}</p>
         {copy.advice && <p className="mx-auto mt-3 max-w-sm text-sm leading-relaxed text-muted">{copy.advice}</p>}
         {onRetry && (
-          <button type="button" onClick={onRetry} className="mt-5 text-sm font-medium text-basalt underline-offset-4 hover:underline">
+          <button type="button" onClick={onRetry} className="mt-5 text-sm font-medium text-ink underline-offset-4 hover:underline">
             Try again
           </button>
         )}

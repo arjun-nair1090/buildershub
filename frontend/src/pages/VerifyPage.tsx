@@ -76,7 +76,7 @@ function ResultBanner({ record, checkedAt }: { record: PublicVerification; check
       <p className="mt-4 max-w-md text-[15px] leading-relaxed text-chalk/85">
         Listed on Jewlerify by {record.store.name}, {record.store.area}. {levelSummary(record)}
       </p>
-      <div className="mt-6 flex flex-wrap items-end justify-between gap-x-6 gap-y-2 border-t border-white/15 pt-4">
+      <div className="mt-6 flex flex-wrap items-end justify-between gap-x-6 gap-y-2 border-t border-chalk/15 pt-4">
         <div>
           <p className="text-xs text-chalk/60">Jewellery ID</p>
           <p className="tabular mt-0.5 text-lg font-medium tracking-[0.08em]">{record.jewellery_id}</p>
@@ -109,8 +109,14 @@ function VerifiedRecord({ record, checkedAt }: { record: PublicVerification; che
   return (
     // overflow-x-clip: the moving gold rate tape otherwise made phones zoom out slightly to fit it.
     <div className="mx-auto max-w-5xl overflow-x-clip sm:px-6 sm:py-10">
+      {record.gold_rate && (
+        <div className="rise mb-6 lg:mb-8">
+          <GoldRateTape rate={record.gold_rate} />
+        </div>
+      )}
+
       {/* The record and its side column get their own grid, so the sticky column stops at the end of the record
-          instead of sliding over the tape and similar pieces below. */}
+          instead of sliding over the similar pieces below. */}
       <div className="lg:grid lg:grid-cols-[1fr_380px] lg:items-start lg:gap-8">
         <article className="bg-white sm:rounded-lg sm:border sm:border-line sm:shadow-[0_30px_60px_-40px_rgba(21,25,27,0.45)]">
           <ResultBanner record={record} checkedAt={checkedAt} />
@@ -132,7 +138,7 @@ function VerifiedRecord({ record, checkedAt }: { record: PublicVerification; che
                 {record.type} · {record.description}
               </p>
               {record.stock_status !== "in_stock" && (
-                <span className="mt-3 inline-flex rounded-full border border-line-strong bg-chalk px-2.5 py-0.5 text-xs font-semibold text-ink">
+                <span className="mt-3 inline-flex rounded-full border border-line-strong bg-canvas px-2.5 py-0.5 text-xs font-semibold text-ink">
                   {STOCK_LABEL[record.stock_status]}
                 </span>
               )}
@@ -221,7 +227,7 @@ function VerifiedRecord({ record, checkedAt }: { record: PublicVerification; che
             </dl>
           </Section>
 
-          <div className="rise flex gap-3 border-t border-line bg-chalk/60 px-5 py-5 text-[13px] leading-relaxed text-muted sm:rounded-b-lg sm:px-8" style={delay(570)}>
+          <div className="rise flex gap-3 border-t border-line bg-canvas/60 px-5 py-5 text-[13px] leading-relaxed text-muted sm:rounded-b-lg sm:px-8" style={delay(570)}>
             <Info className="mt-0.5 size-4 shrink-0 text-gold-deep" strokeWidth={1.75} />
             <p>
               This page verifies the information associated with the registered digital record. It does not independently
@@ -248,16 +254,10 @@ function VerifiedRecord({ record, checkedAt }: { record: PublicVerification; che
         </aside>
       </div>
 
-      {record.gold_rate && (
-        <div className="rise mt-6 lg:mt-8" style={delay(620)}>
-          <GoldRateTape rate={record.gold_rate} />
-        </div>
-      )}
-
       <SimilarPieces record={record} />
 
       <p className="px-5 py-8 text-center text-sm">
-        <Link to="/verify" className="font-medium text-basalt underline-offset-4 hover:underline">
+        <Link to="/verify" className="font-medium text-ink underline-offset-4 hover:underline">
           Verify another item
         </Link>
       </p>
@@ -290,9 +290,9 @@ function VerifySkeleton() {
     <div className="mx-auto min-h-dvh max-w-5xl sm:px-6 sm:py-10" role="status" aria-label="Checking the record">
       <div className="bg-white sm:rounded-lg sm:border sm:border-line lg:max-w-[calc(100%-412px)]">
         <div className="space-y-4 bg-basalt px-5 py-8 sm:rounded-t-lg sm:px-8">
-          <Skeleton className="h-8 w-56 bg-white/15" />
-          <Skeleton className="h-4 w-72 bg-white/10" />
-          <Skeleton className="mt-6 h-5 w-40 bg-white/15" />
+          <Skeleton className="h-8 w-56 bg-chalk/15" />
+          <Skeleton className="h-4 w-72 bg-chalk/10" />
+          <Skeleton className="mt-6 h-5 w-40 bg-chalk/15" />
         </div>
         <div className="space-y-3 px-5 py-7 sm:px-8">
           <Skeleton className="h-6 w-32" />

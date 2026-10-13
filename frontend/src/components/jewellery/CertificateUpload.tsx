@@ -41,7 +41,7 @@ export function CertificateUpload({ file, onChange, existing }: CertificateUploa
   }
 
   const row = (name: string, meta: string, actions: ReactNode) => (
-    <div className="flex items-center gap-3 rounded-md border border-line bg-chalk px-3 py-2.5">
+    <div className="flex items-center gap-3 rounded-md border border-line bg-canvas px-3 py-2.5">
       <FileText className="size-5 shrink-0 text-gold" strokeWidth={1.5} />
       <div className="min-w-0 flex-1">
         <p className="truncate text-sm font-medium text-ink">{name}</p>
@@ -76,10 +76,10 @@ export function CertificateUpload({ file, onChange, existing }: CertificateUploa
           "Certificate on file",
           "PDF or image uploaded earlier",
           <div className="flex shrink-0 gap-1">
-            <button type="button" onClick={existing.onDownload} className="rounded-sm px-2 py-1 text-[13px] text-basalt hover:bg-white">
+            <button type="button" onClick={existing.onDownload} className="rounded-sm px-2 py-1 text-[13px] text-ink hover:bg-white">
               Download
             </button>
-            <button type="button" onClick={() => inputRef.current?.click()} className="rounded-sm px-2 py-1 text-[13px] text-basalt hover:bg-white">
+            <button type="button" onClick={() => inputRef.current?.click()} className="rounded-sm px-2 py-1 text-[13px] text-ink hover:bg-white">
               Replace
             </button>
             <button type="button" onClick={existing.onRemove} className="rounded-sm px-2 py-1 text-[13px] text-danger hover:bg-white">
@@ -99,7 +99,7 @@ export function CertificateUpload({ file, onChange, existing }: CertificateUploa
           onDrop={onDrop}
           className={cn(
             "flex w-full flex-col items-center rounded-md border border-dashed px-4 py-6 text-center transition-colors",
-            dragging ? "border-basalt bg-basalt-50" : "border-line-strong bg-white hover:border-basalt/50",
+            dragging ? "border-gold bg-basalt-50" : "border-line-strong bg-white hover:border-gold/50",
           )}
         >
           <Upload className="mb-2 size-5 text-gold" strokeWidth={1.5} />

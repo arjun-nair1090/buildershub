@@ -10,7 +10,7 @@ export function StoreTile({ store, distanceKm }: { store: CatalogStore; distance
   const { cover } = store;
   return (
     <Link to={`/stores/${store.slug}`} className="group block min-w-0">
-      <div className="overflow-hidden rounded-md border border-line bg-chalk">
+      <div className="overflow-hidden rounded-md border border-line bg-canvas">
         {cover ? (
           <img
             src={photoService.url(cover.public_id, "thumb")}

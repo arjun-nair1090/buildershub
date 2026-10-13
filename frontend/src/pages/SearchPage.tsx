@@ -157,7 +157,7 @@ export function SearchPage() {
               update({ q: e.target.value });
             }}
             placeholder="Search rings, necklaces, store names, areas"
-            className="h-12 w-full rounded-md border border-line-strong bg-white pl-10 pr-3 text-[15px] text-ink placeholder:text-muted focus:border-basalt focus:outline-none"
+            className="h-12 w-full rounded-md border border-line-strong bg-white pl-10 pr-3 text-[15px] text-ink placeholder:text-muted focus:border-gold focus:outline-none"
           />
         </label>
       </form>
@@ -223,7 +223,7 @@ export function SearchPage() {
             onClick={() => update({ tab }, true)}
             className={cn(
               "-mb-px border-b-2 px-3 py-2.5 text-sm transition-colors",
-              filters.tab === tab ? "border-basalt font-semibold text-ink" : "border-transparent text-muted hover:text-ink",
+              filters.tab === tab ? "border-gold font-semibold text-ink" : "border-transparent text-muted hover:text-ink",
             )}
           >
             {TAB_LABEL[tab]}
@@ -236,7 +236,7 @@ export function SearchPage() {
         <aside className="hidden lg:block" aria-label="Filters">
           <FilterPanel filters={filters} onChange={(patch) => update(patch)} hasLocation={here !== null} />
           {panelCount > 0 && (
-            <button type="button" onClick={clear} className="mt-2 text-sm font-medium text-basalt underline-offset-4 hover:underline">
+            <button type="button" onClick={clear} className="mt-2 text-sm font-medium text-ink underline-offset-4 hover:underline">
               Clear filters
             </button>
           )}
@@ -260,7 +260,7 @@ export function SearchPage() {
           {results && shown === 0 && (
             <div className="rounded-lg border border-line bg-white px-6 py-12 text-center">
               <p className="font-display text-[24px] text-ink">Nothing matches these filters</p>
-              <button type="button" onClick={clear} className="mt-3 text-sm font-medium text-basalt underline-offset-4 hover:underline">
+              <button type="button" onClick={clear} className="mt-3 text-sm font-medium text-ink underline-offset-4 hover:underline">
                 Clear filters
               </button>
             </div>
@@ -281,7 +281,7 @@ export function SearchPage() {
       {sheetOpen && (
         <div ref={sheetRef} className="fixed inset-0 z-50 lg:hidden" role="dialog" aria-modal="true" aria-label="Filters">
           <button type="button" tabIndex={-1} aria-label="Close filters" className="absolute inset-0 bg-basalt/50" onClick={closeSheet} />
-          <div className="absolute inset-x-0 bottom-0 flex max-h-[85dvh] flex-col rounded-t-xl bg-chalk">
+          <div className="absolute inset-x-0 bottom-0 flex max-h-[85dvh] flex-col rounded-t-xl bg-canvas">
             <div className="flex items-center justify-between border-b border-line px-4 py-3">
               <p className="font-semibold text-ink">Filters</p>
               <button ref={sheetClose} type="button" onClick={closeSheet} aria-label="Close filters" className="grid size-10 place-items-center rounded-full hover:bg-basalt-50">
@@ -295,7 +295,7 @@ export function SearchPage() {
               <button type="button" onClick={clear} className="h-12 flex-1 rounded-md border border-line-strong bg-white text-sm font-medium text-ink">
                 Clear
               </button>
-              <button type="button" onClick={closeSheet} className="h-12 flex-[2] rounded-md bg-basalt text-sm font-medium text-chalk">
+              <button type="button" onClick={closeSheet} className="h-12 flex-[2] rounded-md bg-gold-bright text-sm font-medium text-basalt">
                 Show {shown} {shown === 1 ? "result" : "results"}
               </button>
             </div>

@@ -10,7 +10,7 @@ export function PieceTile({ piece, distanceKm }: { piece: PieceCard; distanceKm?
   const { cover, price } = piece;
   return (
     <Link to={`/verify/${piece.jewellery_id}`} className="group block min-w-0">
-      <div className="relative overflow-hidden rounded-md border border-line bg-chalk">
+      <div className="relative overflow-hidden rounded-md border border-line bg-canvas">
         {cover ? (
           <img
             src={photoService.url(cover.public_id, "thumb")}

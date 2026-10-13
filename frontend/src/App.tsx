@@ -35,8 +35,8 @@ const DesignFormPage = named(() => import("@/pages/admin/DesignFormPage"), "Desi
 
 function PageLoader() {
   return (
-    <div className="grid min-h-dvh place-items-center bg-chalk" role="status">
-      <Loader2 className="size-6 animate-spin text-basalt" />
+    <div className="grid min-h-dvh place-items-center bg-canvas" role="status">
+      <Loader2 className="size-6 animate-spin text-ink" />
       <span className="sr-only">Loading</span>
     </div>
   );
@@ -98,7 +98,7 @@ export default function App() {
         toastOptions={{
           classNames: {
             toast: "!rounded-md !border !border-line !bg-white !font-sans !text-ink !shadow-[0_10px_30px_-12px_rgba(36,49,46,0.3)]",
-            success: "[&_[data-icon]]:!text-basalt",
+            success: "[&_[data-icon]]:!text-ink",
             error: "[&_[data-icon]]:!text-danger",
           },
         }}

@@ -25,7 +25,7 @@ export function DiscountPreview({ input }: { input: PricePreviewInput | null }) 
   }, [key]);
 
   return (
-    <div className="rounded-md border border-line bg-chalk p-4" aria-live="polite">
+    <div className="rounded-md border border-line bg-canvas p-4" aria-live="polite">
       {price ? (
         <>
           <p className="text-[13px] text-muted">
@@ -37,7 +37,7 @@ export function DiscountPreview({ input }: { input: PricePreviewInput | null }) 
               <span className="rounded-full bg-gold-soft px-2 py-0.5 text-xs font-semibold text-gold-deep">{price.discount.label}</span>
             </p>
           )}
-          <p className="tabular mt-1 text-xl font-semibold text-basalt">{formatINRRange(price.final_min, price.final_max)}</p>
+          <p className="tabular mt-1 text-xl font-semibold text-ink">{formatINRRange(price.final_min, price.final_max)}</p>
         </>
       ) : (
         <p className="text-[13px] text-muted">Fill in the weight and prices to preview what buyers will see.</p>

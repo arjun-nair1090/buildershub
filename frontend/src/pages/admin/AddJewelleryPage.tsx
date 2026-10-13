@@ -17,9 +17,9 @@ function RegistrationSuccess({ item, onAnother }: { item: Jewellery; onAnother: 
   return (
     <Panel className="mx-auto max-w-4xl overflow-hidden">
       <div className="flex items-start gap-4 border-b border-line bg-basalt-50/60 px-6 py-6 sm:px-8">
-        <CheckCircle2 className="mt-0.5 size-6 shrink-0 text-basalt" strokeWidth={1.75} />
+        <CheckCircle2 className="mt-0.5 size-6 shrink-0 text-ink" strokeWidth={1.75} />
         <div>
-          <h1 className="font-display text-[26px] leading-tight text-basalt">Piece registered</h1>
+          <h1 className="font-display text-[26px] leading-tight text-ink">Piece registered</h1>
           <p className="mt-1 text-[15px] text-muted">
             Add its photos and publish it from the record page. Its QR code starts working once it's published.
           </p>

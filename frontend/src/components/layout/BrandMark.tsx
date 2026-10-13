@@ -57,7 +57,7 @@ interface BrandMarkProps {
 export function BrandMark({ to = "/", tone = "dark", className }: BrandMarkProps) {
   return (
     <Link to={to} className={cn("group inline-flex", className)} aria-label="Jewlerify, home">
-      <span aria-hidden className={cn("font-display text-[28px] leading-none", tone === "dark" ? "text-basalt" : "text-chalk")}>
+      <span aria-hidden className={cn("font-display text-[28px] leading-none", tone === "dark" ? "text-ink" : "text-chalk")}>
         Jewler
         <span className="relative">
           ı

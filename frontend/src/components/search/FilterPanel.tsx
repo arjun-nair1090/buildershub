@@ -27,7 +27,7 @@ function Chip({ on, onClick, children, disabled }: { on: boolean; onClick: () =>
       onClick={onClick}
       className={cn(
         "rounded-full border px-3 py-1.5 text-[13px] transition-colors disabled:opacity-40",
-        on ? "border-basalt bg-basalt text-chalk" : "border-line-strong bg-white text-ink hover:border-basalt/40",
+        on ? "border-gold-bright bg-gold-bright text-basalt" : "border-line-strong bg-white text-ink hover:border-gold/40",
       )}
     >
       {children}
@@ -52,7 +52,7 @@ function NumberBox({ label, value, onCommit }: { label: string; value: number | 
           if (next === "") onCommit(null);
           else if (/^\d+(\.\d+)?$/.test(next)) onCommit(Number(next));
         }}
-        className="h-10 w-full rounded-md border border-line-strong bg-white px-3 text-sm text-ink placeholder:text-muted focus:border-basalt focus:outline-none"
+        className="h-10 w-full rounded-md border border-line-strong bg-white px-3 text-sm text-ink placeholder:text-muted focus:border-gold focus:outline-none"
       />
     </label>
   );

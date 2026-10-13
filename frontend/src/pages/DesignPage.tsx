@@ -26,7 +26,7 @@ function DesignView({ design }: { design: PublicDesign }) {
       <Gallery className="rise" photos={design.photos} sizes="(min-width: 1024px) 520px, 100vw" />
 
       <div className="rise mt-8 lg:mt-0">
-        <span className="inline-flex rounded-full bg-basalt px-2.5 py-0.5 text-xs font-semibold text-chalk">Made to order</span>
+        <span className="inline-flex rounded-full bg-gold-bright px-2.5 py-0.5 text-xs font-semibold text-basalt">Made to order</span>
         <div className="mt-3 flex items-start gap-3">
           <h1 className="min-w-0 break-words font-display text-[32px] leading-tight text-ink sm:text-[38px]">{design.title}</h1>
           <SaveButton kind="design" id={design.public_id} title={design.title} variant="inline" className="mt-1" />
@@ -53,7 +53,7 @@ function DesignView({ design }: { design: PublicDesign }) {
 
         <Link
           to={`/stores/${design.store.slug}`}
-          className="group mt-6 flex items-center justify-between gap-4 rounded-lg border border-line bg-white px-5 py-4 transition-colors hover:border-basalt/40"
+          className="group mt-6 flex items-center justify-between gap-4 rounded-lg border border-line bg-white px-5 py-4 transition-colors hover:border-gold/40"
         >
           <span className="min-w-0">
             <span className="block text-[13px] text-muted">Made by</span>
