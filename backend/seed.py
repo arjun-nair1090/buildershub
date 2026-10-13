@@ -29,8 +29,8 @@ REGISTERED_RATE_22K = D("13700")  # IBJA 22K, 11 Oct 2026
 # Placeholder details until the team edits the store in admin. Phone and WhatsApp stay empty rather
 # than holding a made-up number that might belong to someone.
 STORE = {
-    "slug": "your-store-name",
-    "name": "Your Store Name",
+    "slug": "navkar-jewellers",
+    "name": "NAVKAR Jewellers",
     "address": "Placeholder address, Zaveri Bazaar, Mumbai",
     "area": "Zaveri Bazaar",
     "city": "Mumbai",

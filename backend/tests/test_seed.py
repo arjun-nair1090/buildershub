@@ -19,7 +19,7 @@ def test_seed_is_complete_and_idempotent(monkeypatch):
     with sessionmaker(bind=engine)() as db:
         assert db.scalar(select(func.count(User.id))) == 1
         [store] = db.scalars(select(Store)).all()
-        assert (store.name, store.city, store.area, store.phone) == ("Your Store Name", "Mumbai", "Zaveri Bazaar", None)
+        assert (store.name, store.city, store.area, store.phone) == ("NAVKAR Jewellers", "Mumbai", "Zaveri Bazaar", None)
         pieces = db.scalars(select(Jewellery)).all()
         assert {p.title for p in pieces} == {"Nakshi kada", "Hollow chain", "Rani haar", "Casting ring",
                                              "Jaguar bracelet"}
